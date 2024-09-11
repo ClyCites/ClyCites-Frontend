@@ -7,16 +7,13 @@ const Hero = () => {
       <div className="hero-map" />
 
       <div className="relative z-20 flex flex-1 flex-col xl:w-1/2">
-        <Image 
-          src="/camp.svg"
-          alt="camp"
-          width={50}
-          height={50}
-          className="absolute left-[-5px] top-[-30px] w-10 lg:w-[50px]"
-        />
-        <h1 className="bold-52 lg:bold-88">Putuk Truno Camp Area</h1>
+        
+        <h1 className="bold-52 lg:bold-25">Agriculture in your community</h1>
+        <p className="regular-16 mt-6 text-blue-800 xl:max-w-[520px]">
+        “9 out of 10 people breathe polluted air”
+        </p>
         <p className="regular-16 mt-6 text-gray-30 xl:max-w-[520px]">
-          We want to be on each of your journeys seeking the satisfaction of seeing the incorruptible beauty of nature. We can help you on an adventure around the world in just one app
+        We empower communities with accurate, hyperlocal and timely air quality data to drive air pollution mitigation actions
         </p>
 
         <div className="my-11 flex flex-wrap gap-5">
@@ -39,7 +36,22 @@ const Hero = () => {
         </div>
 
         <div className="flex flex-col w-full gap-3 sm:flex-row">
-          <Button 
+        <button
+            type="button"
+            className="ml-4 bg-blue-100 hover:bg-green-700 text-black font-bold py-2 px-4 rounded"
+          >
+            Get Involved
+            <img src="/user.svg" alt="icon" className="inline-block w-4 h-4 ml-2" />
+          </button>
+          <button
+            type="button"
+            className="bg-blue-800 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+          >
+            Explore Data
+            <img src="/user.svg" alt="icon" className="inline-block w-4 h-4 ml-2" />
+          </button>
+
+          {/* <Button 
             type="button" 
             title="Download App" 
             variant="btn_green" 
@@ -49,32 +61,18 @@ const Hero = () => {
             title="How we work?" 
             icon="/play.svg"
             variant="btn_white_text" 
-          />
+          /> */}
         </div>
       </div>
 
       <div className="relative flex flex-1 items-start">
-        <div className="relative z-20 flex w-[268px] flex-col gap-8 rounded-3xl bg-green-90 px-7 py-8">
-
-           <div className="flex flex-col">
-            <div className="flexBetween">
-              <p className="regular-16 text-gray-20">Location</p>
-              <Image src="/close.svg" alt="close" width={24} height={24} />
-            </div>
-            <p className="bold-20 text-white">Aguas Calientes</p>
-          </div>
-
-          <div className="flexBetween">
-            <div className="flex flex-col">
-              <p className="regular-16 block text-gray-20">Distance</p>
-              <p className="bold-20 text-white">173.28 mi</p>
-            </div>
-            <div className="flex flex-col">
-              <p className="regular-16 block text-gray-20">Elevation</p>
-              <p className="bold-20 text-white">2.040 km</p>
-            </div>
-          </div>
-        </div>
+      <Image 
+        src="/images/agri.jpg" 
+        alt="logo" 
+        className="absolute top-0 left-0 w-full h-full object-cover"
+        width={100}
+        height={100}
+      />
       </div>
     </section>
   )
