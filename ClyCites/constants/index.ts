@@ -43,32 +43,35 @@ export const FEATURES = [
 // FOOTER SECTION
 export const FOOTER_LINKS = [
   {
-    title: 'Learn More',
+    title: 'Products',
     links: [
-      'About ClyCites',
-      'Press Releases',
-      'Environment',
-      'Jobs',
-      'Privacy Policy',
-      'Contact Us',
+      'Analytics Dashboard',
+      'Mobile App',
+      'Product2',
+      'Product2',
+      
     ],
   },
   {
-    title: 'Our Community',
-    links: ['Climbing xixixi', 'ClyCites clycites', 'ClyCites kinthill'],
+    title: 'Solutions',
+    links: ['For African Cities', 'For Communities', 'For Research'],
   },
 ];
 
 export const FOOTER_CONTACT_INFO = {
-  title: 'Contact Us',
+  title: 'About',
   links: [
-    { label: 'Admin Officer', value: '123-456-7890' },
-    { label: 'Email Officer', value: 'clycites@ClyCites.com' },
+    { label: 'About Us' },
+    { label: 'Contact Us' },
+    { label: 'Resources' },
+    { label: 'Events' },
+    { label: 'Careers' },
+    { label: 'Blog' },
   ],
 };
 
 export const SOCIALS = {
-  title: 'Social',
+  title: 'ClyCites',
   links: [
     '/facebook.svg',
     '/instagram.svg',
