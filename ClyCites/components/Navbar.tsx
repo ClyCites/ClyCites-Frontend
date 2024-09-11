@@ -5,6 +5,19 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from 'next/navigation';
 
+interface DropdownLink {
+  label: string;
+  href?: string;
+  isLabel?: boolean;
+}
+
+interface NavLink {
+  key: string;
+  label: string;
+  href?: string;
+  dropdown?: DropdownLink[];
+}
+
 export const NAV_LINKS = [
   {
     href: '/',
@@ -60,6 +73,7 @@ const Navbar = () => {
   const [selectedLanguage, setSelectedLanguage] = useState('English');
   const [languageMenuOpen, setLanguageMenuOpen] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+  const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   // const [isMenuOpen, setIsMenuOpen] = useState(false);
   const languages = ['English', 'Spanish', 'French', 'German', 'Chinese'];
 
@@ -72,6 +86,10 @@ const Navbar = () => {
     const locale = language === 'English' ? 'en' : language.slice(0, 2).toLowerCase();
     router.push(router.pathname, router.asPath, { locale });
     console.log(`Language switched to: ${language}`);
+  };
+
+  const handleDropdownToggle = (key: string) => {
+    setActiveDropdown(activeDropdown === key ? null : key);
   };
 
   useEffect(() => {
@@ -191,73 +209,88 @@ const Navbar = () => {
           </button>
         </div>
       </nav>
-      // Navbar for Small Devices
+      {/* // Navbar for Small Devices */}
       <nav
         className={`fixed top-0 left-0 w-full z-20 bg-white border-b-2 ${scrolled ? 'top-0' : 'top-8'} border-white shadow-lg py-2 px-4 lg:hidden`}
         style={{ position: 'fixed', zIndex: 50 }}
       >
-  <div className="flex items-center justify-between">
-    {/* Logo */}
-    <Link href="/">
-      <Image src="/images/logo.jpeg" alt="logo" width={40} height={29} className="rounded-full" />
-    </Link>
+        <div className="flex items-center justify-between">
+          {/* Logo */}
+          <Link href="/">
+            <Image src="/images/logo.jpeg" alt="logo" width={55} height={29} className="rounded-full" />
+          </Link>
 
-    {/* Mobile Menu Button */}
-    <button
-      onClick={() => setIsOpen(!isOpen)}
-      className="text-gray-700 focus:outline-none"
-    >
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        className="h-6 w-6"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <path d="M4 6h16M4 12h16M4 18h16" />
-      </svg>
-    </button>
-  </div>
-
-  {/* Mobile Menu Links */}
-  {isOpen && (
-    <div className="mt-2 bg-gray-100 text-gray-800 p-4">
-      <ul className="flex flex-col gap-2">
-        {NAV_LINKS.map((link) => (
-          <li key={link.key} className="relative">
-            <Link
-              href={link.href || '#'}
-              className="text-gray-700 hover:text-blue-600 block py-2 px-4 transition-colors"
+          {/* Mobile Menu Button */}
+          <button
+            onClick={() => setIsOpen(!isOpen)}
+            className="text-gray-700 focus:outline-none"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-6 w-6"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
             >
-              {link.label}
-            </Link>
-            {link.dropdown && (
-              <ul className="mt-2 bg-white text-gray-800 p-2 shadow-lg">
-                {link.dropdown.map((dropdownLink) => (
-                  <li key={dropdownLink.label}>
-                    {dropdownLink.isLabel ? (
-                      <span className="block px-4 py-2 text-sm text-gray-600 font-bold">{dropdownLink.label}</span>
-                    ) : (
-                      <Link
-                        href={dropdownLink.href || '#'}
-                        className="block text-gray-700 hover:bg-blue-100 hover:text-blue-600 px-4 py-2 text-sm"
+              <path d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Mobile Menu Links */}
+        {isOpen && (
+          <div className="mt-2 bg-gray-100 text-gray-800 p-4">
+            <ul className="flex flex-col gap-2">
+              {NAV_LINKS.map((link) => (
+                <li key={link.key} className="relative">
+                  <button
+                    onClick={() => handleDropdownToggle(link.key)}
+                    className="w-full text-gray-700 hover:text-blue-600 block py-2 px-4 transition-colors text-left"
+                  >
+                    {link.label}
+                    {link.dropdown && (
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="inline h-5 w-5 ml-2"
+                        viewBox="0 0 20 20"
+                        fill="currentColor"
                       >
-                        {dropdownLink.label}
-                      </Link>
+                        <path
+                          fillRule="evenodd"
+                          d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
                     )}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </li>
-        ))}
-      </ul>
-    </div>
-  )}
-</nav>
+                  </button>
+                  {activeDropdown === link.key && link.dropdown && (
+                    <ul className="mt-2 bg-white text-gray-800 p-2 shadow-lg">
+                      {link.dropdown.map((dropdownLink) => (
+                        <li key={dropdownLink.label}>
+                          {dropdownLink.isLabel ? (
+                            <span className="block px-4 py-2 text-sm text-gray-600 font-bold">{dropdownLink.label}</span>
+                          ) : (
+                            <Link
+                              href={dropdownLink.href || '#'}
+                              className="block text-gray-700 hover:bg-blue-100 hover:text-blue-600 px-4 py-2 text-sm"
+                            >
+                              {dropdownLink.label}
+                            </Link>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </nav>
+
 
 
     </div>
