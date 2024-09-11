@@ -5,7 +5,7 @@ import React from 'react'
 
 const Footer = () => {
   return (
-    <footer className="flexCenter mb-24">
+    <footer className="flexCenter mb-4">
       <div className="padding-container max-container flex w-full flex-col gap-14">
         <div className="flex flex-col items-start justify-center gap-[10%] md:flex-row">
 
@@ -184,6 +184,7 @@ const Footer = () => {
 
           </div>
         </div>
+        <div className="w-full border-t border-black-100" />
         <div className="flex justify-between items-center w-full">
         <div className="flex space-x-20">
           <p className="regular-14 text-gray-600 hover:text-blue-600 cursor-pointer">2024 ClyCites</p>
