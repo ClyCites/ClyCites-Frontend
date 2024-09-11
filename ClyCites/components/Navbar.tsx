@@ -132,7 +132,9 @@ const Navbar = () => {
             </div>
           )}
         </div>
-        <label className="text-sm text-gray-600">Join the ClyCites Network</label>
+        <label className="text-sm sm:text-base md:text-lg text-xl font-semibold text-gray-600">
+          Join the ClyCites Network
+        </label>
       </div>
 
       {/* Navbar For Big screens*/}
@@ -283,10 +285,26 @@ const Navbar = () => {
                         </li>
                       ))}
                     </ul>
+
                   )}
                 </li>
               ))}
             </ul>
+          {/* Action Buttons */}
+          <div className="flex flex-col gap-4">
+            <div className="flex ">
+              <button type="button" className="bg-blue-100 hover:bg-green-700 text-black font-bold py-2 px-4 rounded w-[600px]" >
+                Get Involved
+                <img src="/user.svg" alt="icon" className="inline-block w-4 h-4 ml-2" />
+              </button>
+            </div>
+            <div className="flex">
+              <button type="button" className="bg-blue-800 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded w-[600px]" >
+                Explore Data
+                <img src="/user.svg" alt="icon" className="inline-block w-4 h-4 ml-2" />
+              </button>
+            </div>
+          </div>
           </div>
         )}
       </nav>
