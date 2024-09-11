@@ -59,6 +59,8 @@ const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
   const [selectedLanguage, setSelectedLanguage] = useState('English');
   const [languageMenuOpen, setLanguageMenuOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+  // const [isMenuOpen, setIsMenuOpen] = useState(false);
   const languages = ['English', 'Spanish', 'French', 'German', 'Chinese'];
 
   const router = useRouter();
@@ -115,9 +117,9 @@ const Navbar = () => {
         <label className="text-sm text-gray-600">Join the ClyCites Network</label>
       </div>
 
-      {/* Navbar */}
+      {/* Navbar For Big screens*/}
       <nav
-        className={`flex items-center justify-between max-container padding-container fixed ${scrolled ? 'top-0' : 'top-8'
+        className={`hidden lg:flex items-center justify-between max-container padding-container fixed ${scrolled ? 'top-0' : 'top-8'
           } left-0 w-full z-20 py-2 bg-white border-b-2 border-white shadow-lg`}
         style={{ position: 'fixed', zIndex: 50 }}
       >
@@ -189,6 +191,75 @@ const Navbar = () => {
           </button>
         </div>
       </nav>
+      // Navbar for Small Devices
+      <nav
+        className={`fixed top-0 left-0 w-full z-20 bg-white border-b-2 ${scrolled ? 'top-0' : 'top-8'} border-white shadow-lg py-2 px-4 lg:hidden`}
+        style={{ position: 'fixed', zIndex: 50 }}
+      >
+  <div className="flex items-center justify-between">
+    {/* Logo */}
+    <Link href="/">
+      <Image src="/images/logo.jpeg" alt="logo" width={40} height={29} className="rounded-full" />
+    </Link>
+
+    {/* Mobile Menu Button */}
+    <button
+      onClick={() => setIsOpen(!isOpen)}
+      className="text-gray-700 focus:outline-none"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        className="h-6 w-6"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M4 6h16M4 12h16M4 18h16" />
+      </svg>
+    </button>
+  </div>
+
+  {/* Mobile Menu Links */}
+  {isOpen && (
+    <div className="mt-2 bg-gray-100 text-gray-800 p-4">
+      <ul className="flex flex-col gap-2">
+        {NAV_LINKS.map((link) => (
+          <li key={link.key} className="relative">
+            <Link
+              href={link.href || '#'}
+              className="text-gray-700 hover:text-blue-600 block py-2 px-4 transition-colors"
+            >
+              {link.label}
+            </Link>
+            {link.dropdown && (
+              <ul className="mt-2 bg-white text-gray-800 p-2 shadow-lg">
+                {link.dropdown.map((dropdownLink) => (
+                  <li key={dropdownLink.label}>
+                    {dropdownLink.isLabel ? (
+                      <span className="block px-4 py-2 text-sm text-gray-600 font-bold">{dropdownLink.label}</span>
+                    ) : (
+                      <Link
+                        href={dropdownLink.href || '#'}
+                        className="block text-gray-700 hover:bg-blue-100 hover:text-blue-600 px-4 py-2 text-sm"
+                      >
+                        {dropdownLink.label}
+                      </Link>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </li>
+        ))}
+      </ul>
+    </div>
+  )}
+</nav>
+
+
     </div>
   );
 };
