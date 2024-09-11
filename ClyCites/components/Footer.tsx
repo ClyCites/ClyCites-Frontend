@@ -184,18 +184,20 @@ const Footer = () => {
 
           </div>
         </div>
-        
-        <div>
-          <div className="" />
-          <p className="regular-14 w-full text-gray-30">2024 ClyCites</p>
-          <p className="regular-14 w-full text-gray-30">Terms of service</p>
-          <p className="regular-14 w-full text-gray-30">Privacy Policy</p>
-          <p className="regular-14 w-full text-gray-30">ClyCites Data</p>
-          </div>
-          <div className="" >
-          <p className="regular-14 w-full text-gray-30">A PROJECT By BUGEMA UNIVERSITY </p>
-          
-          </div>
+        <div className="flex justify-between items-center w-full">
+        <div className="flex space-x-20">
+          <p className="regular-14 text-gray-600 hover:text-blue-600 cursor-pointer">2024 ClyCites</p>
+          <p className="regular-14 text-gray-600 hover:text-blue-600 cursor-pointer">Terms of service</p>
+          <p className="regular-14 text-gray-600 hover:text-blue-600 cursor-pointer">Privacy Policy</p>
+          <p className="regular-14 text-gray-600 hover:text-blue-600 cursor-pointer">ClyCites Data</p>
+        </div>
+        <div className="flex flex-col">
+          <p className="regular-14 text-gray-600">A PROJECT</p>
+          <p className="regular-14 text-gray-600">BY</p>
+          <p className="font-bold text-xl text-gray-600">BUGEMA UNIVERSITY</p>
+        </div>
+        </div>
+
         </div>
       
     </footer>
