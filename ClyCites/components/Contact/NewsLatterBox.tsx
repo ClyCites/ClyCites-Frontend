@@ -51,7 +51,7 @@ const NewsLatterBox: React.FC = () => {
               Subscribe to receive the latest from us.
             </h3>
             <p className="mb-4 border-b border-body-color border-opacity-25 pb-4 text-base font-medium leading-relaxed text-body-color dark:border-white dark:border-opacity-25">
-              Please subscribe to our newsletter
+            Subscribe to our newsletter and learn more about ClyCites 
             </p>
           </div>
 

@@ -4,6 +4,7 @@ import GetApp from "@/components/GetApp";
 import Guide from "@/components/Guide";
 import Hero from "@/components/Hero";
 import Contact from "@/components/Contact";
+import ScrollToTop from "@/components/ScrollToTop";
 
 export default function Home() {
   return (
@@ -14,6 +15,7 @@ export default function Home() {
       <Features />
       <GetApp />
       <Contact />
+      <ScrollToTop />
     </>
   )
 }
