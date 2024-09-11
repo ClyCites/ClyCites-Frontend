@@ -16,6 +16,7 @@ export const NAV_LINKS = [
     key: 'products',
     label: 'Products',
     dropdown: [
+      { label: 'Our Products', isLabel: true }, // Add label item
       { href: '/', label: 'Product 1' },
       { href: '/', label: 'Product 2' },
       { href: '/', label: 'Product 3' },
@@ -29,6 +30,7 @@ export const NAV_LINKS = [
     key: 'solutions',
     label: 'Solutions',
     dropdown: [
+      { label: 'Solutions', isLabel: true }, // Add label item
       { href: '/', label: 'Solution 1' },
       { href: '/', label: 'Solution 2' },
       { href: '/', label: 'Solution 3' },
@@ -42,12 +44,13 @@ export const NAV_LINKS = [
     key: 'contact_us',
     label: 'About',
     dropdown: [
+      { label: 'About ClyCites', isLabel: true }, // Add label item
       { href: '/', label: 'About Us' },
+      { href: '/', label: 'Resources' },
+      { href: '/', label: 'Careers' },
       { href: '/', label: 'Contact Us' },
-      { href: '/', label: 'FAQs' },
-      { href: '/', label: 'Terms of Service' },
-      { href: '/', label: 'Privacy Policy' },
-      { href: '/', label: 'Site Map' }
+      { href: '/', label: 'Events' },
+      { href: '/', label: 'Press' }
     ]
   }
 ];
@@ -127,7 +130,7 @@ const Navbar = () => {
           {NAV_LINKS.map((link) => (
             <li key={link.key} className="relative group">
               <Link
-                href={link.href}
+                 href={link.href || '#'}
                 className="text-gray-700 hover:text-light-blue flex items-center pb-1.5 transition-all hover:font-bold"
               >
                 {link.label}
@@ -147,15 +150,22 @@ const Navbar = () => {
                 )}
               </Link>
               {link.dropdown && (
-                <ul className="absolute left-0 bg-white text-gray-800 p-4 w-[500px] shadow-lg opacity-0 transition-opacity group-hover:opacity-100 grid grid-cols-2 gap-2">
-                  {link.dropdown.map((dropdownLink) => (
-                    <li key={dropdownLink.label} className="py-1">
-                      <Link href={dropdownLink.href} className="text-gray-700 hover:text-light-blue block">
+                <ul className="absolute left-0 bg-gray-100 text-gray-800 p-4 w-[500px] grid grid-cols-1 gap-4 shadow-lg opacity-0 transition-opacity group-hover:opacity-100">
+                {link.dropdown.map((dropdownLink, index) => (
+                  <li key={dropdownLink.label} className={`py-1 ${index === 0 && dropdownLink.isLabel ? 'col-span-2' : ''}`}>
+                    {dropdownLink.isLabel ? (
+                      <span className="block px-4 py-2 text-sm text-gray-600 font-bold">{dropdownLink.label}</span>
+                    ) : (
+                      <Link 
+                        href={dropdownLink.href || '#'} 
+                        className="text-gray-700 hover:bg-blue-100 hover:text-blue-600 block px-4 py-2 text-sm"
+                      >
                         {dropdownLink.label}
                       </Link>
-                    </li>
-                  ))}
-                </ul>
+                    )}
+                  </li>
+                ))}
+              </ul>
               )}
             </li>
           ))}
@@ -165,7 +175,7 @@ const Navbar = () => {
         <div className="flex gap-4">
           <button
             type="button"
-            className="bg-dark_green hover:bg-green-700 text-black font-bold py-2 px-4 rounded"
+            className="ml-4 bg-blue-100 hover:bg-green-700 text-black font-bold py-2 px-4 rounded"
           >
             Get Involved
             <img src="/user.svg" alt="icon" className="inline-block w-4 h-4 ml-2" />
