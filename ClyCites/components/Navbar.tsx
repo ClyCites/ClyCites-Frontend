@@ -59,7 +59,7 @@ export const NAV_LINKS = [
     label: 'About',
     dropdown: [
       { label: 'About ClyCites', isLabel: true }, // Add label item
-      { href: '/', label: 'About Us' },
+      { href: '/about', label: 'About Us' },
       { href: '/', label: 'Resources' },
       { href: '/', label: 'Careers' },
       { href: '/', label: 'Contact Us' },
