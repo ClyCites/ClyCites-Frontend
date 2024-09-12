@@ -6,14 +6,16 @@ import Hero from "@/components/Hero";
 import Contact from "@/components/Contact";
 import ScrollToTop from "@/components/ScrollToTop";
 import Brands from "@/components/Brands";
+import BelowHero from "@/components/BelowHero";
 
 export default function Home() {
   return (
     <>
       <Hero />
       <Brands />
-      <Camp />
       <Guide />
+      <BelowHero />
+      <Camp />
       <Features />
       <GetApp />
       <Contact />
