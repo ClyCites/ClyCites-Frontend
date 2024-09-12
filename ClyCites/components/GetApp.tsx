@@ -7,8 +7,8 @@ const GetApp = () => {
     <section className="flexCenter w-full flex-col pb-[100px]">
       <div className="get-app">
         <div className="z-20 flex w-full flex-1 flex-col items-start justify-center gap-12">
-          <h2 className="bold-40 lg:bold-64 xl:max-w-[320px]">Get for free now!</h2>
-          <p className="regular-16 text-gray-10">Available on iOS and Android</p>
+          <h2 className="bold-30 lg:bold-64 xl:max-w-[320px] text-blue-500">Download the app</h2>
+          <p className="regular-16 text-gray-10">Discover the quality of you Plants and soil</p>
           <div className="flex w-full flex-col gap-3 whitespace-nowrap xl:flex-row">
             <Button 
               type="button"
@@ -19,7 +19,7 @@ const GetApp = () => {
             />
             <Button 
               type="button"
-              title="Play Store"
+              title="Google Play"
               icon="/android.svg"
               variant="btn_dark_green_outline"
               full

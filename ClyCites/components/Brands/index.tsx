@@ -6,31 +6,31 @@ const brandsData: Brand[] = [
     id: 1,
     name: "RENU",
     href: "https://renu.ac.ug/",
-    image: "/images/brands/renu.png",
+    image: "/images/bugema.png",
   },
   {
     id: 2,
     name: "SDA",
     href: "https://www.adventist.org/",
-    image: "/images/brands/9.png",
+    image: "/images/bugema.png",
   },
   {
     id: 3,
     name: "NCHE",
     href: "https://unche.or.ug/",
-    image: "/images/brands/nche.png",
+    image: "/images/bugema.png",
   },
   {
     id: 4,
     name: "Bugema University",
     href: "https://bugemauniv.ac.ug",
-    image: "/images/logo/bugema.png",
+    image: "/images/bugema.png",
   },
   {
     id: 5,
     name: "Flair ERMS",
     href: "",
-    image: "/images/brands/flair1.jpg",
+    image: "/images/bugema.png",
   },
 ];
 
@@ -68,9 +68,10 @@ const SingleBrand = ({ brand }: { brand: Brand }) => {
         href={href}
         target="_blank"
         rel="nofollow noreferrer"
-        className="relative h-14 w-28 opacity-70 grayscale hover:opacity-100 hover:scale-105 hover:grayscale-0 dark:opacity-60 dark:hover:opacity-100 transition-all duration-500"
+        className="relative flex h-14 w-28 opacity-70 grayscale hover:opacity-100 hover:scale-105 hover:grayscale-0 dark:opacity-60 dark:hover:opacity-100 transition-all duration-500"
       >
-        <Image src={image} alt={name} fill />
+        <Image src={image} alt={name} className="w-20 h-10" width={20} height={20} />
+        <span>{name}</span>
       </a>
     </div>
   );
