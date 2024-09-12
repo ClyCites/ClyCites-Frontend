@@ -1,7 +1,7 @@
 import Image from 'next/image'
 import Button from '../Button'
 
-const AboutSection = () => {
+const AboutMission = () => {
   return (
     
     <section className="max-container padding-container flex flex-col gap-20 py-10 pb-32 md:gap-28 lg:py-20 xl:flex-row">
@@ -11,7 +11,7 @@ const AboutSection = () => {
 
     <div className="relative z-20 flex flex-1 flex-col xl:w-1/2">
       
-      <h1 className="bold-52 lg:bold-25">Our story</h1>
+      <h1 className="bold-52 lg:bold-25">Our values</h1>
       {/* <p className="regular-16 mt-6 text-blue-800 xl:max-w-[520px]">
       “9 out of 10 people breathe polluted air”
       </p>
@@ -94,4 +94,4 @@ const AboutSection = () => {
   )
 }
 
-export default AboutSection
+export default AboutMission

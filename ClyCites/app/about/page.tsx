@@ -1,6 +1,7 @@
 import Image from 'next/image'
 import Button from '../../components/Button'
 import AboutSection from "@/components/About/AboutSection";
+import AboutMission from '@/components/About/AboutMission';
 
 const AboutPage = () => {
   return (
@@ -14,8 +15,8 @@ const AboutPage = () => {
                        About Us
                     </h3>
                   </div>
-                  <div className="flex justify-between items-center w-full mt-20">
-                    <div className="flex space-x-10">
+                  <div className="flex justify-between items-center w-full mt-20 ">
+                    <div className="flex space-x-10 mb-5">
                       <p className="regular-14 text-gray-600 hover:text-blue-600 cursor-pointer">Our vision</p>
                       <p className="regular-14 text-gray-600 hover:text-blue-600 cursor-pointer">Our story</p>
                       <p className="regular-14 text-gray-600 hover:text-blue-600 cursor-pointer">Our mission</p>
@@ -26,11 +27,10 @@ const AboutPage = () => {
                     </div>
               </div>
         </div>
-
-
  
 <AboutSection />
-
+<div className="w-full border-t border-black mb-10" />
+<AboutMission />
 </>
 
   )
