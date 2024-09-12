@@ -2,6 +2,7 @@ import Image from 'next/image'
 import Button from '../../components/Button'
 import AboutSection from "@/components/About/AboutSection";
 import AboutMission from '@/components/About/AboutMission';
+import AboutHome from '@/components/About/AboutHome';
 
 const AboutPage = () => {
   return (
@@ -27,7 +28,8 @@ const AboutPage = () => {
                     </div>
               </div>
         </div>
- 
+        <AboutHome />
+<div className="w-full border-t border-black mb-10" />
 <AboutSection />
 <div className="w-full border-t border-black mb-10" />
 <AboutMission />
