@@ -5,11 +5,13 @@ import Guide from "@/components/Guide";
 import Hero from "@/components/Hero";
 import Contact from "@/components/Contact";
 import ScrollToTop from "@/components/ScrollToTop";
+import Brands from "@/components/Brands";
 
 export default function Home() {
   return (
     <>
       <Hero />
+      <Brands />
       <Camp />
       <Guide />
       <Features />

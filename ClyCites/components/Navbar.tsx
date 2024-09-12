@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from 'next/navigation';
+import { useTranslation } from 'react-i18next';
 
 interface DropdownLink {
   label: string;
@@ -70,26 +71,34 @@ export const NAV_LINKS = [
 
 const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
-  const [selectedLanguage, setSelectedLanguage] = useState('English');
   const [languageMenuOpen, setLanguageMenuOpen] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   // const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const languages = ['English', 'Spanish', 'French', 'German', 'Chinese'];
+
+  const { i18n } = useTranslation();
+  const [isDropdownOpen, setDropdownOpen] = useState(false);
+  const [selectedLanguage, setSelectedLanguage] = useState(i18n.language);
+
 
   const router = useRouter();
 
-  const handleLanguageClick = (language: string) => {
-    setSelectedLanguage(language);
-
-    // Language switching logic
-    const locale = language === 'English' ? 'en' : language.slice(0, 2).toLowerCase();
-    router.push(router.pathname, router.asPath, { locale });
-    console.log(`Language switched to: ${language}`);
-  };
-
   const handleDropdownToggle = (key: string) => {
     setActiveDropdown(activeDropdown === key ? null : key);
+  };
+
+  const handleMouseEnter = (key: string) => {
+    setActiveDropdown(key); // Show the dropdown on hover
+  };
+
+  const handleMouseLeave = () => {
+    setActiveDropdown(null); // Hide the dropdown when the mouse leaves
+  };
+
+  const handleLanguageChange = (language: string) => {
+    i18n.changeLanguage(language); // Change the language
+    setSelectedLanguage(language); // Update the selected language
+    setDropdownOpen(false);
   };
 
   useEffect(() => {
@@ -112,74 +121,65 @@ const Navbar = () => {
       <div className="top-0 left-0 w-full h-8 bg-gray-300 border-b-2 border-white shadow-lg flex justify-between items-center px-4">
         <div className="relative">
           <button
-            onClick={() => setLanguageMenuOpen(!languageMenuOpen)}
             className="text-sm text-gray-600 flex items-center"
           >
-            <Image src="/world-icon.svg" alt="world icon" width={16} height={16} className="mr-2" />
-            {selectedLanguage}
+            <Image src="" alt="world icon" width={16} height={16} className="mr-2" />
+            English
           </button>
-          {languageMenuOpen && (
-            <div className="absolute top-full mt-2 w-32 bg-white border border-gray-300 shadow-lg">
-              {languages.map((language) => (
-                <button
-                  key={language}
-                  onClick={() => handleLanguageClick(language)}
-                  className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                >
-                  {language}
-                </button>
-              ))}
-            </div>
-          )}
         </div>
-        <label className="text-sm sm:text-base md:text-lg text-xl font-semibold text-gray-600">
+        <label className="text-sm font-semibold text-gray-600">
           Join the ClyCites Network
         </label>
       </div>
 
       {/* Navbar For Big screens*/}
       <nav
-        className={`hidden lg:flex items-center justify-between max-container padding-container fixed ${scrolled ? 'top-0' : 'top-8'
-          } left-0 w-full z-20 py-2 bg-white border-b-2 border-white shadow-lg`}
-        style={{ position: 'fixed', zIndex: 50 }}
-      >
-        <Link href="/">
-          <Image src="/images/logo.jpeg" alt="logo" width={80} height={29} className="rounded-full" />
-        </Link>
+      className={`hidden lg:flex items-center justify-between max-container padding-container fixed ${scrolled ? 'top-0' : 'top-8'
+        } left-0 w-full z-20 py-2 bg-white border-b-2 border-white shadow-lg`}
+      style={{ position: 'fixed', zIndex: 50 }}
+    >
+      <Link href="/">
+        <Image src="/images/logo.jpeg" alt="logo" width={80} height={29} className="rounded-full" />
+      </Link>
 
-        {/* Navigation Links aligned to the right */}
-        <ul className="flex items-center gap-8 ml-auto lg:flex">
-          {NAV_LINKS.map((link) => (
-            <li key={link.key} className="relative group">
-              <Link
-                 href={link.href || '#'}
-                className="text-gray-700 hover:text-light-blue flex items-center pb-1.5 transition-all hover:font-bold"
-              >
-                {link.label}
-                {link.dropdown && (
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5 ml-2"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                )}
-              </Link>
+      {/* Navigation Links aligned to the right */}
+      <ul className="flex items-center gap-8 ml-auto lg:flex">
+        {NAV_LINKS.map((link) => (
+          <li
+            key={link.key}
+            className="relative group"
+            onMouseEnter={() => handleMouseEnter(link.key)}  // Show dropdown on hover
+            onMouseLeave={handleMouseLeave} // Hide dropdown when leaving
+          >
+            <button
+              className="text-gray-700 hover:text-light-blue flex items-center pb-1.5 transition-all hover:font-bold"
+              onClick={() => handleDropdownToggle(link.key)} // Toggle dropdown on click
+            >
+              {link.label}
               {link.dropdown && (
-                <ul className="absolute left-0 bg-gray-100 text-gray-800 p-4 w-[500px] grid grid-cols-1 gap-4 shadow-lg opacity-0 transition-opacity group-hover:opacity-100">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5 ml-2"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              )}
+            </button>
+            {link.dropdown && activeDropdown === link.key && (
+              <ul className="absolute left-0 bg-gray-100 text-gray-800 p-4 w-[500px] grid grid-cols-1 gap-4 shadow-lg">
                 {link.dropdown.map((dropdownLink, index) => (
                   <li key={dropdownLink.label} className={`py-1 ${index === 0 && dropdownLink.isLabel ? 'col-span-2' : ''}`}>
                     {dropdownLink.isLabel ? (
                       <span className="block px-4 py-2 text-sm text-gray-600 font-bold">{dropdownLink.label}</span>
                     ) : (
-                      <Link 
-                        href={dropdownLink.href || '#'} 
+                      <Link
+                        href={dropdownLink.href || '#'}
                         className="text-gray-700 hover:bg-blue-100 hover:text-blue-600 block px-4 py-2 text-sm"
                       >
                         {dropdownLink.label}
@@ -188,28 +188,28 @@ const Navbar = () => {
                   </li>
                 ))}
               </ul>
-              )}
-            </li>
-          ))}
-        </ul>
+            )}
+          </li>
+        ))}
+      </ul>
 
-        {/* Action Buttons */}
-        <div className="flex gap-4">
-          <button
-            type="button"
-            className="ml-4 bg-blue-100 hover:bg-green-700 text-black font-bold py-2 px-4 rounded"
-          >
-            Get Involved
-            <img src="/user.svg" alt="icon" className="inline-block w-4 h-4 ml-2" />
-          </button>
-          <button
-            type="button"
-            className="bg-blue-800 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-          >
-            Explore Data
-            <img src="/user.svg" alt="icon" className="inline-block w-4 h-4 ml-2" />
-          </button>
-        </div>
+      {/* Action Buttons */}
+      <div className="flex gap-4">
+        <button
+          type="button"
+          className="ml-4 bg-blue-100 hover:bg-green-700 text-black font-bold py-2 px-4 rounded"
+        >
+          Get Involved
+          <img src="/user.svg" alt="icon" className="inline-block w-4 h-4 ml-2" />
+        </button>
+        <button
+          type="button"
+          className="bg-blue-800 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+        >
+          Explore Data
+          <img src="/user.svg" alt="icon" className="inline-block w-4 h-4 ml-2" />
+        </button>
+      </div>
       </nav>
       {/* // Navbar for Small Devices */}
       <nav
