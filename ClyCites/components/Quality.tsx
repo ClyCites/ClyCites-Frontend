@@ -1,19 +1,25 @@
 import Image from 'next/image'
 import Button from './Button'
 
-const Hero = () => {
+const Quality = () => {
   return (
     <section className="max-container padding-container flex flex-col gap-20 py-10 pb-32 md:gap-28 lg:py-20 xl:flex-row">
       <div className="hero-map" />
 
       <div className="relative z-20 flex flex-1 flex-col xl:w-1/2">
+      <button
+            type="button"
+            className="bg-blue-100 text-black font-bold py-2 px-4 rounded"
+          >
+            ClyCites Quality
+          </button>
         
         <h1 className="bold-52 lg:bold-25">Agriculture in your community</h1>
-        <p className="regular-16 mt-6 text-blue-800 xl:max-w-[520px]">
+        {/* <p className="regular-16 mt-6 text-blue-800 xl:max-w-[520px]">
         “9 out of 10 people breathe polluted air”
-        </p>
+        </p> */}
         <p className="regular-16 mt-6 text-gray-30 xl:max-w-[520px]">
-        We empower communities with accurate, hyperlocal and timely air quality data to drive air pollution mitigation actions
+        We deploy a high-resolution air quality monitoring network in target urban areas across Africa to increase awareness and understanding of air quality management, provide actionable information and derive actions against air pollution
         </p>
 
         <div className="my-11 flex flex-wrap gap-5">
@@ -38,18 +44,18 @@ const Hero = () => {
         <div className="flex flex-col w-full gap-3 sm:flex-row">
         <button
             type="button"
-            className="ml-4 bg-blue-100 hover:bg-green-700 text-black font-bold py-2 px-4 rounded"
+            className="text-blue-500 font-bold py-2 px-4 rounded"
           >
-            Get Involved
+            Learn more
             <img src="/user.svg" alt="icon" className="inline-block w-4 h-4 ml-2" />
           </button>
-          <button
+          {/* <button
             type="button"
             className="bg-blue-800 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
           >
             Explore Data
             <img src="/user.svg" alt="icon" className="inline-block w-4 h-4 ml-2" />
-          </button>
+          </button> */}
 
           {/* <Button 
             type="button" 
@@ -78,4 +84,4 @@ const Hero = () => {
   )
 }
 
-export default Hero
+export default Quality
