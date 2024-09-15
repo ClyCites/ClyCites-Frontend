@@ -3,7 +3,9 @@ import React from 'react'
 
 const Guide = () => {
   return (
-    <section className="flexCenter flex-col">
+    <section className="flexCenter flex-col bg-gray-100">
+       <h1 className="lg:text-3xl bold text-center justify-center font-semibold text-gray-600">Closing the air quality data gaps in Africa</h1>
+       <h1 className="mt-10 text-center justify-center font-semibold text-gray-600">We provide accurate, hyperlocal, and timely air quality data to provide evidence of the magnitude and scale of air pollution across Africa.</h1>
       <div className="padding-container max-container w-full pb-24">
         <Image src="/camp.svg" alt="camp" width={50} height={50} />
         <p className="uppercase regular-18 -mt-1 mb-3 text-green-50">
@@ -15,7 +17,7 @@ const Guide = () => {
         </div>
       </div>
 
-      <div className="flexCenter max-container relative w-full">
+      {/* <div className="flexCenter max-container relative w-full">
         <Image 
           src="/boat.png"
           alt="boat"
@@ -23,31 +25,7 @@ const Guide = () => {
           height={580}
           className="w-full object-cover object-center 2xl:rounded-5xl"
         />
-
-        <div className="absolute flex bg-white py-8 pl-5 pr-7 gap-3 rounded-3xl border shadow-md md:left-[5%] lg:top-20">
-          <Image 
-            src="/meter.svg"
-            alt="meter"
-            width={16}
-            height={158}
-            className="h-full w-auto"
-          />
-          <div className="flexBetween flex-col">
-            <div className='flex w-full flex-col'>
-              <div className="flexBetween w-full">
-                <p className="regular-16 text-gray-20">Destination</p>
-                <p className="bold-16 text-green-50">48 min</p>
-              </div>
-              <p className="bold-20 mt-2">Aguas Calientes</p>
-            </div>
-
-            <div className='flex w-full flex-col'>
-              <p className="regular-16 text-gray-20">Start track</p>
-              <h4 className="bold-20 mt-2 whitespace-nowrap">Wonorejo Pasuruan</h4>
-            </div>
-          </div>
-        </div>
-      </div>
+      </div> */}
     </section>
   )
 }

@@ -3,15 +3,25 @@ import Features from "@/components/Features";
 import GetApp from "@/components/GetApp";
 import Guide from "@/components/Guide";
 import Hero from "@/components/Hero";
+import Quality from "@/components/Quality";
+import Contact from "@/components/Contact";
+import ScrollToTop from "@/components/ScrollToTop";
+import Brands from "@/components/Brands";
+import BelowHero from "@/components/BelowHero";
 
 export default function Home() {
   return (
     <>
       <Hero />
-      <Camp />
+      <Brands />
       <Guide />
+      <BelowHero />
+      <Quality />
+      <Camp />
       <Features />
       <GetApp />
+      <Contact />
+      <ScrollToTop />
     </>
   )
 }
