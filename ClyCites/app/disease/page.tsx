@@ -1,6 +1,7 @@
 import Image from 'next/image'
 import Button from '../../components/Button'
 import Diseases from '@/components/Diseases'
+import DiseasesBelow from '@/components/DiseasesBelow'
 
 const DiseasePage = () => {
   return (
@@ -18,6 +19,8 @@ const DiseasePage = () => {
               </div>
         </div>
         <Diseases/>
+        <div className="w-full border-t border-black mb-10" />
+        <DiseasesBelow/>
         {/* <AboutHome />
 <div className="w-full border-t border-black mb-10" />
 <AboutSection />
