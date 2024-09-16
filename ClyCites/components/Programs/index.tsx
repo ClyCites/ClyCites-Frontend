@@ -1,6 +1,6 @@
 import React from "react";
 import Image from "next/image";
-// import SectionTitle from "../Common/SectionTitle";
+import SectionTitle from "../Common/SectionTitle";
 import Link from "next/link";
 const newsData = [
   {
@@ -38,15 +38,13 @@ const Programs: React.FC = () => {
   return (
     <section className="px-8">
       <div className="container">
-        <div className="hidden md:block">
-          {/* <SectionTitle
-            title="Students Life"
-            paragraph="At Bugema University, student life goes beyond the classroom. 
-            Our vibrant campus community offers a diverse range of activities, organizations, 
-            and resources designed to support your personal growth, leadership development, and overall well-being."
+        <div className="hidden md:block lg:mt-10">
+          <SectionTitle
+            title="Featured research collaborations"
+            paragraph="Microsoft collaborates with the global research community through programs, events, learning opportunities, and joint research endeavors."
             center
             mb="50px"
-          /> */}
+          />
         </div>
 
         {/* Section Title on small screens */}
