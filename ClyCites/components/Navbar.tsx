@@ -46,7 +46,7 @@ export const NAV_LINKS = [
     dropdown: [
       { label: 'Solutions', isLabel: true }, // Add label item
       { href: '/disease', label: 'Disease Control' },
-      { href: '/', label: 'Solution 2' },
+      { href: '/nutrition', label: 'Nutrition Monitoring' },
       { href: '/', label: 'Solution 3' },
       { href: '/', label: 'Solution 4' },
       { href: '/', label: 'Solution 5' },
