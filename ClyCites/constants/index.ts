@@ -47,8 +47,9 @@ export const FOOTER_LINKS = [
     links: [
       'Analytics Dashboard',
       'Mobile App',
-      'Product2',
-      'Product2',
+      'Disease Control',
+      'Hardware',
+      'Nutrition Monitoring',
       
     ],
   },
