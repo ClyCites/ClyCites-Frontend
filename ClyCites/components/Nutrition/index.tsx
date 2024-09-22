@@ -50,7 +50,7 @@ const newsData = [
 
 const Nutrition: React.FC = () => {
   return (
-    <section className="px-8">
+    <section className="px-8 lg:mt-0 mt-10">
       <div className="container grid grid-cols-1 lg:grid-cols-3 gap-4 ">
 
         {/* Left-hand side (section title) */}
