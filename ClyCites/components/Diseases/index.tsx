@@ -51,10 +51,10 @@ const newsData = [
 const Diseases: React.FC = () => {
   return (
     <section className="px-8">
-      <div className="container grid grid-cols-1 lg:grid-cols-3 gap-4 ">
+      <div className=" grid grid-cols-1 lg:grid-cols-3 gap-4 ">
 
         {/* Left-hand side (section title) */}
-        <div className="lg:flex lg:justify-end lg:mt-20 ">
+        <div className="lg:flex lg:justify-end lg:mt-20 mt-20">
           <div
             className="wow fadeInUp w-full mx-auto text-start"
             data-wow-delay=".1s"

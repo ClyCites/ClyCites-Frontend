@@ -8,10 +8,10 @@ import Link from "next/link";
 const NutritionBelow: React.FC = () => {
   return (
     <section className="px-8">
-      <div className="container grid grid-cols-1 lg:grid-cols-3 gap-4 lg:mb-20">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:mb-20 mb-20">
 
         {/* Left-hand side (section title) */}
-        <div className="lg:flex lg:justify-end lg:mt-20 ">
+        <div className="lg:flex lg:justify-end lg:mt-20">
           <div
             className="wow fadeInUp w-full mx-auto text-start"
             data-wow-delay=".1s"
@@ -49,7 +49,7 @@ const NutritionBelow: React.FC = () => {
 
       </div>
       {/* SECOND ROW */}
-      <div className="container grid grid-cols-1 lg:grid-cols-3 gap-4 lg:mb-20">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:mb-20 mb-10">
 
         {/* Right-hand side (news articles) */}
         <div className="lg:col-span-2 relative overflow-visible">
@@ -73,7 +73,7 @@ const NutritionBelow: React.FC = () => {
         </div>
 
         {/* RIGHT-hand side (section title) */}
-        <div className="lg:flex lg:justify-end lg:mt-20 ">
+        <div className="lg:flex lg:justify-end lg:mt-20 mt-20">
           <div
             className="wow fadeInUp w-full mx-auto text-start"
             data-wow-delay=".1s"
@@ -88,7 +88,7 @@ const NutritionBelow: React.FC = () => {
         </div>
       </div>
       {/* THIRD ROW */}
-      <div className="container grid grid-cols-1 lg:grid-cols-3 gap-4 lg:mb-20">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:mb-20 mb-20">
 
         {/* Left-hand side (section title) */}
         <div className="lg:flex lg:justify-end lg:mt-20 ">
