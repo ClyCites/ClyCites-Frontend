@@ -5,7 +5,9 @@ This repository contains the code for the frontend of the three projects under t
 1. ClyCites-AgricAssis
 2. ClyCites-Emarket
 3. ClyCites-Expertportal.
+   
 You will find each in the root of the folder.
+
 
 ## Prerequisites 
 Before contributing, ensure you have the following tools installed on your local machine:
@@ -15,8 +17,18 @@ Before contributing, ensure you have the following tools installed on your local
 
 ## Fork and clone
 Fork the repository and clone your fork to your local machine using the command 
-`code`
+`git clone https://github.com/your-username/ClyCites-Frontend.git
+`
+`cd ClyCites-Frontend`
 
 Fork the repo and then clone it so you have a local copy.
 
-##Install dependencies
+## Install dependencies
+Each of the three applications has its own dependencies, so you'll need to navigate to the specific folder and install dependencies app that you have chosen to contribute to. For example:
+`cd ClyCites-AgricAssis
+npm install
+`
+After installing the dependencies for ClyCites-AgricAssis, you can start the development server:
+
+`npm run dev
+`
