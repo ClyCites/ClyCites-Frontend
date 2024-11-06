@@ -31,12 +31,12 @@ export const NAV_LINKS = [
     label: 'Products',
     dropdown: [
       { label: 'Our Products', isLabel: true }, // Add label item
-      { href: '/', label: 'Product 1' },
-      { href: '/', label: 'Product 2' },
-      { href: '/', label: 'Product 3' },
-      { href: '/', label: 'Product 4' },
-      { href: '/', label: 'Product 5' },
-      { href: '/', label: 'Product 6' }
+      { href: '/', label: 'Analytics Dashboard' },
+      { href: '/', label: 'Mobile App' },
+      { href: '/', label: 'Weather Detection' },
+      { href: '/', label: 'Pest And Diseases Detection' },
+      { href: '/', label: 'Soil PH Detection' },
+      { href: '/', label: 'Agriculture E-Market' }
     ]
   },
   {
@@ -45,8 +45,8 @@ export const NAV_LINKS = [
     label: 'Solutions',
     dropdown: [
       { label: 'Solutions', isLabel: true }, // Add label item
-      { href: '/', label: 'Solution 1' },
-      { href: '/', label: 'Solution 2' },
+      { href: '/disease', label: 'Disease Control' },
+      { href: '/nutrition', label: 'Nutrition Monitoring' },
       { href: '/', label: 'Solution 3' },
       { href: '/', label: 'Solution 4' },
       { href: '/', label: 'Solution 5' },
@@ -64,7 +64,7 @@ export const NAV_LINKS = [
       { href: '/', label: 'Careers' },
       { href: '/', label: 'Contact Us' },
       { href: '/', label: 'Events' },
-      { href: '/', label: 'Press' }
+      { href: '/program', label: 'Programs' }
     ]
   }
 ];
