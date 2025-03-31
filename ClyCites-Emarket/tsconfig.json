@@ -1,0 +1,49 @@
+{
+  "compilerOptions": {
+    "target": "ES2017",
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    // "moduleResolution": "bundler",
+    // "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "preserve",
+    "incremental": true,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "paths": {
+      "@/*": [
+        "./*"
+      ]
+    },
+    "moduleResolution": "node",
+    "resolveJsonModule": true
+  },
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts",
+    "components/backoffice/LargeCards.jsx",
+    "components/backoffice/LargeCard.jsx",
+    "components/backoffice/Navbar.jsx",
+    "components/backoffice/Sidebar.jsx",
+    "components/backoffice/Heading.jsx",
+    "app/layout.tsx",
+    "app/(back-office)/dashboard/(catalog)/categories/page.jsx"
+, "tailwind.config.js", "components/ui/collapsible.jsx", "components/ui/dropdown-menu.jsx"  ],
+  "exclude": [
+    "node_modules"
+  ]
+}
