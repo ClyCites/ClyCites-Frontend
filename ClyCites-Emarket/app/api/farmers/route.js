@@ -23,8 +23,9 @@ export async function POST(request){
                 landSize : parseFloat(farmerData.landSize),
                 mainCrop : farmerData.mainCrop,
                 userId : farmerData.userId,
-            }
-        })
+            },
+        });
+        console.log(newFarmerProfile);
         
         return NextResponse.json(newFarmerProfile)
     } catch (error){

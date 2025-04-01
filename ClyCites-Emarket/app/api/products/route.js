@@ -4,7 +4,7 @@ import db from "../../../lib/db";
 export async function POST(request){
 
     try {
-        const {barcode, categoryId, description, farmerId, imageUrl, isActive, isWholesale, productCode, productPrice, salePrice, sku, slug,tags, title, wholesalePrice, wholesaleQty, productStock, Qty} = await request.json();
+        const {barcode, categoryId, description, farmerId, imageUrl, isActive, isWholesale, productCode, productPrice, salePrice, sku, slug,tags, title,unit, wholesalePrice, wholesaleQty, productStock, qty} = await request.json();
         const existingProduct = await db.product.findUnique({
             where: {
                 slug
@@ -55,7 +55,7 @@ export async function POST(request){
     }
 }
 
-export async function Get (request){
+export async function GET(request){
     try {
 
         const products = await db.product.findMany({

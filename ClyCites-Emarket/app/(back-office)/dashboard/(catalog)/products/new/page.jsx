@@ -7,7 +7,7 @@ import { getData } from "@/lib/getData";
 export default async function NewProduct() {
   const categoriesData = await getData("categories")
   const usersData = await getData("users");
-  console.log(usersData);
+  // console.log(usersData);
   
   const farmersData = usersData.filter((user) => user.role === "FARMER");
   const farmers = farmersData.map((farmer)=>{
@@ -22,10 +22,6 @@ export default async function NewProduct() {
       title:category.title
     }
   })
- return (
-  <div>
-    <NewProductForm categories={categories} farmers={farmers} />
+ return <NewProductForm categories={categories} farmers={farmers} />
 
-  </div>
- )
 }

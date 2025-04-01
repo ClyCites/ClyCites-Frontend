@@ -14,6 +14,7 @@ import ArrayItemsInput from '@/components/FormInputs/ArrayItemsInput';
 import { watch } from 'lucide-react';
 import ToggleInput from '@/components/FormInputs/ToggleInput';
 import {generateUserCode} from '@/lib/generateUserCode';
+import { useRouter } from "next/navigation"; // For Next.js 13+
 
 export default function NewProductForm({categories,farmers}) {
   const [imageUrl, setImageUrl] = useState("")
@@ -28,7 +29,7 @@ export default function NewProductForm({categories,farmers}) {
   });
   const isActive = watch("isActive");
   const isWholeSale = watch("isWholeSale")
-  const router = userRouter()
+  const router = useRouter()
   function redirect(){
     router.push("/dashboard/products")
   }
@@ -93,7 +94,7 @@ export default function NewProductForm({categories,farmers}) {
           />
           <TextInput
             label="Product Sale Price (Discounted)"
-            name="sakePrice"
+            name="salePrice"
             type='number'
             register={register}
             errors={errors}

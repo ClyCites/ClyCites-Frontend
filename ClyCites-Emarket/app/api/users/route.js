@@ -43,7 +43,7 @@ export async function POST(request){
     }
 }
 
-export async function Get (request){
+export async function GET(request){
     try {
 
         const users = await db.user.findMany({
