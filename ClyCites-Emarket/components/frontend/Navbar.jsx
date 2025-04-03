@@ -27,17 +27,18 @@ export default function Navbar() {
         </div>
         {/* 3 ICONS */}
         <div className="flex gap-4">
-          <button className="flex items-center space-x-1 text-green-950 dark:text-slate-100">
+          <Link href="/login" className="flex items-center space-x-1 text-green-950 dark:text-slate-100">
             <User />
             <span>Login</span>
-          </button>
-          <button className="flex items-center space-x-1 text-green-950">
+          </Link>
+          <button className="flex items-center space-x-1 text-green-950 dark:text-slate-100">
             <HelpCircle />
             <span>Help</span>
           </button>
           <DropdownMenu>
             <DropdownMenuTrigger>
-              <button
+              <Link
+                href="/cart"
                 type="button"
                 className="relative inline-flex items-center p-3 text-sm font-medium text-center text-white bg-transparent rounded-lg "
               >
@@ -46,7 +47,7 @@ export default function Navbar() {
                 <div className="absolute inline-flex items-center justify-center w-6 h-6 text-xs font-bold text-white bg-red-500  rounded-full -top-0 end-6 dark:border-gray-900">
                   20
                 </div>
-              </button>
+              </Link>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="py-2 px-4 pr-8">
               <DropdownMenuLabel>Cart Items</DropdownMenuLabel>
