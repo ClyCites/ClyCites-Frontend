@@ -10,6 +10,7 @@ import ImageInput from '@/components/FormInputs/ImageInput';
 import { makePostRequest } from '@/lib/apiRequest';
 import ToggleInput from '@/components/FormInputs/ToggleInput';
 import SelectInput from '@/components/FormInputs/SelectInput';
+import { useRouter } from "next/navigation";
 import { watch } from 'lucide-react';
 
 export default function NewMarketForm({categories}) {
@@ -23,6 +24,10 @@ export default function NewMarketForm({categories}) {
     }
   });
   const isActive = watch("isActive")
+  const router = useRouter()
+  function redirect() {
+    router.push("/dashboard/categories")
+  }
   async function onSubmit(data){
     // setLoading(true)
     const slug = generateSlug( data.title)
@@ -34,9 +39,10 @@ export default function NewMarketForm({categories}) {
     "api/markets",
     data,
     "Market",
-    reset
+    reset,
+    redirect
   );
-  setLogoUrl("")
+  setImageUrl("")
   }
   return (
     <div>
