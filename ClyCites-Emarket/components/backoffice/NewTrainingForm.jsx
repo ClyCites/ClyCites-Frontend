@@ -33,7 +33,7 @@ export default function NewTrainingForm({categories}) {
   const [content, setContent] = useState("");
   const router = useRouter()
   function redirect(){
-    router.push("/dashboard/trainings")
+    router.push("/dashboard/community")
   }
 
   const isActive = watch("isActive")

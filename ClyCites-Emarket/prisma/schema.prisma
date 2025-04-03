@@ -129,6 +129,9 @@ model Training{
   category    Category  @relation(fields: [categoryId], references: [id])
   categoryId  String @db.ObjectId
 
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
 }
 enum UserRole{
   ADMIN
