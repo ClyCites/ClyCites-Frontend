@@ -1,6 +1,12 @@
-# ClyCites
+<p align="center">
+  <a href="https://github.com/Saga211/ClyCites-Frontend">
+    <img src="https://raw.githubusercontent.com/Saga211/ClyCites-Frontend/staging/public/logo.png" alt="ClyCites Logo">
+  </a>
+  <h3>ClyCites</h3>
+   <p>ClyCites is a is an opensource platform that help professional and upcoming farmer to get into the trade digitally. It helps farmer to market and sell their farm produces digitally at the comfort of their farm and communicate with potential customer. The project is designed to help creat a digital family of farmers and customers by being the middle source/men in the market.
+   </p>
+</p> 
 
-ClyCites is a is an opensource platform that help professional and upcoming farmer to get into the trade digitally. It helps farmer to market and sell their farm produces digitally at the comfort of their farm and communicate with potential customer. The project is designed to help creat a digital family of farmers and customers by being the middle source/men in the market.
 
 ## Features
 
