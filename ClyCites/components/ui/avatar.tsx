@@ -1,49 +1,44 @@
 "use client"
 
 import * as React from "react"
-import { type VariantProps, cva } from "class-variance-authority"
-
 import { cn } from "@/lib/utils"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 
-const avatarGroupVariants = cva("flex items-center", {
-  variants: {
-    size: {
-      default: "-space-x-2",
-      sm: "-space-x-1.5",
-      lg: "-space-x-3",
-    },
-  },
-  defaultVariants: {
-    size: "default",
-  },
-})
+export interface AvatarProps extends React.HTMLAttributes<HTMLDivElement> {}
 
-export interface AvatarGroupProps
-  extends React.HTMLAttributes<HTMLDivElement>,
-    VariantProps<typeof avatarGroupVariants> {
-  limit?: number
-  total?: number
-  truncate?: boolean
-}
-
-const AvatarGroup = React.forwardRef<HTMLDivElement, AvatarGroupProps>(
-  ({ className, size, limit = 4, total, truncate = true, ...props }, ref) => {
-    const slicedChildren = React.Children.toArray(props.children).slice(0, limit)
-    const excess = total ?? React.Children.count(props.children) - limit
-
+const Avatar = React.forwardRef<HTMLDivElement, AvatarProps>(
+  ({ className, children, ...props }, ref) => {
     return (
-      <div ref={ref} className={cn(avatarGroupVariants({ size }), className)} {...props}>
-        {slicedChildren}
-        {truncate && excess > 0 && (
-          <Avatar>
-            <AvatarFallback className="bg-muted text-muted-foreground">+{excess}</AvatarFallback>
-          </Avatar>
-        )}
+      <div
+        ref={ref}
+        className={cn("relative flex h-10 w-10 shrink-0 overflow-hidden rounded-full", className)}
+        {...props}
+      >
+        {children}
       </div>
     )
-  },
+  }
 )
-AvatarGroup.displayName = "AvatarGroup"
+Avatar.displayName = "Avatar"
 
-export { AvatarGroup }
+export interface AvatarFallbackProps
+  extends React.HTMLAttributes<HTMLSpanElement> {}
+
+const AvatarFallback = React.forwardRef<HTMLSpanElement, AvatarFallbackProps>(
+  ({ className, children, ...props }, ref) => {
+    return (
+      <span
+        ref={ref}
+        className={cn(
+          "flex h-full w-full items-center justify-center rounded-full bg-muted text-muted-foreground",
+          className
+        )}
+        {...props}
+      >
+        {children}
+      </span>
+    )
+  }
+)
+AvatarFallback.displayName = "AvatarFallback"
+
+export { Avatar, AvatarFallback }
