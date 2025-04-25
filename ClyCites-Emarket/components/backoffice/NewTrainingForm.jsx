@@ -6,47 +6,57 @@ import TextInput from '@/components/FormInputs/TextInput'
 import {useForm} from "react-hook-form";
 import SubmitButton from '@/components/FormInputs/SubmitButton';
 import TextareaInput from '@/components/FormInputs/TextAreasInput';
+import { generateSlug } from '@/lib/generateSlug';
 import ImageInput from '@/components/FormInputs/ImageInput';
-import { makePostRequest } from '@/lib/apiRequest';
-import ToggleInput from '@/components/FormInputs/ToggleInput';
 import SelectInput from '@/components/FormInputs/SelectInput';
-import { useRouter } from "next/navigation";
+import ToggleInput from '@/components/FormInputs/ToggleInput';
+import { useRouter } from "next/navigation"; 
 import { watch } from 'lucide-react';
+import dynamic from "next/dynamic";
+// import QuillEditor from '../../../../../components/FormInputs/QuillEditor';
 
-export default function NewMarketForm({categories}) {
+const QuillEditor = dynamic(()=> import("@/components/FormInputs/QuillEditor"),
+{
+  ssr: false,
+}) 
+
+export default function NewTrainingForm({categories}) {
   const [imageUrl, setImageUrl] = useState("")
-  
+ 
   const [loading, setLoading] = useState(false)
-  
   const {register,reset,watch,handleSubmit,formState: {errors}} = useForm({
     defaultValues:{
       isActive:true
     }
   });
-  const isActive = watch("isActive")
+  
+  const [content, setContent] = useState("");
   const router = useRouter()
-  function redirect() {
-    router.push("/dashboard/categories")
+  function redirect(){
+    router.push("/dashboard/community")
   }
+
+  const isActive = watch("isActive")
   async function onSubmit(data){
     // setLoading(true)
-    const slug = generateSlug( data.title)
+    const slug = generateSlug(data.title)
     data.slug = slug;
-    data.logoUrl = imageUrl;
+    data.imageUrl = imageUrl;
+    data.content = content;
   console.log(data);
   makePostRequest(
     setLoading,
-    "api/markets",
+    "api/trainings",
     data,
-    "Market",
-    reset,
-    redirect
+    "Training",
+    reset
   );
   setImageUrl("")
+  setContent("")
   }
   return (
     <div>
-      <FormHeader title="New Market"/>
+      <FormHeader title="New Training"/>
 
       <form action="" onSubmit={handleSubmit(onSubmit)}
         className="w-full max-w-4xl p-4 bg-white border border-gray-200 rounded-lg shadow sm:p-6 md:p-8 dark:bg-gray-800 dark:border-gray-700 mx-auto my-3"
@@ -54,45 +64,39 @@ export default function NewMarketForm({categories}) {
 
         <div className="grid gap-4 sm:grid-cols-2 sm:gap-6">
           <TextInput
-            label="Market Title"
+            label="Training Title"
             name="title"
             register={register}
             errors={errors}
-            className = "w-full"
+            className='w-full'
           />
           <SelectInput
-            label="Select Categories"
+            label="Select Category"
             name="categoryIds"
             register={register}
             errors={errors}
             className='w-full'
             options={categories}
-            multiple={true}
-          />
-
-          <ImageInput 
-          imageUrl={imageUrl}
-          setImageUrl={setImageUrl}
-          endpoint="marketLogoUploader"
-          label="Market Logo"
-
           />
           <TextareaInput
-            label="Market Description"
+            label="Training Description"
             name="description"
             register={register}
             errors={errors}
           />
-         
-         <ToggleInput 
-        label="Market Status" 
+          <ImageInput imageUrl={imageUrl} setImageUrl={setImageUrl} endpoint="trainingImageUploader" label="Training Image"/>
+        
+          <QuillEditor label="Training Content" value={content} onChange={setContent}/>
+
+        <ToggleInput 
+        label="Publish Your Training" 
         name="isActive" 
         trueTitle="Active" 
         falseTitle="InActive" 
         register={register}
         />
         </div>
-        <SubmitButton isLoading={loading} buttonTitle="Create Market" loadingButtonTitle="Creating Market please wait..."/>
+        <SubmitButton isLoading={loading} buttonTitle="Create Training" loadingButtonTitle="Creating Training please wait..."/>
 
       </form>
       
