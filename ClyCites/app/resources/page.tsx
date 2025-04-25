@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 // Resource data
-const resources = [
+const resources: Resource[]= [
   {
     id: 1,
     title: "Beginner's Guide to Digital Agriculture",
