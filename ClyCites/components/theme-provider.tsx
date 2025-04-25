@@ -1,12 +1,12 @@
+// components/theme-provider.tsx
 import * as React from "react";
-import { ThemeProvider } from "next-themes";
-import { ReactNode } from "react"; // Import ReactNode to type children
+import { ThemeProvider as NextThemesProvider } from "next-themes";
+import { ReactNode } from "react";
 
-interface MyThemeProviderProps {
-  children: ReactNode; // Explicitly typing children as ReactNode
-  // Add other props if needed
+interface ThemeProviderProps {
+  children: ReactNode;
 }
 
-export function MyThemeProvider({ children }: MyThemeProviderProps) {
-  return <ThemeProvider>{children}</ThemeProvider>;
+export function ThemeProvider({ children }: ThemeProviderProps) {
+  return <NextThemesProvider>{children}</NextThemesProvider>;
 }
