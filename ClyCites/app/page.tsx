@@ -1,27 +1,22 @@
-import Camp from "@/components/Camp";
-import Features from "@/components/Features";
-import GetApp from "@/components/GetApp";
-import Guide from "@/components/Guide";
-import Hero from "@/components/Hero";
-import Quality from "@/components/Quality";
-import Contact from "@/components/Contact";
-import ScrollToTop from "@/components/ScrollToTop";
-import Brands from "@/components/Brands";
-import BelowHero from "@/components/BelowHero";
+import { Hero } from "@/components/hero"
+import { Features } from "@/components/features"
+import { ProblemSolution } from "@/components/problem-solution"
+import { Team } from "@/components/team"
+import { BusinessModel } from "@/components/business-model"
+import { Impact } from "@/components/impact"
+import { CTA } from "@/components/cta"
+import { StatsCard } from "@/components/stats-card"
 
 export default function Home() {
   return (
     <>
       <Hero />
-      <Brands />
-      <Guide />
-      <BelowHero />
-      <Quality />
-      <Camp />
       <Features />
-      <GetApp />
-      <Contact />
-      <ScrollToTop />
+      <ProblemSolution />
+      <Team />
+      <BusinessModel />
+      <Impact />
+      <CTA />
     </>
   )
 }

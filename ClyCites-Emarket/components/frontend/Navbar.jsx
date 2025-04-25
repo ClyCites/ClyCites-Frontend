@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import logo from "../../public/images/logo.jpeg";
 import SearchForm from "./SearchForm";
+import HelpModel from "./HelpModel";
 import { HelpCircle, ShoppingCart, User, X } from "lucide-react";
 import {
   DropdownMenu,
@@ -31,10 +32,7 @@ export default function Navbar() {
             <User />
             <span>Login</span>
           </Link>
-          <button className="flex items-center space-x-1 text-green-950 dark:text-slate-100">
-            <HelpCircle />
-            <span>Help</span>
-          </button>
+          <HelpModel/>
           <DropdownMenu>
             <DropdownMenuTrigger>
               <Link
