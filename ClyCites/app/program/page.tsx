@@ -466,7 +466,7 @@ function ProgramCard({ program }: { program: { status: string; /* add other fiel
     }
   }
 
-  const getCategoryIcon = (category) => {
+  const getCategoryIcon = (category: string) => {
     switch (category) {
       case "training":
         return <BookOpen className="h-4 w-4" />
