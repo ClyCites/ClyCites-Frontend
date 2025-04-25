@@ -138,7 +138,7 @@ export function Hero() {
             <motion.div variants={itemVariants} className="mt-10 flex flex-col sm:flex-row gap-4">
               <Button asChild size="lg" className="rounded-full group">
                 <Link href="/get-started">
-                  Get Started
+                  Get Started Now
                   <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
                 </Link>
               </Button>
