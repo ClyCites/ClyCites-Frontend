@@ -453,7 +453,7 @@ export default function ProgramPage() {
 
 // Program Card Component
 function ProgramCard({ program }: { program: { status: string; /* add other fields here */ } }) {
-  const getStatusColor = (status) => {
+  const getStatusColor = (status: string) => {
     switch (status) {
       case "Ongoing":
         return "bg-emerald-500 hover:bg-emerald-600"
