@@ -451,8 +451,22 @@ export default function ProgramPage() {
   )
 }
 
+export interface Program {
+  id: number
+  title: string
+  description: string
+  image: string
+  category: string
+  location: string
+  duration: string
+  participants: string
+  startDate: string
+  status: string
+  link: string
+}
+
 // Program Card Component
-function ProgramCard({ program }: { program: { status: string; /* add other fields here */ } }) {
+function ProgramCard({ program }: { program: Program }) {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "Ongoing":
