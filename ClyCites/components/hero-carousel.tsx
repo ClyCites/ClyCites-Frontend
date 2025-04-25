@@ -90,7 +90,7 @@ export function HeroCarousel() {
             <div
               key={index}
               className="w-3 h-3 rounded-full bg-white/50 transition-all duration-300 cursor-pointer"
-              onClick={() => plugin.current?.embla?.scrollTo(index)}
+              onClick={() => (plugin.current as { embla?: { scrollTo: (index: number) => void } }).embla?.scrollTo(index)}
             />
           ))}
         </div>
