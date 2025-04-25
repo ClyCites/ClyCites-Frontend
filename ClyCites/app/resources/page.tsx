@@ -96,6 +96,18 @@ const resources = [
     url: "#",
   },
 ]
+export type Resource = {
+  id: number
+  title: string
+  description: string
+  category: 'guide' | 'article' | 'video' | 'technical'
+  image: string
+  type: 'PDF' | 'Article' | 'Video' | 'Documentation'
+  size?: string // optional, only for PDFs
+  duration?: string // optional, only for Videos
+  date: string
+  url: string
+}
 
 export default function ResourcesPage() {
   return (
@@ -320,9 +332,10 @@ export default function ResourcesPage() {
   )
 }
 
+
 // Resource Card Component
-function ResourceCard({ resource }) {
-  const getIcon = (category) => {
+function ResourceCard({ resource }: { resource: Resource }) {
+  const getIcon = (category: string) => {
     switch (category) {
       case "guide":
         return <FileText className="h-5 w-5" />
@@ -335,7 +348,7 @@ function ResourceCard({ resource }) {
     }
   }
 
-  const getBadgeColor = (category) => {
+  const getBadgeColor = (category: "guide" | "article" | "video" | "technical") => {
     switch (category) {
       case "guide":
         return "bg-emerald-500 hover:bg-emerald-600"
