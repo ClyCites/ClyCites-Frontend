@@ -80,8 +80,13 @@ const impactData = [
     },
   },
 ]
-
-const Testimonial = ({ testimonial }) => (
+interface TestimonialType {
+  quote: string;
+  author: string;
+  role: string;
+  avatar: string; // Assuming this is the image URL
+}
+const Testimonial = ({ testimonial }: { testimonial: TestimonialType }) => (
   <div className="flex flex-col md:flex-row gap-4 items-start md:items-center">
     <div className="h-16 w-16 rounded-full overflow-hidden border-2 border-emerald-200 dark:border-emerald-800 flex-shrink-0">
       <img
@@ -239,7 +244,7 @@ export function Impact() {
 
                 <Card className="border-0 shadow-md bg-card">
                   <CardContent className="p-6">
-                    <Testimonial testimonial={impactData[activeIndex].testimonial} />
+                  <Testimonial testimonial={impactData[activeIndex].testimonial} />
                   </CardContent>
                 </Card>
 
