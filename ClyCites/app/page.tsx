@@ -5,7 +5,6 @@ import { Team } from "@/components/team"
 import { BusinessModel } from "@/components/business-model"
 import { Impact } from "@/components/impact"
 import { CTA } from "@/components/cta"
-import { StatsCard } from "@/components/stats-card"
 
 export default function Home() {
   return (
