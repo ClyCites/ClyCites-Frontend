@@ -452,7 +452,7 @@ export default function ProgramPage() {
 }
 
 // Program Card Component
-function ProgramCard({ program }) {
+function ProgramCard({ program }: { program: { status: string; /* add other fields here */ } }) {
   const getStatusColor = (status) => {
     switch (status) {
       case "Ongoing":
