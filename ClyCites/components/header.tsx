@@ -40,11 +40,11 @@ export function Header() {
             <span className="hidden md:inline-block">Introducing PricePulse-AI: Real-time market price monitoring</span>
           </div>
           <div className="flex items-center space-x-4">
-            <Link href="/login" className="text-emerald-100 hover:text-white transition-colors">
+            <Link href="https://price-monitoring-three.vercel.app/login" className="text-emerald-100 hover:text-white transition-colors">
               Login
             </Link>
             <span className="text-emerald-500">|</span>
-            <Link href="/register" className="text-emerald-100 hover:text-white transition-colors">
+            <Link href="https://price-monitoring-three.vercel.app/register" className="text-emerald-100 hover:text-white transition-colors">
               Register
             </Link>
           </div>
