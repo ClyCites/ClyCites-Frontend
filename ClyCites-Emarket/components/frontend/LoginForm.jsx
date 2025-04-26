@@ -71,7 +71,7 @@ export default function LoginForm() {
       {emailErr && <small className="text-red-600 -mt-2 mb-2">{emailErr}</small>}
       <TextInput label= "Password" name="password" register = {register} errors={errors} type="password"/>
 
-      <SubmitButton isLoading = {loading} buttonTitle = "Login" loadingButtonTitle= "Loggin Please wait..." />
+      <SubmitButton isLoading = {loading} buttonTitle = "Login" loadingButtonTitle= "Signing you in Please wait..." />
 
 
       <div className="flex items-center ">
