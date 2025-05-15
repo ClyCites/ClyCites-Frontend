@@ -243,14 +243,14 @@ export function Footer() {
               </li>
               <li className="flex items-center gap-3">
                 <Mail className="h-5 w-5 text-emerald-400 flex-shrink-0" />
-                <a href="mailto:info@clycites.com" className="text-gray-300 hover:text-emerald-400 transition-colors">
-                  info@clycites.com
+                <a href="mailto:clycites@gmail.com" className="text-gray-300 hover:text-emerald-400 transition-colors">
+                  clycites@gmail.com
                 </a>
               </li>
               <li className="flex items-center gap-3">
                 <Phone className="h-5 w-5 text-emerald-400 flex-shrink-0" />
-                <a href="tel:+256123456789" className="text-gray-300 hover:text-emerald-400 transition-colors">
-                  +256 123 456 789
+                <a href="tel:+256785046375" className="text-gray-300 hover:text-emerald-400 transition-colors">
+                  +256785046375
                 </a>
               </li>
             </ul>
