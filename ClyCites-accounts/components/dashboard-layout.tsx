@@ -98,7 +98,6 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
         </div>
       </div>
 
-      {/* Mobile menu */}
       <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
         <SheetTrigger asChild>
           <Button variant="ghost" size="sm" className="lg:hidden fixed top-4 left-4 z-40">
