@@ -111,11 +111,10 @@ export default function ApplicationsPage() {
   const handleRegenerateSecret = async (appId: string) => {
     const result = await regenerateClientSecret(appId)
     if (result.success) {
-      // Show the new secret temporarily
       setShowSecrets((prev) => ({ ...prev, [appId]: true }))
       setTimeout(() => {
         setShowSecrets((prev) => ({ ...prev, [appId]: false }))
-      }, 30000) // Hide after 30 seconds
+      }, 30000)
     }
   }
 
