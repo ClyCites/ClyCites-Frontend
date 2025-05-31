@@ -275,7 +275,6 @@ export default function ApplicationsPage() {
           </Dialog>
         </div>
 
-        {/* Organization Selector */}
         <div className="flex items-center space-x-4">
           <div className="flex-1 max-w-sm">
             <Label htmlFor="organization">Organization</Label>
