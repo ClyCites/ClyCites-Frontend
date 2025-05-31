@@ -161,7 +161,6 @@ export default function DashboardPage() {
           </Card>
         </div>
 
-        {/* Organizations */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
