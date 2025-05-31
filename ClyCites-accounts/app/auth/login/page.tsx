@@ -12,6 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Separator } from "@/components/ui/separator"
 import { Chrome, Eye, EyeOff } from "lucide-react"
+import { useAuth } from "@/hooks/useAuth"
 
 export default function LoginPage() {
   const [identifier, setIdentifier] = useState("")
@@ -23,25 +24,20 @@ export default function LoginPage() {
   const searchParams = useSearchParams()
   const redirectUrl = searchParams.get("redirect")
 
+  const { login } = useAuth()
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
     setError("")
 
     try {
-      const response = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ identifier, password }),
-      })
+      const result = await login({ identifier, password })
 
-      const data = await response.json()
-
-      if (response.ok) {
-        localStorage.setItem("token", data.token)
+      if (result.success) {
         router.push(redirectUrl || "/dashboard")
       } else {
-        setError(data.message || "Login failed")
+        setError(result.error || "Login failed")
       }
     } catch (err) {
       setError("Network error. Please try again.")

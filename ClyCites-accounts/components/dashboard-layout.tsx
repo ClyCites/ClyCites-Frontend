@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
@@ -18,6 +18,7 @@ import {
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { Building2, Users, Key, Shield, Settings, LogOut, Menu, Home, User } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useAuth } from "@/hooks/useAuth"
 
 interface DashboardUser {
   firstName: string
@@ -36,56 +37,16 @@ const navigation = [
 ]
 
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<DashboardUser | null>(null)
+  const { user, isLoading: authLoading, logout } = useAuth()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const pathname = usePathname()
   const router = useRouter()
 
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const token = localStorage.getItem("token")
-        if (!token) {
-          router.push("/auth/login")
-          return
-        }
-
-        const response = await fetch("/api/auth/me", {
-          headers: { Authorization: `Bearer ${token}` },
-        })
-
-        if (response.ok) {
-          const userData = await response.json()
-          setUser(userData)
-        } else {
-          localStorage.removeItem("token")
-          router.push("/auth/login")
-        }
-      } catch (error) {
-        console.error("Failed to fetch user:", error)
-        router.push("/auth/login")
-      }
-    }
-
-    fetchUser()
-  }, [router])
-
   const handleLogout = async () => {
-    try {
-      const token = localStorage.getItem("token")
-      await fetch("/api/auth/logout", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
-      })
-    } catch (error) {
-      console.error("Logout error:", error)
-    } finally {
-      localStorage.removeItem("token")
-      router.push("/auth/login")
-    }
+    await logout()
   }
 
-  if (!user) {
+  if (authLoading || !user) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>

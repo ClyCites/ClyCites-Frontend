@@ -12,6 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Separator } from "@/components/ui/separator"
 import { Chrome, Eye, EyeOff } from "lucide-react"
+import { useAuth } from "@/hooks/useAuth"
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -26,24 +27,20 @@ export default function RegisterPage() {
   const [error, setError] = useState("")
   const router = useRouter()
 
+  const { register } = useAuth()
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
     setError("")
 
     try {
-      const response = await fetch("/api/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      })
+      const result = await register(formData)
 
-      const data = await response.json()
-
-      if (response.ok) {
+      if (result.success) {
         router.push("/auth/verify-email?email=" + encodeURIComponent(formData.email))
       } else {
-        setError(data.message || "Registration failed")
+        setError(result.error || "Registration failed")
       }
     } catch (err) {
       setError("Network error. Please try again.")

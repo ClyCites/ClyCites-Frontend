@@ -65,6 +65,8 @@ export default function TokensPage() {
   const fetchTokens = async () => {
     try {
       const token = localStorage.getItem("token")
+      // Note: This would need to be adapted based on your actual API structure
+      // Since the API expects orgId, you'd need to get the current organization context
       const response = await fetch("/api/organizations/current/tokens", {
         headers: { Authorization: `Bearer ${token}` },
       })
