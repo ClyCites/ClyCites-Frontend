@@ -306,7 +306,6 @@ export default function ApplicationsPage() {
           </div>
         </div>
 
-        {/* Applications Grid */}
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {filteredApplications.map((app) => {
             const AppTypeIcon = applicationTypes.find((t) => t.value === app.type)?.icon || Shield
