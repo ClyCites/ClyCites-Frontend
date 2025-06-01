@@ -55,6 +55,79 @@ interface OrganizationMember {
   status: "active" | "pending" | "suspended"
 }
 
+// Backend response interface (what we actually get from API)
+interface BackendOrganization {
+  _id: string
+  name: string
+  slug: string
+  description: string
+  industry: string
+  size: string
+  website?: string
+  logo?: string | null
+  isActive: boolean
+  isDefault: boolean
+  createdBy: string
+  subscription: {
+    plan: string
+    status: string
+    limits: {
+      maxUsers: number
+      maxTeams: number
+      maxApplications: number
+      maxAPIRequests: number
+    }
+  }
+  membership: {
+    role: {
+      _id: string
+      name: string
+      level: number
+    }
+    status: string
+    joinedAt: string
+  }
+  owner: {
+    _id: string
+    email: string
+    firstName: string
+    lastName: string
+    fullName: string
+    isLocked: boolean
+  }
+  settings: {
+    passwordPolicy: any
+    sessionSettings: any
+    allowPublicSignup: boolean
+    requireEmailVerification: boolean
+    enableSSO: boolean
+  }
+  createdAt: string
+  updatedAt: string
+  __v: number
+}
+
+// Function to transform backend data to frontend format
+const transformOrganization = (backendOrg: BackendOrganization): Organization => {
+  return {
+    id: backendOrg._id,
+    name: backendOrg.name,
+    slug: backendOrg.slug,
+    description: backendOrg.description,
+    industry: backendOrg.industry,
+    size: backendOrg.size,
+    website: backendOrg.website,
+    subscription: {
+      plan: backendOrg.subscription.plan,
+      status: backendOrg.subscription.status,
+    },
+    role: backendOrg.membership?.role?.name || "member",
+    memberCount: 0, // We'll need to get this from a separate API call or calculate it
+    createdAt: backendOrg.createdAt,
+    updatedAt: backendOrg.updatedAt,
+  }
+}
+
 export function useOrganizations() {
   const [organizations, setOrganizations] = useState<Organization[]>([])
   const [currentOrganization, setCurrentOrganization] = useState<Organization | null>(null)
@@ -65,10 +138,38 @@ export function useOrganizations() {
   const fetchOrganizations = useCallback(async () => {
     try {
       setIsLoading(true)
+      console.log("Fetching organizations...")
       setError(null) // Clear previous errors
-      const response = await apiClient.get<Organization[]>("/organizations")
+      const response = await apiClient.get("/organizations")
+      console.log("Organizations API response:", response)
+
       if (response.success && response.data) {
-        setOrganizations(response.data)
+        // Check if response.data is an array
+        if (Array.isArray(response.data)) {
+          // Transform backend data to frontend format
+          const transformedOrganizations = response.data.map(transformOrganization)
+          setOrganizations(transformedOrganizations)
+        }
+        // Check if response.data.organizations exists and is an array (common API pattern)
+        else if (
+          typeof response.data === "object" &&
+          response.data !== null &&
+          "organizations" in response.data &&
+          Array.isArray((response.data as any).organizations)
+        ) {
+          const transformedOrganizations = (response.data as any).organizations.map(transformOrganization)
+          setOrganizations(transformedOrganizations)
+        }
+        // If it's a single organization object
+        else if (typeof response.data === "object" && response.data !== null) {
+          console.log("Single organization received:", response.data)
+          // If it's a single organization, wrap it in an array
+          const transformedOrganization = transformOrganization(response.data as BackendOrganization)
+          setOrganizations([transformedOrganization])
+        } else {
+          console.warn("Unexpected organizations data format:", response.data)
+          setOrganizations([]) // Set empty array for unexpected format
+        }
       } else {
         setOrganizations([]) // Set empty array if no data
       }
@@ -84,10 +185,11 @@ export function useOrganizations() {
   const fetchOrganization = useCallback(async (id: string) => {
     try {
       setError(null)
-      const response = await apiClient.get<Organization>(`/organizations/${id}`)
+      const response = await apiClient.get<BackendOrganization>(`/organizations/${id}`)
       if (response.success && response.data) {
-        setCurrentOrganization(response.data)
-        return response.data
+        const transformedOrg = transformOrganization(response.data)
+        setCurrentOrganization(transformedOrg)
+        return transformedOrg
       }
       throw new Error("Organization not found")
     } catch (err: any) {
@@ -117,10 +219,11 @@ export function useOrganizations() {
 
   const createOrganization = async (data: CreateOrganizationData) => {
     try {
-      const response = await apiClient.post<Organization>("/organizations", data)
+      const response = await apiClient.post<BackendOrganization>("/organizations", data)
       if (response.success && response.data) {
-        setOrganizations((prev) => [...prev, response.data!])
-        return { success: true, data: response.data }
+        const transformedOrg = transformOrganization(response.data)
+        setOrganizations((prev) => [...prev, transformedOrg])
+        return { success: true, data: transformedOrg }
       }
       return { success: false, error: "Failed to create organization" }
     } catch (error: any) {
@@ -130,13 +233,14 @@ export function useOrganizations() {
 
   const updateOrganization = async (id: string, data: Partial<CreateOrganizationData>) => {
     try {
-      const response = await apiClient.put<Organization>(`/organizations/${id}`, data)
+      const response = await apiClient.put<BackendOrganization>(`/organizations/${id}`, data)
       if (response.success && response.data) {
-        setOrganizations((prev) => prev.map((org) => (org.id === id ? response.data! : org)))
+        const transformedOrg = transformOrganization(response.data)
+        setOrganizations((prev) => prev.map((org) => (org.id === id ? transformedOrg : org)))
         if (currentOrganization?.id === id) {
-          setCurrentOrganization(response.data)
+          setCurrentOrganization(transformedOrg)
         }
-        return { success: true, data: response.data }
+        return { success: true, data: transformedOrg }
       }
       return { success: false, error: "Failed to update organization" }
     } catch (error: any) {

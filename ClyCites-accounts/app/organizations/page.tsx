@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -8,48 +8,32 @@ import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Building2, Plus, Search, Settings, Users } from "lucide-react"
 import { DashboardLayout } from "@/components/dashboard-layout"
-
-interface Organization {
-  id: string
-  name: string
-  description: string
-  role: string
-  memberCount: number
-  createdAt: string
-}
+import { useOrganizations } from "@/hooks/useOrganizations"
 
 export default function OrganizationsPage() {
-  const [organizations, setOrganizations] = useState<Organization[]>([])
-  const [isLoading, setIsLoading] = useState(true)
+  const { organizations, isLoading, error } = useOrganizations()
   const [searchTerm, setSearchTerm] = useState("")
 
-  useEffect(() => {
-    const fetchOrganizations = async () => {
-      try {
-        const token = localStorage.getItem("token")
-        const response = await fetch("/api/organizations", {
-          headers: { Authorization: `Bearer ${token}` },
-        })
+  const filteredOrganizations = Array.isArray(organizations)
+    ? organizations.filter(
+        (org) =>
+          org.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          org.description.toLowerCase().includes(searchTerm.toLowerCase()),
+      )
+    : []
 
-        if (response.ok) {
-          const data = await response.json()
-          setOrganizations(data)
-        }
-      } catch (error) {
-        console.error("Failed to fetch organizations:", error)
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
-    fetchOrganizations()
-  }, [])
-
-  const filteredOrganizations = organizations.filter(
-    (org) =>
-      org.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      org.description.toLowerCase().includes(searchTerm.toLowerCase()),
-  )
+  if (error) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <h3 className="text-lg font-semibold text-red-600">Error loading organizations</h3>
+            <p className="text-muted-foreground">{error}</p>
+          </div>
+        </div>
+      </DashboardLayout>
+    )
+  }
 
   return (
     <DashboardLayout>
@@ -96,7 +80,7 @@ export default function OrganizationsPage() {
                       <div>
                         <CardTitle className="text-lg">{org.name}</CardTitle>
                         <Badge variant="outline" className="text-xs">
-                          {org.role}
+                          {org.role || org.membership?.role?.name || "Member"}
                         </Badge>
                       </div>
                     </div>
@@ -112,9 +96,22 @@ export default function OrganizationsPage() {
                   <div className="flex items-center justify-between text-sm text-muted-foreground">
                     <div className="flex items-center space-x-1">
                       <Users className="h-4 w-4" />
-                      <span>{org.memberCount} members</span>
+                      <span>{org.memberCount || 0} members</span>
                     </div>
                     <span>Created {new Date(org.createdAt).toLocaleDateString()}</span>
+                  </div>
+                  <div className="mt-2 flex items-center space-x-2">
+                    <Badge variant={org.isActive ? "default" : "secondary"} className="text-xs">
+                      {org.isActive ? "Active" : "Inactive"}
+                    </Badge>
+                    {org.isDefault && (
+                      <Badge variant="outline" className="text-xs">
+                        Default
+                      </Badge>
+                    )}
+                    <Badge variant="outline" className="text-xs">
+                      {org.subscription.plan}
+                    </Badge>
                   </div>
                 </CardContent>
               </Card>

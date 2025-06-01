@@ -8,76 +8,110 @@ interface Application {
   name: string
   description: string
   type: "web" | "mobile" | "desktop" | "api" | "service" | "integration"
-  platform?: "web" | "ios" | "android" | "windows" | "macos" | "linux" | "cross-platform"
   clientId: string
   clientSecret: string
   redirectUris: string[]
   scopes: string[]
   grantTypes: string[]
   isActive: boolean
+  usage: {
+    activeUsers: number
+    totalRequests: number
+  }
   createdAt: string
   updatedAt: string
-  usage: {
-    totalRequests: number
-    activeUsers: number
-    lastUsed: string | null
-  }
 }
 
 interface CreateApplicationData {
   name: string
   description?: string
-  type: Application["type"]
-  platform?: Application["platform"]
-  redirectUris?: string[]
+  type: "web" | "mobile" | "desktop" | "api" | "service" | "integration"
+  platform?: string
+  redirectUris: string[]
   scopes: string[]
-  grantTypes?: string[]
+  grantTypes: string[]
+}
+
+// Backend response interface
+interface BackendApplication {
+  _id: string
+  name: string
+  description: string
+  type: string
+  clientId: string
+  clientSecret: string
+  redirectUris: string[]
+  scopes: string[]
+  grantTypes: string[]
+  isActive: boolean
+  organizationId: string
+  createdBy: string
+  usage?: {
+    activeUsers: number
+    totalRequests: number
+  }
+  createdAt: string
+  updatedAt: string
+  __v: number
+}
+
+// Transform backend data to frontend format
+const transformApplication = (backendApp: BackendApplication): Application => {
+  return {
+    id: backendApp._id,
+    name: backendApp.name,
+    description: backendApp.description,
+    type: backendApp.type as Application["type"],
+    clientId: backendApp.clientId,
+    clientSecret: backendApp.clientSecret,
+    redirectUris: backendApp.redirectUris,
+    scopes: backendApp.scopes,
+    grantTypes: backendApp.grantTypes,
+    isActive: backendApp.isActive,
+    usage: backendApp.usage || { activeUsers: 0, totalRequests: 0 },
+    createdAt: backendApp.createdAt,
+    updatedAt: backendApp.updatedAt,
+  }
 }
 
 export function useApplications(organizationId?: string) {
   const [applications, setApplications] = useState<Application[]>([])
-  const [currentApplication, setCurrentApplication] = useState<Application | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  const fetchApplications = useCallback(
-    async (orgId?: string) => {
-      if (!orgId && !organizationId) return
+  const fetchApplications = useCallback(async () => {
+    if (!organizationId) {
+      setApplications([])
+      setIsLoading(false)
+      return
+    }
 
-      try {
-        setIsLoading(true)
-        const response = await apiClient.get<Application[]>(`/organizations/${orgId || organizationId}/applications`)
-        if (response.success && response.data) {
-          setApplications(response.data)
-        }
-      } catch (err: any) {
-        setError(err.message)
-      } finally {
-        setIsLoading(false)
-      }
-    },
-    [organizationId],
-  )
-
-  const fetchApplication = useCallback(async (appId: string) => {
     try {
-      const response = await apiClient.get<Application>(`/applications/${appId}`)
+      setIsLoading(true)
+      setError(null)
+      const response = await apiClient.get<BackendApplication[]>(`/organizations/${organizationId}/applications`)
       if (response.success && response.data) {
-        setCurrentApplication(response.data)
-        return response.data
+        const transformedApplications = response.data.map(transformApplication)
+        setApplications(transformedApplications)
+      } else {
+        setApplications([])
       }
     } catch (err: any) {
-      setError(err.message)
-      throw err
+      console.error("Failed to fetch applications:", err)
+      setError(err.message || "Failed to load applications")
+      setApplications([])
+    } finally {
+      setIsLoading(false)
     }
-  }, [])
+  }, [organizationId])
 
   const createApplication = async (orgId: string, data: CreateApplicationData) => {
     try {
-      const response = await apiClient.post<Application>(`/organizations/${orgId}/applications`, data)
+      const response = await apiClient.post<BackendApplication>(`/organizations/${orgId}/applications`, data)
       if (response.success && response.data) {
-        setApplications((prev) => [...prev, response.data!])
-        return { success: true, data: response.data }
+        const transformedApp = transformApplication(response.data)
+        setApplications((prev) => [...prev, transformedApp])
+        return { success: true, data: transformedApp }
       }
       return { success: false, error: "Failed to create application" }
     } catch (error: any) {
@@ -87,15 +121,11 @@ export function useApplications(organizationId?: string) {
 
   const regenerateClientSecret = async (appId: string) => {
     try {
-      const response = await apiClient.post<{ clientSecret: string }>(`/applications/${appId}/regenerate-secret`)
+      const response = await apiClient.post<BackendApplication>(`/applications/${appId}/regenerate-secret`)
       if (response.success && response.data) {
-        setApplications((prev) =>
-          prev.map((app) => (app.id === appId ? { ...app, clientSecret: response.data!.clientSecret } : app)),
-        )
-        if (currentApplication?.id === appId) {
-          setCurrentApplication((prev) => (prev ? { ...prev, clientSecret: response.data!.clientSecret } : null))
-        }
-        return { success: true, clientSecret: response.data.clientSecret }
+        const transformedApp = transformApplication(response.data)
+        setApplications((prev) => prev.map((app) => (app.id === appId ? transformedApp : app)))
+        return { success: true, data: transformedApp }
       }
       return { success: false, error: "Failed to regenerate client secret" }
     } catch (error: any) {
@@ -104,20 +134,15 @@ export function useApplications(organizationId?: string) {
   }
 
   useEffect(() => {
-    if (organizationId) {
-      fetchApplications(organizationId)
-    }
-  }, [fetchApplications, organizationId])
+    fetchApplications()
+  }, [fetchApplications])
 
   return {
     applications,
-    currentApplication,
     isLoading,
     error,
     fetchApplications,
-    fetchApplication,
     createApplication,
     regenerateClientSecret,
-    setCurrentApplication,
   }
 }
