@@ -65,12 +65,17 @@ export function useOrganizations() {
   const fetchOrganizations = useCallback(async () => {
     try {
       setIsLoading(true)
+      setError(null) // Clear previous errors
       const response = await apiClient.get<Organization[]>("/organizations")
       if (response.success && response.data) {
         setOrganizations(response.data)
+      } else {
+        setOrganizations([]) // Set empty array if no data
       }
     } catch (err: any) {
-      setError(err.message)
+      console.error("Failed to fetch organizations:", err)
+      setError(err.message || "Failed to load organizations")
+      setOrganizations([]) // Set empty array on error
     } finally {
       setIsLoading(false)
     }
@@ -78,26 +83,34 @@ export function useOrganizations() {
 
   const fetchOrganization = useCallback(async (id: string) => {
     try {
+      setError(null)
       const response = await apiClient.get<Organization>(`/organizations/${id}`)
       if (response.success && response.data) {
         setCurrentOrganization(response.data)
         return response.data
       }
+      throw new Error("Organization not found")
     } catch (err: any) {
-      setError(err.message)
+      console.error("Failed to fetch organization:", err)
+      setError(err.message || "Failed to load organization")
       throw err
     }
   }, [])
 
   const fetchMembers = useCallback(async (orgId: string) => {
     try {
+      setError(null)
       const response = await apiClient.get<OrganizationMember[]>(`/organizations/${orgId}/members`)
       if (response.success && response.data) {
         setMembers(response.data)
         return response.data
       }
+      setMembers([])
+      return []
     } catch (err: any) {
-      setError(err.message)
+      console.error("Failed to fetch members:", err)
+      setError(err.message || "Failed to load members")
+      setMembers([])
       throw err
     }
   }, [])

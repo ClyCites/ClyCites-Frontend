@@ -39,6 +39,7 @@ import { useOrganizations } from "@/hooks/useOrganizations"
 
 export default function ApplicationsPage() {
   const { organizations } = useOrganizations()
+  console.log("Organizations:", organizations)
   const [selectedOrgId, setSelectedOrgId] = useState<string>("")
   const { applications, createApplication, regenerateClientSecret } = useApplications(selectedOrgId)
 

@@ -24,7 +24,11 @@ class ApiClient {
     return token ? { Authorization: `Bearer ${token}` } : {}
   }
 
-  private async request<T>(endpoint: string, options: RequestInit = {}): Promise<ApiResponse<T>> {
+  private async sleep(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms))
+  }
+
+  private async request<T>(endpoint: string, options: RequestInit = {}, retryCount = 0): Promise<ApiResponse<T>> {
     const url = `${this.baseURL}${endpoint}`
     const headers = {
       ...this.defaultHeaders,
@@ -38,15 +42,60 @@ class ApiClient {
         headers,
       })
 
-      const data = await response.json()
+      // Handle rate limiting with exponential backoff
+      if (response.status === 429 && retryCount < 3) {
+        const retryAfter = response.headers.get("Retry-After")
+        const delay = retryAfter ? Number.parseInt(retryAfter) * 1000 : Math.pow(2, retryCount) * 1000
+
+        console.warn(`Rate limited. Retrying after ${delay}ms (attempt ${retryCount + 1}/3)`)
+        await this.sleep(delay)
+        return this.request<T>(endpoint, options, retryCount + 1)
+      }
+
+      let data: any
+      try {
+        data = await response.json()
+      } catch (jsonError) {
+        // Handle non-JSON responses
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`)
+        }
+        data = { success: true }
+      }
 
       if (!response.ok) {
-        throw new Error(data.message || `HTTP error! status: ${response.status}`)
+        const errorMessage = data?.message || data?.error || `HTTP error! status: ${response.status}`
+
+        // Provide user-friendly error messages
+        switch (response.status) {
+          case 429:
+            throw new Error("Too many requests. Please wait a moment and try again.")
+          case 401:
+            throw new Error("Authentication required. Please log in again.")
+          case 403:
+            throw new Error("You don't have permission to perform this action.")
+          case 404:
+            throw new Error("The requested resource was not found.")
+          case 500:
+            throw new Error("Server error. Please try again later.")
+          default:
+            throw new Error(errorMessage)
+        }
       }
 
       return data
     } catch (error) {
       console.error("API request failed:", error)
+
+      // Don't retry on authentication errors
+      if (error instanceof Error && (error.message.includes("401") || error.message.includes("Authentication"))) {
+        // Redirect to login or clear auth state
+        if (typeof window !== "undefined") {
+          localStorage.removeItem("token")
+          window.location.href = "/auth/login"
+        }
+      }
+
       throw error
     }
   }
