@@ -56,6 +56,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Desktop Sidebar */}
       <div className="hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:w-72 lg:flex-col">
         <div className="flex grow flex-col gap-y-5 overflow-y-auto bg-white px-6 pb-4 shadow-sm">
           <div className="flex h-16 shrink-0 items-center">
@@ -98,6 +99,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
         </div>
       </div>
 
+      {/* Mobile menu */}
       <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
         <SheetTrigger asChild>
           <Button variant="ghost" size="sm" className="lg:hidden fixed top-4 left-4 z-40">
@@ -137,7 +139,9 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
         </SheetContent>
       </Sheet>
 
+      {/* Main content */}
       <div className="lg:pl-72">
+        {/* Top bar */}
         <div className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-gray-200 bg-white px-4 shadow-sm sm:gap-x-6 sm:px-6 lg:px-8">
           <div className="flex flex-1 gap-x-4 self-stretch lg:gap-x-6">
             <div className="flex flex-1"></div>
@@ -148,8 +152,8 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                     <Avatar className="h-8 w-8">
                       <AvatarImage src="/placeholder-user.jpg" alt={user?.username} />
                       <AvatarFallback>
-                        {user?.firstName[0]}
-                        {user?.lastName[0]}
+                        {user?.firstName?.[0] || ""}
+                        {user?.lastName?.[0] || ""}
                       </AvatarFallback>
                     </Avatar>
                   </Button>
@@ -187,6 +191,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
           </div>
         </div>
 
+        {/* Page content */}
         <main className="py-10">
           <div className="px-4 sm:px-6 lg:px-8">{children}</div>
         </main>

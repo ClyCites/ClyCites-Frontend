@@ -111,10 +111,11 @@ export default function ApplicationsPage() {
   const handleRegenerateSecret = async (appId: string) => {
     const result = await regenerateClientSecret(appId)
     if (result.success) {
+      // Show the new secret temporarily
       setShowSecrets((prev) => ({ ...prev, [appId]: true }))
       setTimeout(() => {
         setShowSecrets((prev) => ({ ...prev, [appId]: false }))
-      }, 30000)
+      }, 30000) // Hide after 30 seconds
     }
   }
 
@@ -275,6 +276,7 @@ export default function ApplicationsPage() {
           </Dialog>
         </div>
 
+        {/* Organization Selector */}
         <div className="flex items-center space-x-4">
           <div className="flex-1 max-w-sm">
             <Label htmlFor="organization">Organization</Label>
@@ -306,6 +308,7 @@ export default function ApplicationsPage() {
           </div>
         </div>
 
+        {/* Applications Grid */}
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {filteredApplications.map((app) => {
             const AppTypeIcon = applicationTypes.find((t) => t.value === app.type)?.icon || Shield
