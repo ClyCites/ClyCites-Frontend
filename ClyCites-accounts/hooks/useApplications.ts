@@ -89,9 +89,29 @@ export function useApplications(organizationId?: string) {
     try {
       setIsLoading(true)
       setError(null)
-      const response = await apiClient.get<BackendApplication[]>(`/organizations/${organizationId}/applications`)
+      const response = await apiClient.get<any>(`/organizations/${organizationId}/applications`)
+
+      console.log("Applications API Response:", response)
+
       if (response.success && response.data) {
-        const transformedApplications = response.data.map(transformApplication)
+        let applicationsData: BackendApplication[] = []
+
+        // Handle different possible response structures
+        if (Array.isArray(response.data)) {
+          applicationsData = response.data
+        } else if (response.data.applications && Array.isArray(response.data.applications)) {
+          applicationsData = response.data.applications
+        } else if (response.data.data && Array.isArray(response.data.data)) {
+          applicationsData = response.data.data
+        } else if (typeof response.data === "object" && response.data._id) {
+          // Single application object
+          applicationsData = [response.data]
+        } else {
+          console.warn("Unexpected applications data structure:", response.data)
+          applicationsData = []
+        }
+
+        const transformedApplications = applicationsData.map(transformApplication)
         setApplications(transformedApplications)
       } else {
         setApplications([])

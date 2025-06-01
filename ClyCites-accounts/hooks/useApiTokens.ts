@@ -65,34 +65,65 @@ const transformApiToken = (backendToken: BackendApiToken): ApiToken => {
   }
 }
 
-export function useApiTokens() {
+export function useApiTokens(organizationId?: string) {
   const [tokens, setTokens] = useState<ApiToken[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  const fetchTokens = useCallback(async () => {
-    try {
-      setIsLoading(true)
-      setError(null)
-      const response = await apiClient.get<BackendApiToken[]>("/tokens")
-      if (response.success && response.data) {
-        const transformedTokens = response.data.map(transformApiToken)
-        setTokens(transformedTokens)
-      } else {
+  const fetchTokens = useCallback(
+    async (orgId?: string) => {
+      const targetOrgId = orgId || organizationId
+      if (!targetOrgId) {
+        console.warn("No organization ID provided for fetching tokens")
         setTokens([])
+        setIsLoading(false)
+        return
       }
-    } catch (err: any) {
-      console.error("Failed to fetch tokens:", err)
-      setError(err.message || "Failed to load tokens")
-      setTokens([])
-    } finally {
-      setIsLoading(false)
-    }
-  }, [])
 
-  const createToken = async (data: CreateTokenData) => {
+      try {
+        setIsLoading(true)
+        setError(null)
+        console.log("Fetching tokens for organization:", targetOrgId)
+        const response = await apiClient.get<BackendApiToken[] | any>(`/organizations/${targetOrgId}/tokens`)
+        console.log("Tokens API response:", response)
+
+        if (response.success && response.data) {
+          let tokensArray: BackendApiToken[] = []
+
+          if (Array.isArray(response.data)) {
+            tokensArray = response.data
+          } else if (response.data.tokens && Array.isArray(response.data.tokens)) {
+            tokensArray = response.data.tokens
+          } else if (typeof response.data === "object" && response.data._id) {
+            tokensArray = [response.data]
+          } else {
+            console.warn("Unexpected tokens data structure:", response.data)
+          }
+
+          const transformedTokens = tokensArray.map(transformApiToken)
+          setTokens(transformedTokens)
+        } else {
+          setTokens([])
+        }
+      } catch (err: any) {
+        console.error("Failed to fetch tokens:", err)
+        setError(err.message || "Failed to load tokens")
+        setTokens([])
+      } finally {
+        setIsLoading(false)
+      }
+    },
+    [organizationId],
+  )
+
+  const createToken = async (data: CreateTokenData, orgId?: string) => {
+    const targetOrgId = orgId || organizationId
+    if (!targetOrgId) {
+      return { success: false, error: "Organization ID is required" }
+    }
+
     try {
-      const response = await apiClient.post<BackendApiToken>("/tokens", data)
+      const response = await apiClient.post<BackendApiToken>(`/organizations/${targetOrgId}/tokens`, data)
       if (response.success && response.data) {
         const transformedToken = transformApiToken(response.data)
         setTokens((prev) => [...prev, transformedToken])
@@ -132,8 +163,10 @@ export function useApiTokens() {
   }
 
   useEffect(() => {
-    fetchTokens()
-  }, [fetchTokens])
+    if (organizationId) {
+      fetchTokens(organizationId)
+    }
+  }, [fetchTokens, organizationId])
 
   return {
     tokens,
