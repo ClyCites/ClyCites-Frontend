@@ -24,9 +24,10 @@ import { useTeams } from "@/hooks/useTeams"
 import { useOrganizations } from "@/hooks/useOrganizations"
 
 export default function TeamsPage() {
-  const { organizations } = useOrganizations()
+  const { organizations, currentOrganization, isLoading } = useOrganizations()
   const [selectedOrgId, setSelectedOrgId] = useState<string>("")
   const { teams, createTeam } = useTeams(selectedOrgId)
+  console.log("Teams data:", teams, "Type:", typeof teams, "Is Array:", Array.isArray(teams))
 
   const [searchTerm, setSearchTerm] = useState("")
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
@@ -57,11 +58,13 @@ export default function TeamsPage() {
     }
   }, [organizations, selectedOrgId])
 
-  const filteredTeams = teams.filter(
-    (team) =>
-      team.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      team.description.toLowerCase().includes(searchTerm.toLowerCase()),
-  )
+  const filteredTeams = Array.isArray(teams)
+    ? teams.filter(
+        (team) =>
+          team.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          team.description.toLowerCase().includes(searchTerm.toLowerCase()),
+      )
+    : []
 
   const handleCreateTeam = async () => {
     if (!selectedOrgId) return
@@ -186,11 +189,12 @@ export default function TeamsPage() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="none">No parent team</SelectItem>
-                      {teams.map((team) => (
-                        <SelectItem key={team.id} value={team.id}>
-                          {team.name}
-                        </SelectItem>
-                      ))}
+                      {Array.isArray(teams) &&
+                        teams.map((team) => (
+                          <SelectItem key={team.id} value={team.id}>
+                            {team.name}
+                          </SelectItem>
+                        ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -241,78 +245,84 @@ export default function TeamsPage() {
         </div>
 
         {/* Teams Grid */}
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {filteredTeams.map((team) => {
-            const VisibilityIcon = getVisibilityIcon(team.visibility)
-            return (
-              <Card key={team.id} className="hover:shadow-md transition-shadow">
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                        <Users className="h-5 w-5 text-blue-600" />
-                      </div>
-                      <div>
-                        <CardTitle className="text-lg">{team.name}</CardTitle>
-                        <div className="flex items-center space-x-2">
-                          <Badge variant="outline" className="text-xs">
-                            {team.type}
-                          </Badge>
-                          <div className="flex items-center space-x-1">
-                            <VisibilityIcon className="h-3 w-3 text-muted-foreground" />
-                            <span className="text-xs text-muted-foreground capitalize">{team.visibility}</span>
+        {!currentOrganization || isLoading || !Array.isArray(teams) ? (
+          <div className="flex items-center justify-center h-64">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          </div>
+        ) : (
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {filteredTeams.map((team) => {
+              const VisibilityIcon = getVisibilityIcon(team.visibility)
+              return (
+                <Card key={team.id} className="hover:shadow-md transition-shadow">
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                          <Users className="h-5 w-5 text-blue-600" />
+                        </div>
+                        <div>
+                          <CardTitle className="text-lg">{team.name}</CardTitle>
+                          <div className="flex items-center space-x-2">
+                            <Badge variant="outline" className="text-xs">
+                              {team.type}
+                            </Badge>
+                            <div className="flex items-center space-x-1">
+                              <VisibilityIcon className="h-3 w-3 text-muted-foreground" />
+                              <span className="text-xs text-muted-foreground capitalize">{team.visibility}</span>
+                            </div>
                           </div>
                         </div>
                       </div>
+                      <Button variant="ghost" size="sm" asChild>
+                        <Link href={`/teams/${team.id}`}>
+                          <Settings className="h-4 w-4" />
+                        </Link>
+                      </Button>
                     </div>
-                    <Button variant="ghost" size="sm" asChild>
-                      <Link href={`/teams/${team.id}`}>
-                        <Settings className="h-4 w-4" />
-                      </Link>
-                    </Button>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <CardDescription>{team.description || "No description provided"}</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <CardDescription>{team.description || "No description provided"}</CardDescription>
 
-                  {team.parent && (
-                    <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-                      <Building2 className="h-4 w-4" />
-                      <span>Part of {team.parent.name}</span>
-                    </div>
-                  )}
-
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">{team.memberCount} members</span>
-                    <span className="text-muted-foreground">
-                      Created {new Date(team.createdAt).toLocaleDateString()}
-                    </span>
-                  </div>
-
-                  {team.children && team.children.length > 0 && (
-                    <div className="pt-2 border-t">
-                      <p className="text-xs text-muted-foreground mb-2">Sub-teams:</p>
-                      <div className="flex flex-wrap gap-1">
-                        {team.children.slice(0, 3).map((child) => (
-                          <Badge key={child.id} variant="secondary" className="text-xs">
-                            {child.name}
-                          </Badge>
-                        ))}
-                        {team.children.length > 3 && (
-                          <Badge variant="secondary" className="text-xs">
-                            +{team.children.length - 3} more
-                          </Badge>
-                        )}
+                    {team.parent && (
+                      <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+                        <Building2 className="h-4 w-4" />
+                        <span>Part of {team.parent.name}</span>
                       </div>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            )
-          })}
-        </div>
+                    )}
 
-        {filteredTeams.length === 0 && (
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">{team.memberCount} members</span>
+                      <span className="text-muted-foreground">
+                        Created {new Date(team.createdAt).toLocaleDateString()}
+                      </span>
+                    </div>
+
+                    {team.children && team.children.length > 0 && (
+                      <div className="pt-2 border-t">
+                        <p className="text-xs text-muted-foreground mb-2">Sub-teams:</p>
+                        <div className="flex flex-wrap gap-1">
+                          {team.children.slice(0, 3).map((child) => (
+                            <Badge key={child.id} variant="secondary" className="text-xs">
+                              {child.name}
+                            </Badge>
+                          ))}
+                          {team.children.length > 3 && (
+                            <Badge variant="secondary" className="text-xs">
+                              +{team.children.length - 3} more
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              )
+            })}
+          </div>
+        )}
+
+        {filteredTeams.length === 0 && !isLoading && Array.isArray(teams) && (
           <div className="text-center py-12">
             <Users className="mx-auto h-12 w-12 text-muted-foreground" />
             <h3 className="mt-2 text-sm font-semibold text-gray-900">No teams</h3>

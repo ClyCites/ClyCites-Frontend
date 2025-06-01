@@ -1,12 +1,14 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import {
   Dialog,
   DialogContent,
@@ -16,35 +18,28 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Key, Plus, Copy, Trash2, Eye, EyeOff } from "lucide-react"
+import { Key, Plus, Search, Settings, Copy, Eye, EyeOff, RefreshCw, Trash2 } from "lucide-react"
 import { DashboardLayout } from "@/components/dashboard-layout"
-
-interface ApiToken {
-  id: string
-  name: string
-  description: string
-  scopes: string[]
-  lastUsed: string | null
-  createdAt: string
-  expiresAt: string | null
-  isActive: boolean
-}
+import { useApiTokens } from "@/hooks/useApiTokens"
+import { useOrganizations } from "@/hooks/useOrganizations"
 
 export default function TokensPage() {
-  const [tokens, setTokens] = useState<ApiToken[]>([])
-  const [isLoading, setIsLoading] = useState(true)
+  const { organizations } = useOrganizations()
+  const [selectedOrgId, setSelectedOrgId] = useState<string>("")
+  const { tokens, isLoading, error, createToken, deleteToken, regenerateToken } = useApiTokens(selectedOrgId)
+
+  const [searchTerm, setSearchTerm] = useState("")
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
+  const [showTokens, setShowTokens] = useState<Record<string, boolean>>({})
+  const [generatedToken, setGeneratedToken] = useState("")
   const [newToken, setNewToken] = useState({
     name: "",
     description: "",
-    scopes: [] as string[],
-    expiresIn: "30d",
+    permissions: [] as string[],
+    expiresAt: "",
   })
-  const [generatedToken, setGeneratedToken] = useState("")
-  const [showToken, setShowToken] = useState(false)
 
-  const availableScopes = [
+  const availablePermissions = [
     "profile",
     "email",
     "organizations",
@@ -56,73 +51,107 @@ export default function TokensPage() {
     "analytics",
     "billing",
     "admin",
+    "read",
+    "write",
+    "delete",
+    "manage",
+  ]
+
+  const expiryOptions = [
+    { value: "7d", label: "7 days" },
+    { value: "30d", label: "30 days" },
+    { value: "90d", label: "90 days" },
+    { value: "1y", label: "1 year" },
+    { value: "never", label: "Never" },
   ]
 
   useEffect(() => {
-    fetchTokens()
-  }, [])
+    if (Array.isArray(organizations) && organizations.length > 0 && !selectedOrgId) {
+      setSelectedOrgId(organizations[0].id)
+    }
+  }, [organizations, selectedOrgId])
 
-  const fetchTokens = async () => {
-    try {
-      const token = localStorage.getItem("token")
-      // Note: This would need to be adapted based on your actual API structure
-      // Since the API expects orgId, you'd need to get the current organization context
-      const response = await fetch("/api/organizations/current/tokens", {
-        headers: { Authorization: `Bearer ${token}` },
-      })
+  const filteredTokens = Array.isArray(tokens)
+    ? tokens.filter(
+        (token) =>
+          token.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          (token.description && token.description.toLowerCase().includes(searchTerm.toLowerCase())),
+      )
+    : []
 
-      if (response.ok) {
-        const data = await response.json()
-        setTokens(data)
-      }
-    } catch (error) {
-      console.error("Failed to fetch tokens:", error)
-    } finally {
-      setIsLoading(false)
+  const calculateExpiryDate = (expiresIn: string): string | undefined => {
+    if (expiresIn === "never") return undefined
+
+    const now = new Date()
+    switch (expiresIn) {
+      case "7d":
+        return new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString()
+      case "30d":
+        return new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000).toISOString()
+      case "90d":
+        return new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000).toISOString()
+      case "1y":
+        return new Date(now.getTime() + 365 * 24 * 60 * 60 * 1000).toISOString()
+      default:
+        return undefined
     }
   }
 
   const handleCreateToken = async () => {
-    try {
-      const token = localStorage.getItem("token")
-      const response = await fetch("/api/organizations/current/tokens", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(newToken),
-      })
+    if (!selectedOrgId) return
 
-      if (response.ok) {
-        const data = await response.json()
-        setGeneratedToken(data.token)
-        setTokens((prev) => [...prev, data.tokenInfo])
-        setNewToken({ name: "", description: "", scopes: [], expiresIn: "30d" })
-      }
-    } catch (error) {
-      console.error("Failed to create token:", error)
+    const tokenData = {
+      ...newToken,
+      expiresAt: calculateExpiryDate(newToken.expiresAt),
+    }
+
+    const result = await createToken(selectedOrgId, tokenData)
+    if (result.success && result.data) {
+      setGeneratedToken(result.data.token)
+      setNewToken({
+        name: "",
+        description: "",
+        permissions: [],
+        expiresAt: "30d",
+      })
     }
   }
 
-  const handleRevokeToken = async (tokenId: string) => {
-    try {
-      const token = localStorage.getItem("token")
-      const response = await fetch(`/api/tokens/${tokenId}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
-      })
+  const handleDeleteToken = async (tokenId: string) => {
+    const result = await deleteToken(tokenId)
+    if (result.success) {
+      // Token removed from state by hook
+    }
+  }
 
-      if (response.ok) {
-        setTokens((prev) => prev.filter((t) => t.id !== tokenId))
-      }
-    } catch (error) {
-      console.error("Failed to revoke token:", error)
+  const handleRegenerateToken = async (tokenId: string) => {
+    const result = await regenerateToken(tokenId)
+    if (result.success) {
+      // Show the new token temporarily
+      setShowTokens((prev) => ({ ...prev, [tokenId]: true }))
+      setTimeout(() => {
+        setShowTokens((prev) => ({ ...prev, [tokenId]: false }))
+      }, 30000) // Hide after 30 seconds
     }
   }
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text)
+  }
+
+  const toggleTokenVisibility = (tokenId: string) => {
+    setShowTokens((prev) => ({ ...prev, [tokenId]: !prev[tokenId] }))
+  }
+
+  const closeCreateDialog = () => {
+    setIsCreateDialogOpen(false)
+    setGeneratedToken("")
+    setNewToken({
+      name: "",
+      description: "",
+      permissions: [],
+      expiresAt: "30d",
+    })
   }
 
   return (
@@ -131,19 +160,19 @@ export default function TokensPage() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold">API Tokens</h1>
-            <p className="text-muted-foreground">Manage your API tokens for programmatic access</p>
+            <p className="text-muted-foreground">Manage API tokens for programmatic access</p>
           </div>
           <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
             <DialogTrigger asChild>
-              <Button>
+              <Button disabled={!selectedOrgId}>
                 <Plus className="mr-2 h-4 w-4" />
                 Create Token
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
+            <DialogContent className="sm:max-w-[600px]">
               <DialogHeader>
                 <DialogTitle>Create API Token</DialogTitle>
-                <DialogDescription>Create a new API token for programmatic access to your account.</DialogDescription>
+                <DialogDescription>Create a new API token for programmatic access</DialogDescription>
               </DialogHeader>
 
               {generatedToken ? (
@@ -154,42 +183,46 @@ export default function TokensPage() {
                       Make sure to copy your token now. You won't be able to see it again!
                     </p>
                     <div className="flex items-center space-x-2">
-                      <Input
-                        value={generatedToken}
-                        type={showToken ? "text" : "password"}
-                        readOnly
-                        className="font-mono text-sm"
-                      />
-                      <Button variant="outline" size="sm" onClick={() => setShowToken(!showToken)}>
-                        {showToken ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                      </Button>
+                      <Input value={generatedToken} readOnly className="font-mono text-xs" />
                       <Button variant="outline" size="sm" onClick={() => copyToClipboard(generatedToken)}>
-                        <Copy className="h-4 w-4" />
+                        <Copy className="h-3 w-3" />
                       </Button>
                     </div>
                   </div>
                   <DialogFooter>
-                    <Button
-                      onClick={() => {
-                        setIsCreateDialogOpen(false)
-                        setGeneratedToken("")
-                        setShowToken(false)
-                      }}
-                    >
-                      Done
-                    </Button>
+                    <Button onClick={closeCreateDialog}>Done</Button>
                   </DialogFooter>
                 </div>
               ) : (
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="name">Token Name</Label>
-                    <Input
-                      id="name"
-                      value={newToken.name}
-                      onChange={(e) => setNewToken((prev) => ({ ...prev, name: e.target.value }))}
-                      placeholder="My API Token"
-                    />
+                <div className="space-y-4 max-h-[60vh] overflow-y-auto">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="name">Token Name</Label>
+                      <Input
+                        id="name"
+                        value={newToken.name}
+                        onChange={(e) => setNewToken((prev) => ({ ...prev, name: e.target.value }))}
+                        placeholder="My API Token"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="expires">Expires In</Label>
+                      <Select
+                        value={newToken.expiresAt}
+                        onValueChange={(value) => setNewToken((prev) => ({ ...prev, expiresAt: value }))}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {expiryOptions.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
 
                   <div className="space-y-2">
@@ -203,75 +236,103 @@ export default function TokensPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="expires">Expires In</Label>
-                    <Select
-                      value={newToken.expiresIn}
-                      onValueChange={(value) => setNewToken((prev) => ({ ...prev, expiresIn: value }))}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="7d">7 days</SelectItem>
-                        <SelectItem value="30d">30 days</SelectItem>
-                        <SelectItem value="90d">90 days</SelectItem>
-                        <SelectItem value="1y">1 year</SelectItem>
-                        <SelectItem value="never">Never</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>Scopes</Label>
-                    <div className="grid grid-cols-2 gap-2">
-                      {availableScopes.map((scope) => (
-                        <label key={scope} className="flex items-center space-x-2">
+                    <Label>Permissions</Label>
+                    <div className="grid grid-cols-2 gap-2 max-h-32 overflow-y-auto">
+                      {availablePermissions.map((permission) => (
+                        <label key={permission} className="flex items-center space-x-2">
                           <input
                             type="checkbox"
-                            checked={newToken.scopes.includes(scope)}
+                            checked={newToken.permissions.includes(permission)}
                             onChange={(e) => {
                               if (e.target.checked) {
                                 setNewToken((prev) => ({
                                   ...prev,
-                                  scopes: [...prev.scopes, scope],
+                                  permissions: [...prev.permissions, permission],
                                 }))
                               } else {
                                 setNewToken((prev) => ({
                                   ...prev,
-                                  scopes: prev.scopes.filter((s) => s !== scope),
+                                  permissions: prev.permissions.filter((p) => p !== permission),
                                 }))
                               }
                             }}
                             className="rounded"
                           />
-                          <span className="text-sm">{scope}</span>
+                          <span className="text-sm">{permission}</span>
                         </label>
                       ))}
                     </div>
                   </div>
-
-                  <DialogFooter>
-                    <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
-                      Cancel
-                    </Button>
-                    <Button onClick={handleCreateToken} disabled={!newToken.name || newToken.scopes.length === 0}>
-                      Create Token
-                    </Button>
-                  </DialogFooter>
                 </div>
+              )}
+
+              {!generatedToken && (
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button onClick={handleCreateToken} disabled={!newToken.name || newToken.permissions.length === 0}>
+                    Create Token
+                  </Button>
+                </DialogFooter>
               )}
             </DialogContent>
           </Dialog>
         </div>
 
-        {isLoading ? (
+        {/* Organization Selector */}
+        <div className="flex items-center space-x-4">
+          <div className="flex-1 max-w-sm">
+            <Label htmlFor="organization">Organization</Label>
+            <Select value={selectedOrgId} onValueChange={setSelectedOrgId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select organization" />
+              </SelectTrigger>
+              <SelectContent>
+                {Array.isArray(organizations) &&
+                  organizations.map((org) => (
+                    <SelectItem key={org.id} value={org.id}>
+                      {org.name}
+                    </SelectItem>
+                  ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex-1 max-w-sm">
+            <Label htmlFor="search">Search Tokens</Label>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+              <Input
+                id="search"
+                placeholder="Search tokens..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Loading State */}
+        {isLoading && (
           <div className="flex items-center justify-center h-64">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
           </div>
-        ) : (
-          <div className="space-y-4">
-            {tokens.map((token) => (
-              <Card key={token.id}>
+        )}
+
+        {/* Error State */}
+        {error && (
+          <div className="text-center py-12">
+            <div className="text-red-600 mb-2">Error loading tokens</div>
+            <p className="text-sm text-muted-foreground">{error}</p>
+          </div>
+        )}
+
+        {/* Tokens Grid */}
+        {!isLoading && !error && (
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {filteredTokens.map((token) => (
+              <Card key={token.id} className="hover:shadow-md transition-shadow">
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
@@ -280,30 +341,65 @@ export default function TokensPage() {
                       </div>
                       <div>
                         <CardTitle className="text-lg">{token.name}</CardTitle>
-                        <CardDescription>{token.description}</CardDescription>
+                        <Badge variant="outline" className="text-xs">
+                          API Token
+                        </Badge>
                       </div>
                     </div>
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-center space-x-1">
                       <Badge variant={token.isActive ? "default" : "secondary"}>
                         {token.isActive ? "Active" : "Inactive"}
                       </Badge>
-                      <Button variant="ghost" size="sm" onClick={() => handleRevokeToken(token.id)}>
-                        <Trash2 className="h-4 w-4" />
+                      <Button variant="ghost" size="sm" asChild>
+                        <Link href={`/tokens/${token.id}`}>
+                          <Settings className="h-4 w-4" />
+                        </Link>
                       </Button>
                     </div>
                   </div>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="space-y-4">
+                  <CardDescription>{token.description || "No description provided"}</CardDescription>
+
                   <div className="space-y-3">
+                    <div>
+                      <Label className="text-xs font-medium text-muted-foreground">TOKEN</Label>
+                      <div className="flex items-center space-x-2 mt-1">
+                        <Input
+                          value={showTokens[token.id] ? token.token : "••••••••••••••••"}
+                          readOnly
+                          className="font-mono text-xs"
+                        />
+                        <Button variant="outline" size="sm" onClick={() => toggleTokenVisibility(token.id)}>
+                          {showTokens[token.id] ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={() => copyToClipboard(token.token)}>
+                          <Copy className="h-3 w-3" />
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={() => handleRegenerateToken(token.id)}>
+                          <RefreshCw className="h-3 w-3" />
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={() => handleDeleteToken(token.id)}>
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    </div>
+
                     <div className="flex flex-wrap gap-1">
-                      {token.scopes.map((scope) => (
-                        <Badge key={scope} variant="outline" className="text-xs">
-                          {scope}
+                      {token.permissions.slice(0, 3).map((permission, index) => (
+                        <Badge key={`${token.id}-permission-${index}`} variant="outline" className="text-xs">
+                          {typeof permission === "string" ? permission : permission.resource || "Unknown"}
                         </Badge>
                       ))}
+                      {token.permissions.length > 3 && (
+                        <Badge variant="outline" className="text-xs">
+                          +{token.permissions.length - 3} more
+                        </Badge>
+                      )}
                     </div>
-                    <div className="flex items-center justify-between text-sm text-muted-foreground">
-                      <span>Last used: {token.lastUsed ? new Date(token.lastUsed).toLocaleDateString() : "Never"}</span>
+
+                    <div className="flex items-center justify-between text-xs text-muted-foreground">
+                      <span>Requests: {token.usage.requestCount}</span>
                       <span>
                         {token.expiresAt
                           ? `Expires: ${new Date(token.expiresAt).toLocaleDateString()}`
@@ -317,17 +413,21 @@ export default function TokensPage() {
           </div>
         )}
 
-        {!isLoading && tokens.length === 0 && (
+        {!isLoading && !error && filteredTokens.length === 0 && (
           <div className="text-center py-12">
             <Key className="mx-auto h-12 w-12 text-muted-foreground" />
             <h3 className="mt-2 text-sm font-semibold text-gray-900">No API tokens</h3>
-            <p className="mt-1 text-sm text-muted-foreground">Get started by creating your first API token.</p>
-            <div className="mt-6">
-              <Button onClick={() => setIsCreateDialogOpen(true)}>
-                <Plus className="mr-2 h-4 w-4" />
-                Create Token
-              </Button>
-            </div>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {searchTerm ? "No tokens match your search." : "Get started by creating your first API token."}
+            </p>
+            {!searchTerm && selectedOrgId && (
+              <div className="mt-6">
+                <Button onClick={() => setIsCreateDialogOpen(true)}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Create Token
+                </Button>
+              </div>
+            )}
           </div>
         )}
       </div>
