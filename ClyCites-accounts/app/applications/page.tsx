@@ -79,16 +79,18 @@ export default function ApplicationsPage() {
   ]
 
   useEffect(() => {
-    if (organizations.length > 0 && !selectedOrgId) {
+    if (Array.isArray(organizations) && organizations.length > 0 && !selectedOrgId) {
       setSelectedOrgId(organizations[0].id)
     }
   }, [organizations, selectedOrgId])
 
-  const filteredApplications = applications.filter(
-    (app) =>
-      app.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      app.description.toLowerCase().includes(searchTerm.toLowerCase()),
-  )
+  const filteredApplications = Array.isArray(applications)
+    ? applications.filter(
+        (app) =>
+          app.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          app.description.toLowerCase().includes(searchTerm.toLowerCase()),
+      )
+    : []
 
   const handleCreateApplication = async () => {
     if (!selectedOrgId) return
@@ -285,11 +287,12 @@ export default function ApplicationsPage() {
                 <SelectValue placeholder="Select organization" />
               </SelectTrigger>
               <SelectContent>
-                {organizations.map((org) => (
-                  <SelectItem key={org.id} value={org.id}>
-                    {org.name}
-                  </SelectItem>
-                ))}
+                {Array.isArray(organizations) &&
+                  organizations.map((org) => (
+                    <SelectItem key={org.id} value={org.id}>
+                      {org.name}
+                    </SelectItem>
+                  ))}
               </SelectContent>
             </Select>
           </div>

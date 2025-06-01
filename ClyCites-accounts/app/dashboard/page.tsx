@@ -42,7 +42,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     // Calculate stats from loaded data
-    const totalMembers = organizations.reduce((sum, org) => sum + org.memberCount, 0)
+    const totalMembers = Array.isArray(organizations) ? organizations.reduce((sum, org) => sum + org.memberCount, 0) : 0
 
     const recentActivity = [
       {
@@ -83,10 +83,10 @@ export default function DashboardPage() {
     ]
 
     setStats({
-      totalOrganizations: organizations.length,
+      totalOrganizations: Array.isArray(organizations) ? organizations.length : 0,
       totalMembers,
-      totalTokens: tokens.length,
-      totalApplications: applications.length,
+      totalTokens: Array.isArray(tokens) ? tokens.length : 0,
+      totalApplications: Array.isArray(applications) ? applications.length : 0,
       recentActivity,
     })
   }, [organizations, tokens, applications])
@@ -233,21 +233,22 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {organizations.slice(0, 3).map((org) => (
-                  <div key={org.id} className="flex items-center justify-between p-3 border rounded-lg">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                        <Building2 className="h-4 w-4 text-blue-600" />
+                {Array.isArray(organizations) &&
+                  organizations.slice(0, 3).map((org) => (
+                    <div key={org.id} className="flex items-center justify-between p-3 border rounded-lg">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                          <Building2 className="h-4 w-4 text-blue-600" />
+                        </div>
+                        <div>
+                          <h4 className="font-medium">{org.name}</h4>
+                          <p className="text-sm text-muted-foreground">{org.memberCount} members</p>
+                        </div>
                       </div>
-                      <div>
-                        <h4 className="font-medium">{org.name}</h4>
-                        <p className="text-sm text-muted-foreground">{org.memberCount} members</p>
-                      </div>
+                      <Badge variant="outline">{org.role}</Badge>
                     </div>
-                    <Badge variant="outline">{org.role}</Badge>
-                  </div>
-                ))}
-                {organizations.length === 0 && (
+                  ))}
+                {(!Array.isArray(organizations) || organizations.length === 0) && (
                   <div className="text-center py-6">
                     <Building2 className="mx-auto h-8 w-8 text-muted-foreground" />
                     <p className="text-sm text-muted-foreground mt-2">No organizations yet</p>
