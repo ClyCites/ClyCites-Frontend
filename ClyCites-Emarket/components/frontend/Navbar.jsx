@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import logo from "../../public/images/logo.jpeg";
 import SearchForm from "./SearchForm";
-import HelpModel from "./HelpModel";
+// import HelpModel from "./HelpModel";
 import { HelpCircle, ShoppingCart, User, X } from "lucide-react";
 import {
   DropdownMenu,
@@ -32,7 +32,7 @@ export default function Navbar() {
             <User />
             <span>Login</span>
           </Link>
-          <HelpModel/>
+          {/* <HelpModel/> */}
           <DropdownMenu>
             <DropdownMenuTrigger>
               <Link
