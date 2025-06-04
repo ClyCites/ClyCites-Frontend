@@ -17,7 +17,7 @@ import {
 export default function Navbar() {
   return (
     <div className="bg-gray-50 dark:bg-slate-800">
-      <div className=" flex items-center justify-between py-3 max-w-7xl mx-auto px-8 gap-8">
+      <div className=" flex items-center justify-between py-3 max-w-7xl mx-auto gap-8">
         {/* Logo */}
         <Link className="" href="/">
           <Image src={logo} alt="limifood logo" className="w-12 h-12" />
@@ -32,6 +32,11 @@ export default function Navbar() {
             <User />
             <span>Login</span>
           </Link>
+          <button className="flex items-center space-x-1 text-green-950 dark:text-slate-100">
+           <HelpCircle />
+          <span>Help</span>
+
+          </button>
           {/* <HelpModel/> */}
           <DropdownMenu>
             <DropdownMenuTrigger>

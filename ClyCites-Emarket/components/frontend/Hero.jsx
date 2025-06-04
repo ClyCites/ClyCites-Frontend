@@ -10,7 +10,7 @@ export default function Hero() {
         {},{},{}
     ]
   return (
-    <div className='flex gap-8'>
+    <div className='flex gap-8 mb-6'>
         <div className="w-1/3 bg-white border border-gray-300 rounded-lg dark:bg-gray-800 dark:border-gray-700 text-slate-800 overflow-hidden">
         <h2 className="bg-slate-100 dark:bg-slate-700 py-3 px-6 font-semibold border-b border-gray-300 text-slate-800 dark:text-slate-100 ">Shop By Category</h2>
         <div className="py-3 px-6 h-[300px] overflow-y-auto flex flex-col gap-2">
@@ -28,7 +28,7 @@ export default function Hero() {
 
         </div>
         </div>
-        <div className="w-2/3 bg-blue-600 rounded-md">
+        <div className="w-2/3 rounded-md">
         <HeroCarousel/>
         </div>
     </div>
