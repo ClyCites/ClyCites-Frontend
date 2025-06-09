@@ -14,11 +14,13 @@ import { MobileNav } from "@/components/mobile-nav"
 import { MainNav } from "@/components/main-nav"
 import { SearchCommand } from "@/components/search-command"
 import { Badge } from "@/components/ui/badge"
+import { GetStartedDialog } from "@/components/get-started-dialog"
 
 export function Header() {
   const pathname = usePathname()
   const [isScrolled, setIsScrolled] = React.useState(false)
   const { setTheme, theme } = useTheme()
+  const [showGetStartedDialog, setShowGetStartedDialog] = React.useState(false)
 
   React.useEffect(() => {
     const handleScroll = () => {
@@ -40,11 +42,11 @@ export function Header() {
             <span className="hidden md:inline-block">Introducing PricePulse-AI: Real-time market price monitoring</span>
           </div>
           <div className="flex items-center space-x-4">
-            <Link href="https://pricepulse.clycites.com/login" className="text-emerald-100 hover:text-white transition-colors">
+            <Link href="/login" className="text-emerald-100 hover:text-white transition-colors">
               Login
             </Link>
             <span className="text-emerald-500">|</span>
-            <Link href="https://pricepulse.clycites.com/register" className="text-emerald-100 hover:text-white transition-colors">
+            <Link href="/register" className="text-emerald-100 hover:text-white transition-colors">
               Register
             </Link>
           </div>
@@ -117,15 +119,18 @@ export function Header() {
                 <Link href="/login">Login</Link>
               </Button>
               <Button
-                asChild
                 className="rounded-full bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-600"
+                onClick={() => setShowGetStartedDialog(true)}
               >
-                <Link href="/get-started">Get Started</Link>
+                Get Started
               </Button>
             </div>
           </TooltipProvider>
         </div>
       </div>
+
+      {/* Get Started Dialog */}
+      <GetStartedDialog open={showGetStartedDialog} onOpenChange={setShowGetStartedDialog} />
     </header>
   )
 }
