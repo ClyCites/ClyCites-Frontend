@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "ClyCites E-market",
-  description: "Developed by Francis",
+  description: "Developed by ClyCites",
 };
 
 export default function RootLayout({

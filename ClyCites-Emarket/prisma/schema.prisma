@@ -22,6 +22,7 @@ model Coupon  {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
 model Banner{
   id       String    @id @default(auto()) @map("_id") @db.ObjectId
   title    String
@@ -31,6 +32,7 @@ model Banner{
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
 model Category{
   id       String    @id @default(auto()) @map("_id") @db.ObjectId
   title    String
@@ -44,10 +46,10 @@ model Category{
   marketIds   String[]  @db.ObjectId
   markets     Market[]  @relation(fields: [marketIds], references: [id])
 
-
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
 model Market{
   id       String    @id @default(auto()) @map("_id") @db.ObjectId
   title    String
@@ -88,6 +90,66 @@ model Product{
   user User @relation(fields: [userId], references: [id])
   userId String  @db.ObjectId
 
+  orderItems OrderItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Order {
+  id       String    @id @default(auto()) @map("_id") @db.ObjectId
+  orderNumber String @unique
+  totalAmount Float
+  status String @default("pending") // pending, processing, shipped, delivered, cancelled
+  shippingAddress Json
+  paymentMethod String
+  paymentStatus String @default("pending") // pending, paid, failed
+  
+  user User @relation(fields: [userId], references: [id])
+  userId String @db.ObjectId
+  
+  items OrderItem[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model OrderItem {
+  id       String    @id @default(auto()) @map("_id") @db.ObjectId
+  quantity Int
+  price Float
+  
+  order Order @relation(fields: [orderId], references: [id])
+  orderId String @db.ObjectId
+  
+  product Product @relation(fields: [productId], references: [id])
+  productId String @db.ObjectId
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Cart {
+  id       String    @id @default(auto()) @map("_id") @db.ObjectId
+  
+  user User @relation(fields: [userId], references: [id])
+  userId String @db.ObjectId @unique
+  
+  items CartItem[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model CartItem {
+  id       String    @id @default(auto()) @map("_id") @db.ObjectId
+  quantity Int
+  
+  cart Cart @relation(fields: [cartId], references: [id])
+  cartId String @db.ObjectId
+  
+  productId String @db.ObjectId
+  
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -114,7 +176,6 @@ model FarmerProfile {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
 }
 
 model Training{
@@ -131,15 +192,15 @@ model Training{
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
 }
+
 enum UserRole{
   ADMIN
   USER 
   FARMER
   MODERATOR
-
 }
+
 model User {
    id       String    @id @default(auto()) @map("_id") @db.ObjectId
   name          String?
@@ -147,6 +208,8 @@ model User {
   password      String
   emailVerified DateTime?
   products Product[]
+  orders Order[]
+  cart Cart?
 
   role          UserRole @default(USER)
 
@@ -155,4 +218,3 @@ model User {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 }
-
