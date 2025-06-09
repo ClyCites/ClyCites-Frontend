@@ -24,7 +24,10 @@ export default withUt(
 			  },
 		  },
 		},
-		  plugins: [require("tailwindcss-animate"),require('@tailwindcss/forms'),require("flowbite/plugin")],
+		  plugins: [require("tailwindcss-animate"),
+			require('@tailwindcss/forms'),
+			// require("flowbite/plugin")
+      ],
 	// }, satisfies Config;
   });
 
