@@ -1,215 +1,459 @@
-import { API_CONFIG, type AuthResponse, type LoginCredentials, type RegisterData, type User } from "./auth-config"
+export interface LoginCredentials {
+  identifier: string // email or username
+  password: string
+  rememberMe?: boolean
+}
+
+export interface RegisterData {
+  username: string
+  email: string
+  password: string
+  firstName: string
+  lastName: string
+}
+
+export interface User {
+  id: string
+  username: string
+  email: string
+  firstName: string
+  lastName: string
+  fullName: string
+  role?: string
+  profilePicture?: string | null
+  isEmailVerified: boolean
+  lastLogin?: string
+  createdAt?: string
+}
+
+export interface AuthResponse {
+  success: boolean
+  message?: string
+  data?: {
+    user: User
+    token: string
+    refreshToken?: string
+  }
+  error?: string
+}
 
 class AuthService {
-  private baseURL = API_CONFIG.BASE_URL
+  private baseURL: string
+  private tokenKey = "auth_token"
+  private refreshTokenKey = "refresh_token"
 
-  private async request<T>(endpoint: string, options: RequestInit = {}): Promise<AuthResponse<T>> {
-    const url = `${this.baseURL}${endpoint}`
-    const token = this.getToken()
+  constructor() {
+    this.baseURL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"
+  }
 
-    const config: RequestInit = {
-      headers: {
-        "Content-Type": "application/json",
-        ...(token && { Authorization: `Bearer ${token}` }),
-        ...options.headers,
-      },
-      credentials: "include",
-      ...options,
+  // Set cookie helper
+  private setCookie(name: string, value: string, days = 7) {
+    if (typeof document === "undefined") return
+    const expires = new Date()
+    expires.setTime(expires.getTime() + days * 24 * 60 * 60 * 1000)
+    document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/;SameSite=Strict${
+      process.env.NODE_ENV === "production" ? ";Secure" : ""
+    }`
+  }
+
+  // Get cookie helper
+  private getCookie(name: string): string | null {
+    if (typeof document === "undefined") return null
+    const nameEQ = name + "="
+    const ca = document.cookie.split(";")
+    for (let i = 0; i < ca.length; i++) {
+      let c = ca[i]
+      while (c.charAt(0) === " ") c = c.substring(1, c.length)
+      if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length)
     }
+    return null
+  }
 
-    try {
-      const response = await fetch(url, config)
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.message || `HTTP error! status: ${response.status}`)
-      }
-
-      return data
-    } catch (error) {
-      console.error("API Request Error:", error)
-      return {
-        success: false,
-        message: error instanceof Error ? error.message : "Network error occurred",
-        data: null,
-      }
-    }
+  // Delete cookie helper
+  private deleteCookie(name: string) {
+    if (typeof document === "undefined") return
+    document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/;`
   }
 
   async login(
     credentials: LoginCredentials,
-  ): Promise<AuthResponse<{ user: User; token: string; refreshToken: string }>> {
-    const response = await this.request<{ user: User; token: string; refreshToken: string }>(
-      API_CONFIG.ENDPOINTS.LOGIN,
-      {
-        method: "POST",
-        body: JSON.stringify(credentials),
-      },
-    )
-
-    if (response.success && response.data) {
-      this.setToken(response.data.token)
-      this.setRefreshToken(response.data.refreshToken)
-    }
-
-    return response
-  }
-
-  async register(data: RegisterData): Promise<AuthResponse<{ user: User }>> {
-    return this.request<{ user: User }>(API_CONFIG.ENDPOINTS.REGISTER, {
-      method: "POST",
-      body: JSON.stringify(data),
-    })
-  }
-
-  async logout(): Promise<AuthResponse<any>> {
+  ): Promise<{ success: boolean; user?: User; token?: string; message: string }> {
     try {
-      const response = await this.request(API_CONFIG.ENDPOINTS.LOGOUT, {
+      const response = await fetch(`${this.baseURL}/auth/login`, {
         method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          identifier: credentials.identifier,
+          password: credentials.password,
+        }),
       })
-      return response
-    } finally {
-      this.removeToken()
-      this.removeRefreshToken()
-    }
-  }
 
-  async getMe(): Promise<AuthResponse<{ user: User }>> {
-    return this.request<{ user: User }>(API_CONFIG.ENDPOINTS.ME)
-  }
+      const data: AuthResponse = await response.json()
 
-  async refreshToken(): Promise<AuthResponse<{ token: string; user: User }>> {
-    const refreshToken = this.getRefreshToken()
-    if (!refreshToken) {
+      if (!response.ok) {
+        throw new Error(data.message || data.error || "Login failed")
+      }
+
+      if (data.success && data.data) {
+        // Store tokens in localStorage and cookies
+        localStorage.setItem(this.tokenKey, data.data.token)
+        if (data.data.refreshToken) {
+          localStorage.setItem(this.refreshTokenKey, data.data.refreshToken)
+        }
+
+        // Set cookies for middleware
+        this.setCookie("token", data.data.token)
+        this.setCookie("auth_token", data.data.token)
+        if (data.data.refreshToken) {
+          this.setCookie("refreshToken", data.data.refreshToken)
+        }
+
+        return {
+          success: true,
+          user: data.data.user,
+          token: data.data.token,
+          message: data.message || "Login successful",
+        }
+      }
+
+      throw new Error(data.message || "Login failed")
+    } catch (error) {
+      console.error("Login error:", error)
       return {
         success: false,
-        message: "No refresh token available",
-        data: null,
+        message: error instanceof Error ? error.message : "Login failed",
       }
     }
+  }
 
-    const response = await this.request<{ token: string; user: User }>(API_CONFIG.ENDPOINTS.REFRESH, {
-      method: "POST",
-      body: JSON.stringify({ refreshToken }),
-    })
+  async register(userData: RegisterData): Promise<{ success: boolean; message: string; user?: User }> {
+    try {
+      const response = await fetch(`${this.baseURL}/auth/register`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify(userData),
+      })
 
-    if (response.success && response.data) {
-      this.setToken(response.data.token)
+      const data: AuthResponse = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.message || data.error || "Registration failed")
+      }
+
+      return {
+        success: data.success,
+        message: data.message || "Registration successful",
+        user: data.data?.user,
+      }
+    } catch (error) {
+      console.error("Registration error:", error)
+      return {
+        success: false,
+        message: error instanceof Error ? error.message : "Registration failed",
+      }
     }
-
-    return response
   }
 
-  async forgotPassword(email: string): Promise<AuthResponse<any>> {
-    return this.request(API_CONFIG.ENDPOINTS.FORGOT_PASSWORD, {
-      method: "POST",
-      body: JSON.stringify({ email }),
-    })
+  async logout(): Promise<void> {
+    try {
+      const refreshToken = localStorage.getItem(this.refreshTokenKey)
+
+      await fetch(`${this.baseURL}/auth/logout`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${this.getToken()}`,
+        },
+        credentials: "include",
+        body: JSON.stringify({ refreshToken }),
+      })
+    } catch (error) {
+      console.error("Logout error:", error)
+    } finally {
+      // Clear all tokens regardless of API call success
+      localStorage.removeItem(this.tokenKey)
+      localStorage.removeItem(this.refreshTokenKey)
+      this.deleteCookie("token")
+      this.deleteCookie("auth_token")
+      this.deleteCookie("refreshToken")
+    }
   }
 
-  async resetPassword(token: string, password: string): Promise<AuthResponse<{ user: User; token: string }>> {
-    const response = await this.request<{ user: User; token: string }>(
-      `${API_CONFIG.ENDPOINTS.RESET_PASSWORD}/${token}`,
-      {
+  async getCurrentUser(): Promise<User | null> {
+    try {
+      const token = this.getToken()
+      if (!token) return null
+
+      const response = await fetch(`${this.baseURL}/auth/me`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        credentials: "include",
+      })
+
+      const data: AuthResponse = await response.json()
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          // Try to refresh token
+          const refreshed = await this.refreshToken()
+          if (refreshed) {
+            return this.getCurrentUser()
+          }
+        }
+        throw new Error(data.message || "Failed to get user")
+      }
+
+      return data.success && data.data ? data.data.user : null
+    } catch (error) {
+      console.error("Get current user error:", error)
+      return null
+    }
+  }
+
+  async refreshToken(): Promise<boolean> {
+    try {
+      const refreshToken = localStorage.getItem(this.refreshTokenKey)
+      if (!refreshToken) return false
+
+      const response = await fetch(`${this.baseURL}/auth/refresh-token`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({ refreshToken }),
+      })
+
+      const data: AuthResponse = await response.json()
+
+      if (!response.ok || !data.success || !data.data) {
+        this.logout()
+        return false
+      }
+
+      // Update tokens
+      localStorage.setItem(this.tokenKey, data.data.token)
+      this.setCookie("token", data.data.token)
+      this.setCookie("auth_token", data.data.token)
+
+      return true
+    } catch (error) {
+      console.error("Token refresh error:", error)
+      this.logout()
+      return false
+    }
+  }
+
+  async forgotPassword(email: string): Promise<{ success: boolean; message: string }> {
+    try {
+      const response = await fetch(`${this.baseURL}/auth/forgot-password`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email }),
+      })
+
+      const data: AuthResponse = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.message || data.error || "Failed to send reset email")
+      }
+
+      return {
+        success: data.success,
+        message: data.message || "Reset email sent",
+      }
+    } catch (error) {
+      console.error("Forgot password error:", error)
+      return {
+        success: false,
+        message: error instanceof Error ? error.message : "Failed to send reset email",
+      }
+    }
+  }
+
+  async resetPassword(token: string, password: string): Promise<{ success: boolean; message: string; user?: User }> {
+    try {
+      const response = await fetch(`${this.baseURL}/auth/reset-password/${token}`, {
         method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({ password }),
-      },
-    )
+      })
 
-    if (response.success && response.data) {
-      this.setToken(response.data.token)
+      const data: AuthResponse = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.message || data.error || "Failed to reset password")
+      }
+
+      if (data.success && data.data) {
+        // Store new tokens after password reset
+        localStorage.setItem(this.tokenKey, data.data.token)
+        if (data.data.refreshToken) {
+          localStorage.setItem(this.refreshTokenKey, data.data.refreshToken)
+        }
+        this.setCookie("token", data.data.token)
+        this.setCookie("auth_token", data.data.token)
+        if (data.data.refreshToken) {
+          this.setCookie("refreshToken", data.data.refreshToken)
+        }
+
+        return {
+          success: true,
+          user: data.data.user,
+          message: data.message || "Password reset successful",
+        }
+      }
+
+      return {
+        success: data.success,
+        message: data.message || "Password reset successful",
+      }
+    } catch (error) {
+      console.error("Reset password error:", error)
+      return {
+        success: false,
+        message: error instanceof Error ? error.message : "Password reset failed",
+      }
     }
+  }
 
-    return response
+  async verifyEmail(token: string): Promise<{ success: boolean; message: string }> {
+    try {
+      const response = await fetch(`${this.baseURL}/auth/verify-email/${token}`, {
+        method: "GET",
+      })
+
+      const data: AuthResponse = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.message || data.error || "Email verification failed")
+      }
+
+      return {
+        success: data.success,
+        message: data.message || "Email verified successfully",
+      }
+    } catch (error) {
+      console.error("Email verification error:", error)
+      return {
+        success: false,
+        message: error instanceof Error ? error.message : "Email verification failed",
+      }
+    }
   }
 
   async changePassword(
     currentPassword: string,
     newPassword: string,
-  ): Promise<AuthResponse<{ user: User; token: string }>> {
-    const response = await this.request<{ user: User; token: string }>(API_CONFIG.ENDPOINTS.CHANGE_PASSWORD, {
-      method: "PUT",
-      body: JSON.stringify({ currentPassword, newPassword }),
-    })
+  ): Promise<{ success: boolean; message: string; user?: User }> {
+    try {
+      const token = this.getToken()
+      if (!token) {
+        return {
+          success: false,
+          message: "Not authenticated",
+        }
+      }
 
-    if (response.success && response.data) {
-      this.setToken(response.data.token)
+      const response = await fetch(`${this.baseURL}/auth/change-password`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        credentials: "include",
+        body: JSON.stringify({ currentPassword, newPassword }),
+      })
+
+      const data: AuthResponse = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.message || data.error || "Failed to change password")
+      }
+
+      if (data.success && data.data) {
+        // Update tokens if provided
+        localStorage.setItem(this.tokenKey, data.data.token)
+        this.setCookie("token", data.data.token)
+        this.setCookie("auth_token", data.data.token)
+
+        return {
+          success: true,
+          user: data.data.user,
+          message: data.message || "Password changed successfully",
+        }
+      }
+
+      return {
+        success: data.success,
+        message: data.message || "Password changed successfully",
+      }
+    } catch (error) {
+      console.error("Change password error:", error)
+      return {
+        success: false,
+        message: error instanceof Error ? error.message : "Failed to change password",
+      }
     }
-
-    return response
   }
 
-  async verifyEmail(token: string): Promise<AuthResponse<any>> {
-    return this.request(`${API_CONFIG.ENDPOINTS.VERIFY_EMAIL}/${token}`, {
-      method: "GET",
-    })
-  }
+  async updateProfile(profileData: Partial<User>): Promise<{ success: boolean; message: string; user?: User }> {
+    try {
+      const token = this.getToken()
+      if (!token) {
+        return {
+          success: false,
+          message: "Not authenticated",
+        }
+      }
 
-  async updateProfile(data: { firstName?: string; lastName?: string; username?: string }): Promise<
-    AuthResponse<{ user: User }>
-  > {
-    return this.request<{ user: User }>("/auth/profile", {
-      method: "PUT",
-      body: JSON.stringify(data),
-    })
-  }
+      const response = await fetch(`${this.baseURL}/auth/profile`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(profileData),
+      })
 
-  // Token management
-  setToken(token: string): void {
-    if (typeof window !== "undefined") {
-      localStorage.setItem("auth_token", token)
-      // Also set as cookie for SSR
-      document.cookie = `token=${token}; path=/; max-age=${15 * 60}; secure; samesite=strict`
+      const data: AuthResponse = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.message || data.error || "Failed to update profile")
+      }
+
+      return {
+        success: data.success,
+        message: data.message || "Profile updated successfully",
+        user: data.data?.user,
+      }
+    } catch (error) {
+      console.error("Update profile error:", error)
+      return {
+        success: false,
+        message: error instanceof Error ? error.message : "Failed to update profile",
+      }
     }
   }
 
   getToken(): string | null {
-    if (typeof window !== "undefined") {
-      return localStorage.getItem("auth_token")
-    }
-    return null
+    if (typeof window === "undefined") return null
+    return localStorage.getItem(this.tokenKey) || this.getCookie("token")
   }
 
-  removeToken(): void {
-    if (typeof window !== "undefined") {
-      localStorage.removeItem("auth_token")
-      document.cookie = "token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;"
-    }
-  }
-
-  setRefreshToken(token: string): void {
-    if (typeof window !== "undefined") {
-      localStorage.setItem("refresh_token", token)
-      document.cookie = `refreshToken=${token}; path=/; max-age=${7 * 24 * 60 * 60}; secure; samesite=strict`
-    }
-  }
-
-  getRefreshToken(): string | null {
-    if (typeof window !== "undefined") {
-      return localStorage.getItem("refresh_token")
-    }
-    return null
-  }
-
-  removeRefreshToken(): void {
-    if (typeof window !== "undefined") {
-      localStorage.removeItem("refresh_token")
-      document.cookie = "refreshToken=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;"
-    }
-  }
-
-  isTokenExpired(token: string): boolean {
-    try {
-      const payload = JSON.parse(atob(token.split(".")[1]))
-      return Date.now() >= payload.exp * 1000
-    } catch {
-      return true
-    }
-  }
-
-  // Google OAuth
-  initiateGoogleAuth(): void {
-    window.location.href = `${this.baseURL}${API_CONFIG.ENDPOINTS.GOOGLE_AUTH}`
+  isAuthenticated(): boolean {
+    return !!this.getToken()
   }
 }
 

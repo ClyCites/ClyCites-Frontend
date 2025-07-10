@@ -1,190 +1,106 @@
 "use client"
 
 import type React from "react"
-import { createContext, useContext, useReducer, useEffect } from "react"
-import { authService } from "./auth-service"
-import type { AuthState, User, LoginCredentials, RegisterData } from "./auth-config"
-import { toast } from "sonner"
+import { createContext, useContext, useEffect, useState } from "react"
+import { authService, type User, type LoginCredentials, type RegisterData } from "./auth-service"
 
-interface AuthContextType extends AuthState {
-  login: (credentials: LoginCredentials) => Promise<void>
-  register: (data: RegisterData) => Promise<void>
+interface AuthContextType {
+  user: User | null
+  isLoading: boolean
+  isAuthenticated: boolean
+  login: (credentials: LoginCredentials) => Promise<{ success: boolean; message: string; user?: User }>
+  register: (data: RegisterData) => Promise<{ success: boolean; message: string; user?: User }>
   logout: () => Promise<void>
-  refreshAuth: () => Promise<void>
-  clearError: () => void
+  refreshUser: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
-type AuthAction =
-  | { type: "AUTH_START" }
-  | { type: "AUTH_SUCCESS"; payload: User }
-  | { type: "AUTH_FAILURE"; payload: string }
-  | { type: "AUTH_LOGOUT" }
-  | { type: "CLEAR_ERROR" }
-
-const initialState: AuthState = {
-  user: null,
-  isAuthenticated: false,
-  isLoading: true,
-  error: null,
-}
-
-function authReducer(state: AuthState, action: AuthAction): AuthState {
-  switch (action.type) {
-    case "AUTH_START":
-      return {
-        ...state,
-        isLoading: true,
-        error: null,
-      }
-    case "AUTH_SUCCESS":
-      return {
-        ...state,
-        user: action.payload,
-        isAuthenticated: true,
-        isLoading: false,
-        error: null,
-      }
-    case "AUTH_FAILURE":
-      return {
-        ...state,
-        user: null,
-        isAuthenticated: false,
-        isLoading: false,
-        error: action.payload,
-      }
-    case "AUTH_LOGOUT":
-      return {
-        ...state,
-        user: null,
-        isAuthenticated: false,
-        isLoading: false,
-        error: null,
-      }
-    case "CLEAR_ERROR":
-      return {
-        ...state,
-        error: null,
-      }
-    default:
-      return state
-  }
-}
-
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [state, dispatch] = useReducer(authReducer, initialState)
+  const [user, setUser] = useState<User | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
 
-  // Check for existing authentication on mount
+  const isAuthenticated = !!user
+
+  // Initialize auth state
   useEffect(() => {
-    const checkAuth = async () => {
-      const token = authService.getToken()
-      if (!token) {
-        dispatch({ type: "AUTH_FAILURE", payload: "" })
-        return
-      }
-
+    const initAuth = async () => {
       try {
-        const response = await authService.getMe()
-        if (response.success && response.data?.user) {
-          dispatch({ type: "AUTH_SUCCESS", payload: response.data.user })
-        } else {
-          throw new Error(response.message || "Failed to get user data")
+        if (authService.isAuthenticated()) {
+          const currentUser = await authService.getCurrentUser()
+          setUser(currentUser)
         }
       } catch (error) {
-        // Try to refresh token
-        try {
-          const refreshResponse = await authService.refreshToken()
-          if (refreshResponse.success && refreshResponse.data?.user) {
-            dispatch({ type: "AUTH_SUCCESS", payload: refreshResponse.data.user })
-          } else {
-            throw new Error("Failed to refresh authentication")
-          }
-        } catch (refreshError) {
-          authService.removeToken()
-          authService.removeRefreshToken()
-          dispatch({ type: "AUTH_FAILURE", payload: "" })
-        }
+        console.error("Auth initialization error:", error)
+      } finally {
+        setIsLoading(false)
       }
     }
 
-    checkAuth()
+    initAuth()
   }, [])
 
   const login = async (credentials: LoginCredentials) => {
-    dispatch({ type: "AUTH_START" })
     try {
-      const response = await authService.login(credentials)
-      if (response.success && response.data?.user) {
-        dispatch({ type: "AUTH_SUCCESS", payload: response.data.user })
-        toast.success("Login successful!")
-      } else {
-        throw new Error(response.message || "Login failed")
+      const result = await authService.login(credentials)
+      if (result.success && result.user) {
+        setUser(result.user)
       }
+      return result
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Login failed"
-      dispatch({ type: "AUTH_FAILURE", payload: message })
-      toast.error(message)
-      throw error
+      console.error("Login error:", error)
+      return {
+        success: false,
+        message: error instanceof Error ? error.message : "Login failed",
+      }
     }
   }
 
   const register = async (data: RegisterData) => {
-    dispatch({ type: "AUTH_START" })
     try {
-      const response = await authService.register(data)
-      if (response.success) {
-        toast.success(response.message || "Registration successful! Please check your email to verify your account.")
-        dispatch({ type: "AUTH_FAILURE", payload: "" }) // Reset loading state
-      } else {
-        throw new Error(response.message || "Registration failed")
+      const result = await authService.register(data)
+      if (result.success && result.user) {
+        setUser(result.user)
       }
+      return result
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Registration failed"
-      dispatch({ type: "AUTH_FAILURE", payload: message })
-      toast.error(message)
-      throw error
+      console.error("Registration error:", error)
+      return {
+        success: false,
+        message: error instanceof Error ? error.message : "Registration failed",
+      }
     }
   }
 
   const logout = async () => {
     try {
-      const response = await authService.logout()
-      dispatch({ type: "AUTH_LOGOUT" })
-      if (response.success) {
-        toast.success("Logged out successfully")
-      }
+      await authService.logout()
+      setUser(null)
     } catch (error) {
-      // Even if logout fails on server, clear local state
-      authService.removeToken()
-      authService.removeRefreshToken()
-      dispatch({ type: "AUTH_LOGOUT" })
-      toast.error("Logout failed, but you have been logged out locally")
+      console.error("Logout error:", error)
     }
   }
 
-  const refreshAuth = async () => {
+  const refreshUser = async () => {
     try {
-      const response = await authService.getMe()
-      if (response.success && response.data?.user) {
-        dispatch({ type: "AUTH_SUCCESS", payload: response.data.user })
+      if (authService.isAuthenticated()) {
+        const currentUser = await authService.getCurrentUser()
+        setUser(currentUser)
       }
     } catch (error) {
-      console.error("Failed to refresh auth:", error)
+      console.error("Refresh user error:", error)
+      setUser(null)
     }
-  }
-
-  const clearError = () => {
-    dispatch({ type: "CLEAR_ERROR" })
   }
 
   const value: AuthContextType = {
-    ...state,
+    user,
+    isLoading,
+    isAuthenticated,
     login,
     register,
     logout,
-    refreshAuth,
-    clearError,
+    refreshUser,
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

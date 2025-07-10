@@ -1,256 +1,482 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { weatherAPI, type WeatherLocation, type WeatherOptions, type WeatherVariables } from "@/lib/api/weather-api"
+import { useState, useEffect, useCallback, useRef, useMemo } from "react"
+import {
+  weatherApi,
+  type LocationData,
+  type WeatherOptions,
+  type ForecastParams,
+  type CurrentWeatherData,
+  type WeatherForecastData,
+} from "../api/weather-api"
 
-export function useWeatherVariables() {
-  const [variables, setVariables] = useState<any>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-
-  useEffect(() => {
-    const fetchVariables = async () => {
-      try {
-        setIsLoading(true)
-        setError(null)
-        const data = await weatherAPI.getAvailableVariables()
-        setVariables(data)
-      } catch (err) {
-        console.error("Failed to fetch weather variables:", err)
-        setError(err instanceof Error ? err.message : "Failed to fetch weather variables")
-        // Fallback to default variables if API fails
-        setVariables({
-          hourly: [
-            "temperature_2m",
-            "relative_humidity_2m",
-            "dew_point_2m",
-            "apparent_temperature",
-            "precipitation",
-            "rain",
-            "showers",
-            "snowfall",
-            "weather_code",
-            "pressure_msl",
-            "surface_pressure",
-            "cloud_cover",
-            "wind_speed_10m",
-            "wind_direction_10m",
-            "wind_gusts_10m",
-          ],
-          daily: [
-            "temperature_2m_max",
-            "temperature_2m_min",
-            "apparent_temperature_max",
-            "apparent_temperature_min",
-            "precipitation_sum",
-            "rain_sum",
-            "showers_sum",
-            "snowfall_sum",
-            "precipitation_hours",
-            "sunrise",
-            "sunset",
-            "windspeed_10m_max",
-            "windgusts_10m_max",
-            "winddirection_10m_dominant",
-          ],
-        })
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
-    fetchVariables()
-  }, [])
-
-  return { variables, isLoading, error }
+export interface Location {
+  name: string
+  country: string
+  region: string
+  lat: number
+  lon: number
+  latitude: number
+  longitude: number
 }
 
-export function useCurrentWeather(location: WeatherLocation | null, variables?: string[], options?: WeatherOptions) {
-  const [data, setData] = useState<any>(null)
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+// Global cache to prevent duplicate requests across component instances
+const weatherCache = new Map<string, { data: CurrentWeatherData; timestamp: number }>()
+const locationCache = new Map<string, { data: LocationData[]; timestamp: number }>()
+const forecastCache = new Map<string, { data: WeatherForecastData; timestamp: number }>()
+const pendingRequests = new Map<string, Promise<any>>()
 
-  const fetchCurrentWeather = async () => {
-    if (!location) return
+const CACHE_DURATION = 5 * 60 * 1000 // 5 minutes
+const DEBOUNCE_DELAY = 300 // 300ms for search
+const WEATHER_DEBOUNCE_DELAY = 100 // 100ms for weather updates
+const REQUEST_TIMEOUT = 10000 // 10 seconds
+const MIN_REQUEST_INTERVAL = 1000 // Minimum 1 second between requests
 
-    try {
-      setIsLoading(true)
-      setError(null)
-      const weatherData = await weatherAPI.getCurrentWeather(location, variables, options)
-      setData(weatherData)
-    } catch (err) {
-      console.error("Failed to fetch current weather:", err)
-      setError(err instanceof Error ? err.message : "Failed to fetch current weather")
-    } finally {
-      setIsLoading(false)
+// Cleanup expired cache entries
+const cleanupCache = () => {
+  const now = Date.now()
+  for (const [key, value] of weatherCache.entries()) {
+    if (now - value.timestamp > CACHE_DURATION) {
+      weatherCache.delete(key)
     }
   }
-
-  useEffect(() => {
-    fetchCurrentWeather()
-  }, [location, variables?.join(","), JSON.stringify(options)])
-
-  return { data, isLoading, error, refetch: fetchCurrentWeather }
-}
-
-export function useWeatherForecast(
-  location: WeatherLocation | null,
-  variables?: WeatherVariables,
-  days = 7,
-  options?: WeatherOptions,
-) {
-  const [data, setData] = useState<any>(null)
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-
-  const fetchForecast = async () => {
-    if (!location) return
-
-    try {
-      setIsLoading(true)
-      setError(null)
-      const forecastData = await weatherAPI.getForecast(location, variables, days, options)
-      setData(forecastData)
-    } catch (err) {
-      console.error("Failed to fetch weather forecast:", err)
-      setError(err instanceof Error ? err.message : "Failed to fetch weather forecast")
-    } finally {
-      setIsLoading(false)
+  for (const [key, value] of locationCache.entries()) {
+    if (now - value.timestamp > CACHE_DURATION) {
+      locationCache.delete(key)
     }
   }
-
-  useEffect(() => {
-    fetchForecast()
-  }, [location, JSON.stringify(variables), days, JSON.stringify(options)])
-
-  return { data, isLoading, error, refetch: fetchForecast }
-}
-
-export function useHistoricalWeather(
-  location: WeatherLocation | null,
-  startDate: string,
-  endDate: string,
-  variables?: WeatherVariables,
-  options?: WeatherOptions,
-) {
-  const [data, setData] = useState<any>(null)
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-
-  const fetchHistoricalWeather = async () => {
-    if (!location || !startDate || !endDate) return
-
-    try {
-      setIsLoading(true)
-      setError(null)
-      const historicalData = await weatherAPI.getHistoricalWeather(location, startDate, endDate, variables, options)
-      setData(historicalData)
-    } catch (err) {
-      console.error("Failed to fetch historical weather:", err)
-      setError(err instanceof Error ? err.message : "Failed to fetch historical weather")
-    } finally {
-      setIsLoading(false)
+  for (const [key, value] of forecastCache.entries()) {
+    if (now - value.timestamp > CACHE_DURATION) {
+      forecastCache.delete(key)
     }
   }
-
-  useEffect(() => {
-    fetchHistoricalWeather()
-  }, [location, startDate, endDate, JSON.stringify(variables), JSON.stringify(options)])
-
-  return { data, isLoading, error, refetch: fetchHistoricalWeather }
 }
 
-export function useClimateProjection(
-  location: WeatherLocation | null,
-  startDate: string,
-  endDate: string,
-  variables?: string[],
-  options?: WeatherOptions,
-) {
-  const [data, setData] = useState<any>(null)
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-
-  const fetchClimateProjection = async () => {
-    if (!location || !startDate || !endDate) return
-
-    try {
-      setIsLoading(true)
-      setError(null)
-      const climateData = await weatherAPI.getClimateProjection(location, startDate, endDate, variables, options)
-      setData(climateData)
-    } catch (err) {
-      console.error("Failed to fetch climate projection:", err)
-      setError(err instanceof Error ? err.message : "Failed to fetch climate projection")
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  useEffect(() => {
-    fetchClimateProjection()
-  }, [location, startDate, endDate, variables?.join(","), JSON.stringify(options)])
-
-  return { data, isLoading, error, refetch: fetchClimateProjection }
-}
+// Run cleanup every 5 minutes
+setInterval(cleanupCache, CACHE_DURATION)
 
 export function useLocationSearch() {
-  const [locations, setLocations] = useState<WeatherLocation[]>([])
-  const [isLoading, setIsLoading] = useState(false)
+  const [locations, setLocations] = useState<LocationData[]>([])
+  const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const searchLocations = async (query: string) => {
-    if (!query.trim()) {
-      setLocations([])
-      return
-    }
+  const abortControllerRef = useRef<AbortController | null>(null)
+  const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const lastRequestTimeRef = useRef<number>(0)
 
-    try {
-      setIsLoading(true)
-      setError(null)
-      const results = await weatherAPI.searchLocations(query)
-      setLocations(results)
-    } catch (err) {
-      console.error("Failed to search locations:", err)
-      setError(err instanceof Error ? err.message : "Failed to search locations")
-      setLocations([])
-    } finally {
-      setIsLoading(false)
-    }
-  }
+  const createCacheKey = useCallback((query: string) => `locations_${query.toLowerCase().trim()}`, [])
 
-  return { locations, isLoading, error, searchLocations }
+  const searchLocationsWithCache = useCallback(
+    async (query: string): Promise<LocationData[]> => {
+      if (!query.trim() || query.length < 2) return []
+
+      const cacheKey = createCacheKey(query)
+
+      // Check cache first
+      const cached = locationCache.get(cacheKey)
+      if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+        return cached.data
+      }
+
+      // Check for pending request
+      if (pendingRequests.has(cacheKey)) {
+        return pendingRequests.get(cacheKey)!
+      }
+
+      // Throttle requests
+      const now = Date.now()
+      const timeSinceLastRequest = now - lastRequestTimeRef.current
+      if (timeSinceLastRequest < MIN_REQUEST_INTERVAL) {
+        await new Promise((resolve) => setTimeout(resolve, MIN_REQUEST_INTERVAL - timeSinceLastRequest))
+      }
+
+      const requestPromise = (async () => {
+        try {
+          // Cancel previous request
+          if (abortControllerRef.current) {
+            abortControllerRef.current.abort()
+          }
+
+          abortControllerRef.current = new AbortController()
+          const timeoutId = setTimeout(() => abortControllerRef.current?.abort(), REQUEST_TIMEOUT)
+
+          lastRequestTimeRef.current = Date.now()
+          const data = await weatherApi.searchLocations(query, abortControllerRef.current.signal)
+
+          clearTimeout(timeoutId)
+
+          // Cache the result
+          locationCache.set(cacheKey, { data, timestamp: Date.now() })
+
+          return data
+        } catch (error: any) {
+          if (error.name === "AbortError") {
+            throw new Error("Search was cancelled")
+          }
+          throw error
+        } finally {
+          pendingRequests.delete(cacheKey)
+        }
+      })()
+
+      pendingRequests.set(cacheKey, requestPromise)
+      return requestPromise
+    },
+    [createCacheKey],
+  )
+
+  const searchLocations = useCallback(
+    async (query: string) => {
+      if (!query.trim() || query.length < 2) {
+        setLocations([])
+        return
+      }
+
+      try {
+        setLoading(true)
+        setError(null)
+
+        const data = await searchLocationsWithCache(query)
+        setLocations(data)
+      } catch (err: any) {
+        console.error("Location search error:", err)
+        if (!err.message.includes("cancelled")) {
+          setError(err.message || "Failed to search locations")
+          setLocations([])
+        }
+      } finally {
+        setLoading(false)
+      }
+    },
+    [searchLocationsWithCache],
+  )
+
+  const debouncedSearchLocations = useCallback(
+    (query: string) => {
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current)
+      }
+
+      debounceTimeoutRef.current = setTimeout(() => {
+        searchLocations(query)
+      }, DEBOUNCE_DELAY)
+    },
+    [searchLocations],
+  )
+
+  const clearLocations = useCallback(() => {
+    setLocations([])
+  }, [])
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort()
+      }
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current)
+      }
+    }
+  }, [])
+
+  return useMemo(
+    () => ({
+      locations,
+      loading,
+      error,
+      searchLocations: debouncedSearchLocations,
+      clearLocations,
+    }),
+    [locations, loading, error, debouncedSearchLocations, clearLocations],
+  )
 }
 
 export function useCurrentLocation() {
-  const [location, setLocation] = useState<WeatherLocation | null>(null)
+  const [location, setLocation] = useState<Location | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const getCurrentLocation = async () => {
+  const getCurrentLocation = useCallback(async () => {
     if (!navigator.geolocation) {
       setError("Geolocation is not supported by this browser")
       return
     }
 
+    setIsLoading(true)
+    setError(null)
+
+    try {
+      const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject, {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 300000, // 5 minutes
+        })
+      })
+
+      // Reverse geocode to get location name
+      try {
+        const locations = await weatherApi.reverseGeocode(position.coords.latitude, position.coords.longitude)
+
+        if (locations && locations.length > 0) {
+          setLocation(locations[0])
+        } else {
+          // Fallback if reverse geocoding fails
+          setLocation({
+            name: "Current Location",
+            country: "",
+            region: "",
+            lat: position.coords.latitude,
+            lon: position.coords.longitude,
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+          })
+        }
+      } catch {
+        // Fallback if reverse geocoding fails
+        setLocation({
+          name: "Current Location",
+          country: "",
+          region: "",
+          lat: position.coords.latitude,
+          lon: position.coords.longitude,
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+        })
+      }
+    } catch (err: any) {
+      let errorMessage = "Failed to get current location"
+
+      switch (err.code) {
+        case err.PERMISSION_DENIED:
+          errorMessage = "Location access denied by user"
+          break
+        case err.POSITION_UNAVAILABLE:
+          errorMessage = "Location information unavailable"
+          break
+        case err.TIMEOUT:
+          errorMessage = "Location request timed out"
+          break
+      }
+
+      setError(errorMessage)
+    } finally {
+      setIsLoading(false)
+    }
+  }, [])
+
+  return useMemo(
+    () => ({
+      location,
+      isLoading,
+      error,
+      getCurrentLocation,
+    }),
+    [location, isLoading, error, getCurrentLocation],
+  )
+}
+
+export function useCurrentWeather(location: Location | null, variables: string[] = [], options: WeatherOptions = {}) {
+  const [data, setData] = useState<CurrentWeatherData | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const abortControllerRef = useRef<AbortController | null>(null)
+  const lastRequestTimeRef = useRef<number>(0)
+
+  const createCacheKey = useCallback(
+    (loc: Location, vars: string[], opts: WeatherOptions) =>
+      `current_${loc.lat}_${loc.lon}_${vars.join(",")}_${JSON.stringify(opts)}`,
+    [],
+  )
+
+  const fetchWeather = useCallback(
+    async (loc: Location, vars: string[], opts: WeatherOptions) => {
+      const cacheKey = createCacheKey(loc, vars, opts)
+
+      // Check cache first
+      const cached = weatherCache.get(cacheKey)
+      if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+        return cached.data
+      }
+
+      // Throttle requests
+      const now = Date.now()
+      const timeSinceLastRequest = now - lastRequestTimeRef.current
+      if (timeSinceLastRequest < MIN_REQUEST_INTERVAL) {
+        await new Promise((resolve) => setTimeout(resolve, MIN_REQUEST_INTERVAL - timeSinceLastRequest))
+      }
+
+      // Cancel previous request
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort()
+      }
+
+      abortControllerRef.current = new AbortController()
+      lastRequestTimeRef.current = Date.now()
+
+      const weatherData = await weatherApi.getCurrentWeather(
+        loc.lat,
+        loc.lon,
+        vars,
+        opts,
+        abortControllerRef.current.signal,
+      )
+
+      // Cache the result
+      weatherCache.set(cacheKey, { data: weatherData, timestamp: Date.now() })
+
+      return weatherData
+    },
+    [createCacheKey],
+  )
+
+  const refetch = useCallback(async () => {
+    if (!location) return
+
     try {
       setIsLoading(true)
       setError(null)
 
-      const position = await new Promise<GeolocationPosition>((resolve, reject) => {
-        navigator.geolocation.getCurrentPosition(resolve, reject)
-      })
-
-      const { latitude, longitude } = position.coords
-      const locationData = await weatherAPI.getLocationByCoords(latitude, longitude)
-      setLocation(locationData)
-    } catch (err) {
-      console.error("Failed to get current location:", err)
-      setError(err instanceof Error ? err.message : "Failed to get current location")
+      const weatherData = await fetchWeather(location, variables, options)
+      setData(weatherData)
+    } catch (err: any) {
+      if (!err.message.includes("cancelled")) {
+        setError(err.message || "Failed to fetch weather data")
+      }
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [location, variables, options, fetchWeather])
 
-  return { location, isLoading, error, getCurrentLocation }
+  // Auto-fetch when location or parameters change
+  useEffect(() => {
+    if (location) {
+      refetch()
+    }
+  }, [location, refetch])
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort()
+      }
+    }
+  }, [])
+
+  return useMemo(
+    () => ({
+      data,
+      isLoading,
+      error,
+      refetch,
+    }),
+    [data, isLoading, error, refetch],
+  )
+}
+
+export function useWeatherForecast(
+  location: Location | null,
+  params: ForecastParams = {},
+  options: WeatherOptions = {},
+) {
+  const [data, setData] = useState<WeatherForecastData | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const abortControllerRef = useRef<AbortController | null>(null)
+  const lastRequestTimeRef = useRef<number>(0)
+
+  const createCacheKey = useCallback(
+    (loc: Location, p: ForecastParams, opts: WeatherOptions) =>
+      `forecast_${loc.lat}_${loc.lon}_${JSON.stringify(p)}_${JSON.stringify(opts)}`,
+    [],
+  )
+
+  const fetchForecast = useCallback(
+    async (loc: Location, p: ForecastParams, opts: WeatherOptions) => {
+      const cacheKey = createCacheKey(loc, p, opts)
+
+      // Check cache first
+      const cached = forecastCache.get(cacheKey)
+      if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+        return cached.data
+      }
+
+      // Throttle requests
+      const now = Date.now()
+      const timeSinceLastRequest = now - lastRequestTimeRef.current
+      if (timeSinceLastRequest < MIN_REQUEST_INTERVAL) {
+        await new Promise((resolve) => setTimeout(resolve, MIN_REQUEST_INTERVAL - timeSinceLastRequest))
+      }
+
+      // Cancel previous request
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort()
+      }
+
+      abortControllerRef.current = new AbortController()
+      lastRequestTimeRef.current = Date.now()
+
+      const forecastData = await weatherApi.getWeatherForecast(
+        loc.lat,
+        loc.lon,
+        p,
+        opts,
+        abortControllerRef.current.signal,
+      )
+
+      // Cache the result
+      forecastCache.set(cacheKey, { data: forecastData, timestamp: Date.now() })
+
+      return forecastData
+    },
+    [createCacheKey],
+  )
+
+  const refetch = useCallback(async () => {
+    if (!location) return
+
+    try {
+      setIsLoading(true)
+      setError(null)
+
+      const forecastData = await fetchForecast(location, params, options)
+      setData(forecastData)
+    } catch (err: any) {
+      if (!err.message.includes("cancelled")) {
+        setError(err.message || "Failed to fetch forecast data")
+      }
+    } finally {
+      setIsLoading(false)
+    }
+  }, [location, params, options, fetchForecast])
+
+  // Auto-fetch when location or parameters change
+  useEffect(() => {
+    if (location) {
+      refetch()
+    }
+  }, [location, refetch])
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort()
+      }
+    }
+  }, [])
+
+  return useMemo(
+    () => ({
+      data,
+      isLoading,
+      error,
+      refetch,
+    }),
+    [data, isLoading, error, refetch],
+  )
 }

@@ -1,11 +1,11 @@
 "use client"
 
+import type React from "react"
+
 import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import {
   Dialog,
   DialogContent,
@@ -13,11 +13,14 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog"
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Spinner } from "@/components/ui/spinner"
-import { Eye, EyeOff } from "lucide-react"
+import { Eye, EyeOff, AlertCircle, CheckCircle } from "lucide-react"
 import { authService } from "@/lib/auth/auth-service"
 import { toast } from "sonner"
 
@@ -41,18 +44,17 @@ const changePasswordSchema = z
 type ChangePasswordFormValues = z.infer<typeof changePasswordSchema>
 
 interface ChangePasswordDialogProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
+  children: React.ReactNode
 }
 
-export function ChangePasswordDialog({ open, onOpenChange }: ChangePasswordDialogProps) {
-  const [isSubmitting, setIsSubmitting] = useState(false)
+export function ChangePasswordDialog({ children }: ChangePasswordDialogProps) {
+  const [open, setOpen] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [showPasswords, setShowPasswords] = useState({
-    current: false,
-    new: false,
-    confirm: false,
-  })
+  const [success, setSuccess] = useState(false)
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false)
+  const [showNewPassword, setShowNewPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
   const form = useForm<ChangePasswordFormValues>({
     resolver: zodResolver(changePasswordSchema),
@@ -64,22 +66,37 @@ export function ChangePasswordDialog({ open, onOpenChange }: ChangePasswordDialo
   })
 
   const onSubmit = async (data: ChangePasswordFormValues) => {
-    setIsSubmitting(true)
+    setIsLoading(true)
     setError(null)
+    setSuccess(false)
 
     try {
-      const response = await authService.changePassword(data.currentPassword, data.newPassword)
-      if (response.success) {
-        toast.success("Password changed successfully")
+      const result = await authService.changePassword(data.currentPassword, data.newPassword)
+
+      if (result.success) {
+        setSuccess(true)
+        toast.success("Password changed successfully!")
         form.reset()
-        onOpenChange(false)
+        setTimeout(() => {
+          setOpen(false)
+          setSuccess(false)
+        }, 2000)
       } else {
-        setError(response.message || "Failed to change password")
+        setError(result.message)
       }
     } catch (error) {
-      setError(error instanceof Error ? error.message : "An error occurred")
+      setError("An unexpected error occurred")
     } finally {
-      setIsSubmitting(false)
+      setIsLoading(false)
+    }
+  }
+
+  const handleOpenChange = (newOpen: boolean) => {
+    setOpen(newOpen)
+    if (!newOpen) {
+      form.reset()
+      setError(null)
+      setSuccess(false)
     }
   }
 
@@ -96,157 +113,142 @@ export function ChangePasswordDialog({ open, onOpenChange }: ChangePasswordDialo
 
   const passwordStrength = calculatePasswordStrength(form.watch("newPassword"))
 
-  const togglePasswordVisibility = (field: keyof typeof showPasswords) => {
-    setShowPasswords((prev) => ({
-      ...prev,
-      [field]: !prev[field],
-    }))
-  }
-
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogTrigger asChild>{children}</DialogTrigger>
+      <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Change Password</DialogTitle>
           <DialogDescription>Enter your current password and choose a new secure password.</DialogDescription>
         </DialogHeader>
 
-        {error && (
-          <Alert variant="destructive">
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          {error && (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
 
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="currentPassword"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Current Password</FormLabel>
-                  <FormControl>
-                    <div className="relative">
-                      <Input
-                        type={showPasswords.current ? "text" : "password"}
-                        placeholder="Enter your current password"
-                        {...field}
-                        disabled={isSubmitting}
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="absolute right-0 top-0"
-                        onClick={() => togglePasswordVisibility("current")}
-                      >
-                        {showPasswords.current ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                      </Button>
-                    </div>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+          {success && (
+            <Alert>
+              <CheckCircle className="h-4 w-4" />
+              <AlertDescription>Password changed successfully!</AlertDescription>
+            </Alert>
+          )}
 
-            <FormField
-              control={form.control}
-              name="newPassword"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>New Password</FormLabel>
-                  <FormControl>
-                    <div className="relative">
-                      <Input
-                        type={showPasswords.new ? "text" : "password"}
-                        placeholder="Enter your new password"
-                        {...field}
-                        disabled={isSubmitting}
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="absolute right-0 top-0"
-                        onClick={() => togglePasswordVisibility("new")}
-                      >
-                        {showPasswords.new ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                      </Button>
-                    </div>
-                  </FormControl>
-                  {field.value && (
-                    <div className="mt-2">
-                      <div className="flex space-x-1">
-                        {[1, 2, 3, 4, 5].map((level) => (
-                          <div
-                            key={level}
-                            className={`h-2 flex-1 rounded-full ${
-                              passwordStrength >= level
-                                ? level <= 2
-                                  ? "bg-red-500"
-                                  : level <= 3
-                                    ? "bg-yellow-500"
-                                    : "bg-green-500"
-                                : "bg-gray-200"
-                            }`}
-                          />
-                        ))}
-                      </div>
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        {passwordStrength <= 2
-                          ? "Weak password"
-                          : passwordStrength <= 3
-                            ? "Moderate password"
-                            : "Strong password"}
-                      </p>
-                    </div>
-                  )}
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="confirmPassword"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Confirm New Password</FormLabel>
-                  <FormControl>
-                    <div className="relative">
-                      <Input
-                        type={showPasswords.confirm ? "text" : "password"}
-                        placeholder="Confirm your new password"
-                        {...field}
-                        disabled={isSubmitting}
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="absolute right-0 top-0"
-                        onClick={() => togglePasswordVisibility("confirm")}
-                      >
-                        {showPasswords.confirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                      </Button>
-                    </div>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <DialogFooter className="flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2">
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
-                Cancel
+          <div className="space-y-2">
+            <Label htmlFor="currentPassword">Current Password</Label>
+            <div className="relative">
+              <Input
+                id="currentPassword"
+                type={showCurrentPassword ? "text" : "password"}
+                placeholder="Enter your current password"
+                {...form.register("currentPassword")}
+                disabled={isLoading}
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="absolute right-0 top-0"
+                onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+              >
+                {showCurrentPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </Button>
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? <Spinner size="sm" className="mr-2" /> : null}
-                Change Password
+            </div>
+            {form.formState.errors.currentPassword && (
+              <p className="text-sm text-red-600">{form.formState.errors.currentPassword.message}</p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="newPassword">New Password</Label>
+            <div className="relative">
+              <Input
+                id="newPassword"
+                type={showNewPassword ? "text" : "password"}
+                placeholder="Enter your new password"
+                {...form.register("newPassword")}
+                disabled={isLoading}
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="absolute right-0 top-0"
+                onClick={() => setShowNewPassword(!showNewPassword)}
+              >
+                {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </Button>
-            </DialogFooter>
-          </form>
-        </Form>
+            </div>
+            {form.watch("newPassword") && (
+              <div className="mt-2">
+                <div className="flex space-x-1">
+                  {[1, 2, 3, 4, 5].map((level) => (
+                    <div
+                      key={level}
+                      className={`h-2 flex-1 rounded-full ${
+                        passwordStrength >= level
+                          ? level <= 2
+                            ? "bg-red-500"
+                            : level <= 3
+                              ? "bg-yellow-500"
+                              : "bg-green-500"
+                          : "bg-gray-200"
+                      }`}
+                    />
+                  ))}
+                </div>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {passwordStrength <= 2
+                    ? "Weak password"
+                    : passwordStrength <= 3
+                      ? "Moderate password"
+                      : "Strong password"}
+                </p>
+              </div>
+            )}
+            {form.formState.errors.newPassword && (
+              <p className="text-sm text-red-600">{form.formState.errors.newPassword.message}</p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="confirmPassword">Confirm New Password</Label>
+            <div className="relative">
+              <Input
+                id="confirmPassword"
+                type={showConfirmPassword ? "text" : "password"}
+                placeholder="Confirm your new password"
+                {...form.register("confirmPassword")}
+                disabled={isLoading}
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="absolute right-0 top-0"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              >
+                {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </Button>
+            </div>
+            {form.formState.errors.confirmPassword && (
+              <p className="text-sm text-red-600">{form.formState.errors.confirmPassword.message}</p>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={isLoading}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={isLoading}>
+              {isLoading ? <Spinner size="sm" className="mr-2" /> : null}
+              Change Password
+            </Button>
+          </DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
   )
