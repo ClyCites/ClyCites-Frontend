@@ -5,14 +5,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { Loader2, AlertTriangle, Plus, Settings, PointerIcon as SidebarTrigger } from "lucide-react"
-import type { Farm } from "@/lib/api/farm-api"
-import { FarmDashboard } from "@/components/farm/farm-dashboard"
+import { Loader2, AlertTriangle, Plus, Settings } from "lucide-react"
+import { SidebarTrigger } from "@/components/ui/sidebar"
 import { KPISection } from "@/components/dashboard/kpi-cards"
 import { InteractiveCharts } from "@/components/dashboard/interactive-charts"
 import { RealTimeAlerts } from "@/components/dashboard/real-time-alerts"
 import { AdvisoryCard } from "@/components/dashboard/advisory-card"
 import { EnhancedWeatherCard } from "@/components/dashboard/enhanced-weather-card"
+import { AIWeatherStatusCard } from "@/components/dashboard/ai-weather-status-card"
 import { MarketPricesChart } from "@/components/dashboard/market-prices-chart"
 import { Separator } from "@/components/ui/separator"
 import {
@@ -23,11 +23,28 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
+import { useAuth } from "@/lib/auth/auth-context"
+
+// Mock Farm interface for demonstration
+interface Farm {
+  _id: string
+  name: string
+  farmType: "crop" | "livestock" | "mixed"
+  size: { value: number; unit: string }
+  location: { latitude: number; longitude: number; address: string }
+  crops: any[]
+  livestock: any[]
+  owner: string
+  managers: string[]
+  isActive: boolean
+  createdAt: string
+  updatedAt: string
+}
 
 export default function DashboardPage() {
+  const { user } = useAuth()
   const [farms, setFarms] = useState<Farm[]>([])
   const [selectedFarm, setSelectedFarm] = useState<Farm | null>(null)
-  const [aiStatus, setAiStatus] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [dashboardView, setDashboardView] = useState<"overview" | "farm">("overview")
@@ -75,31 +92,11 @@ export default function DashboardPage() {
 
       setFarms(mockFarms)
       setSelectedFarm(mockFarms[0])
-
-      // Mock AI status
-      setAiStatus({
-        configured: true,
-        connected: true,
-        error: null,
-      })
     } catch (err) {
       console.error("Error loading initial data:", err)
       setError("Failed to load dashboard data. Please try again.")
     } finally {
       setLoading(false)
-    }
-  }
-
-  const testAIService = async () => {
-    try {
-      // Mock AI service test
-      setAiStatus({
-        configured: true,
-        connected: true,
-        error: null,
-      })
-    } catch (err) {
-      console.error("Error testing AI service:", err)
     }
   }
 
@@ -168,48 +165,20 @@ export default function DashboardPage() {
           <>
             {/* Welcome Section */}
             <div className="space-y-2">
-              <h1 className="text-3xl font-bold tracking-tight">Welcome back, John!</h1>
+              <h1 className="text-3xl font-bold tracking-tight">
+                Welcome back, {user?.firstName || user?.username || "User"}!
+              </h1>
               <p className="text-muted-foreground">Here's what's happening with your agricultural operations today.</p>
             </div>
-
-            {/* AI Service Status */}
-            {aiStatus && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    AI Service Status
-                    {aiStatus.configured ? (
-                      <span className="h-2 w-2 bg-green-500 rounded-full"></span>
-                    ) : (
-                      <span className="h-2 w-2 bg-red-500 rounded-full"></span>
-                    )}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm">Status: {aiStatus.configured ? "Configured" : "Not Configured"}</p>
-                      {aiStatus.connected !== undefined && (
-                        <p className="text-sm">Connection: {aiStatus.connected ? "Connected" : "Disconnected"}</p>
-                      )}
-                      {aiStatus.error && <p className="text-sm text-red-600">Error: {aiStatus.error}</p>}
-                    </div>
-                    <Button onClick={testAIService} size="sm">
-                      Test Connection
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
 
             {/* KPI Cards */}
             <KPISection />
 
             {/* Main Dashboard Grid */}
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7">
-              {/* Weather Card */}
+              {/* AI & Weather Status Card */}
               <div className="col-span-full lg:col-span-4">
-                <EnhancedWeatherCard />
+                <AIWeatherStatusCard />
               </div>
 
               {/* Real-time Alerts */}
@@ -217,8 +186,13 @@ export default function DashboardPage() {
                 <RealTimeAlerts />
               </div>
 
+              {/* Enhanced Weather Card */}
+              <div className="col-span-full lg:col-span-4">
+                <EnhancedWeatherCard />
+              </div>
+
               {/* AI Advisory */}
-              <div className="col-span-full">
+              <div className="col-span-full lg:col-span-3">
                 <AdvisoryCard />
               </div>
 
@@ -228,7 +202,7 @@ export default function DashboardPage() {
               </div>
 
               {/* Interactive Charts */}
-              <div className="col-span-full">
+              <div className="col-span-full lg:col-span-3">
                 <Card>
                   <CardHeader>
                     <CardTitle>Performance Analytics</CardTitle>
@@ -280,7 +254,48 @@ export default function DashboardPage() {
 
             {/* Farm Dashboard */}
             {selectedFarm ? (
-              <FarmDashboard farmId={selectedFarm._id} farmName={selectedFarm.name} />
+              <div className="space-y-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>{selectedFarm.name} Management</CardTitle>
+                    <CardDescription>Detailed farm management dashboard for {selectedFarm.name}</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                      <div className="space-y-2">
+                        <h4 className="font-medium">Farm Type</h4>
+                        <p className="text-sm text-muted-foreground capitalize">{selectedFarm.farmType}</p>
+                      </div>
+                      <div className="space-y-2">
+                        <h4 className="font-medium">Size</h4>
+                        <p className="text-sm text-muted-foreground">
+                          {selectedFarm.size.value} {selectedFarm.size.unit}
+                        </p>
+                      </div>
+                      <div className="space-y-2">
+                        <h4 className="font-medium">Location</h4>
+                        <p className="text-sm text-muted-foreground">{selectedFarm.location.address}</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Farm-specific weather and analytics */}
+                <div className="grid gap-6 md:grid-cols-2">
+                  <AIWeatherStatusCard />
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Farm Analytics</CardTitle>
+                      <CardDescription>Performance metrics for {selectedFarm.name}</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-center py-8">
+                        <p className="text-muted-foreground">Farm-specific analytics coming soon...</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              </div>
             ) : farms.length === 0 ? (
               <Card>
                 <CardContent className="pt-6">

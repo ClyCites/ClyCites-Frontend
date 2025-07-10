@@ -1,108 +1,114 @@
 "use client"
 
-import type React from "react"
-
-import { useState } from "react"
-import { useForm } from "react-hook-form"
+import * as React from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
+import { useForm } from "react-hook-form"
 import * as z from "zod"
+
+import { Button } from "@/components/ui/button"
 import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { Plus, Loader2 } from "lucide-react"
-import { organizationApi } from "@/lib/api/organization-api"
-import { toast } from "sonner"
+import { useOrganizations } from "@/hooks/use-organizations"
+import { Loader2 } from "lucide-react"
 
-const createOrganizationSchema = z.object({
-  name: z.string().min(2, "Organization name must be at least 2 characters").max(100),
-  description: z.string().max(500).optional(),
-  website: z.string().url("Please enter a valid URL").optional().or(z.literal("")),
-  industry: z
-    .enum([
-      "technology",
-      "healthcare",
-      "finance",
-      "education",
-      "retail",
-      "manufacturing",
-      "consulting",
-      "media",
-      "nonprofit",
-      "government",
-      "other",
-    ])
+const formSchema = z.object({
+  name: z.string().min(2, {
+    message: "Organization name must be at least 2 characters.",
+  }),
+  description: z.string().optional(),
+  type: z.enum(["individual", "company", "cooperative", "government"], {
+    required_error: "Please select an organization type.",
+  }),
+  address: z
+    .object({
+      street: z.string().optional(),
+      city: z.string().optional(),
+      state: z.string().optional(),
+      country: z.string().optional(),
+      zipCode: z.string().optional(),
+    })
     .optional(),
-  size: z.enum(["startup", "small", "medium", "large", "enterprise"]).optional(),
+  contactInfo: z
+    .object({
+      email: z.string().email().optional().or(z.literal("")),
+      phone: z.string().optional(),
+      website: z.string().url().optional().or(z.literal("")),
+    })
+    .optional(),
 })
 
-type CreateOrganizationFormData = z.infer<typeof createOrganizationSchema>
-
 interface CreateOrganizationDialogProps {
-  onOrganizationCreated?: (organization: any) => void
-  trigger?: React.ReactNode
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  onSuccess?: () => void
 }
 
-export function CreateOrganizationDialog({ onOrganizationCreated, trigger }: CreateOrganizationDialogProps) {
-  const [open, setOpen] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
+export function CreateOrganizationDialog({ open, onOpenChange, onSuccess }: CreateOrganizationDialogProps) {
+  const [isSubmitting, setIsSubmitting] = React.useState(false)
+  const { createOrganization } = useOrganizations({ autoLoad: false })
 
-  const form = useForm<CreateOrganizationFormData>({
-    resolver: zodResolver(createOrganizationSchema),
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
       description: "",
-      website: "",
+      type: "individual",
+      address: {
+        street: "",
+        city: "",
+        state: "",
+        country: "",
+        zipCode: "",
+      },
+      contactInfo: {
+        email: "",
+        phone: "",
+        website: "",
+      },
     },
   })
 
-  const onSubmit = async (data: CreateOrganizationFormData) => {
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    setIsSubmitting(true)
     try {
-      setIsLoading(true)
-      const response = await organizationApi.createOrganization(data)
-
-      toast.success("Organization created successfully!")
-      setOpen(false)
-      form.reset()
-
-      if (onOrganizationCreated) {
-        onOrganizationCreated(response.data.organization)
+      // Clean up empty optional fields
+      const cleanedValues = {
+        ...values,
+        description: values.description || undefined,
+        address: Object.values(values.address || {}).some((v) => v) ? values.address : undefined,
+        contactInfo: Object.values(values.contactInfo || {}).some((v) => v) ? values.contactInfo : undefined,
       }
-    } catch (error: any) {
-      console.error("Error creating organization:", error)
-      toast.error(error.message || "Failed to create organization")
+
+      const result = await createOrganization(cleanedValues)
+      if (result) {
+        form.reset()
+        onOpenChange(false)
+        onSuccess?.()
+      }
+    } catch (error) {
+      console.error("Failed to create organization:", error)
     } finally {
-      setIsLoading(false)
+      setIsSubmitting(false)
     }
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        {trigger || (
-          <Button>
-            <Plus className="h-4 w-4 mr-2" />
-            Create Organization
-          </Button>
-        )}
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-[500px]">
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[425px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Create New Organization</DialogTitle>
-          <DialogDescription>
-            Create a new organization to manage your agricultural operations and team members.
-          </DialogDescription>
+          <DialogTitle>Create Organization</DialogTitle>
+          <DialogDescription>Create a new organization to manage your farms and team members.</DialogDescription>
         </DialogHeader>
-
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
@@ -110,10 +116,34 @@ export function CreateOrganizationDialog({ onOrganizationCreated, trigger }: Cre
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Organization Name *</FormLabel>
+                  <FormLabel>Organization Name</FormLabel>
                   <FormControl>
                     <Input placeholder="Enter organization name" {...field} />
                   </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="type"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Organization Type</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select organization type" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="individual">Individual</SelectItem>
+                      <SelectItem value="company">Company</SelectItem>
+                      <SelectItem value="cooperative">Cooperative</SelectItem>
+                      <SelectItem value="government">Government</SelectItem>
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}
@@ -128,53 +158,24 @@ export function CreateOrganizationDialog({ onOrganizationCreated, trigger }: Cre
                   <FormControl>
                     <Textarea placeholder="Brief description of your organization" className="resize-none" {...field} />
                   </FormControl>
-                  <FormDescription>Optional description of your organization's purpose and activities.</FormDescription>
+                  <FormDescription>Optional description of your organization's purpose or activities.</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
-            <FormField
-              control={form.control}
-              name="website"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Website</FormLabel>
-                  <FormControl>
-                    <Input placeholder="https://example.com" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className="space-y-4">
+              <h4 className="text-sm font-medium">Contact Information (Optional)</h4>
 
-            <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
-                name="industry"
+                name="contactInfo.email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Industry</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select industry" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="technology">Technology</SelectItem>
-                        <SelectItem value="healthcare">Healthcare</SelectItem>
-                        <SelectItem value="finance">Finance</SelectItem>
-                        <SelectItem value="education">Education</SelectItem>
-                        <SelectItem value="retail">Retail</SelectItem>
-                        <SelectItem value="manufacturing">Manufacturing</SelectItem>
-                        <SelectItem value="consulting">Consulting</SelectItem>
-                        <SelectItem value="media">Media</SelectItem>
-                        <SelectItem value="nonprofit">Non-profit</SelectItem>
-                        <SelectItem value="government">Government</SelectItem>
-                        <SelectItem value="other">Other</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input type="email" placeholder="contact@organization.com" {...field} />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -182,39 +183,120 @@ export function CreateOrganizationDialog({ onOrganizationCreated, trigger }: Cre
 
               <FormField
                 control={form.control}
-                name="size"
+                name="contactInfo.phone"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Organization Size</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select size" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="startup">Startup (1-10)</SelectItem>
-                        <SelectItem value="small">Small (11-50)</SelectItem>
-                        <SelectItem value="medium">Medium (51-200)</SelectItem>
-                        <SelectItem value="large">Large (201-1000)</SelectItem>
-                        <SelectItem value="enterprise">Enterprise (1000+)</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <FormLabel>Phone</FormLabel>
+                    <FormControl>
+                      <Input placeholder="+1 (555) 123-4567" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="contactInfo.website"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Website</FormLabel>
+                    <FormControl>
+                      <Input placeholder="https://www.organization.com" {...field} />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
             </div>
 
-            <div className="flex justify-end space-x-2 pt-4">
-              <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={isLoading}>
+            <div className="space-y-4">
+              <h4 className="text-sm font-medium">Address (Optional)</h4>
+
+              <FormField
+                control={form.control}
+                name="address.street"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Street Address</FormLabel>
+                    <FormControl>
+                      <Input placeholder="123 Main Street" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="address.city"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>City</FormLabel>
+                      <FormControl>
+                        <Input placeholder="City" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="address.state"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>State</FormLabel>
+                      <FormControl>
+                        <Input placeholder="State" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="address.country"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Country</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Country" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="address.zipCode"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>ZIP Code</FormLabel>
+                      <FormControl>
+                        <Input placeholder="12345" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
+
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                 Cancel
               </Button>
-              <Button type="submit" disabled={isLoading}>
-                {isLoading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Create Organization
               </Button>
-            </div>
+            </DialogFooter>
           </form>
         </Form>
       </DialogContent>

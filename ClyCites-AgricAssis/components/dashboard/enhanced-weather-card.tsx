@@ -1,793 +1,438 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Badge } from "@/components/ui/badge"
+import { Separator } from "@/components/ui/separator"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Badge } from "@/components/ui/badge"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { Input } from "@/components/ui/input"
-import {
-  useCurrentWeather,
-  useWeatherForecast,
-  useHistoricalWeather,
-  useWeatherVariables,
-  useLocationSearch,
-  useCurrentLocation,
-} from "@/lib/hooks/use-weather"
-import type { WeatherLocation, WeatherOptions } from "@/lib/api/weather-api"
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import {
   Cloud,
   CloudRain,
   Sun,
   Wind,
   Droplets,
-  Thermometer,
   Gauge,
-  RefreshCw,
   MapPin,
-  Calendar,
+  RefreshCw,
   AlertTriangle,
-  Settings,
   Search,
   Navigation,
-  Plus,
+  Settings,
+  Thermometer,
+  Loader2,
 } from "lucide-react"
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
-import { Label } from "@/components/ui/label"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from "@/components/ui/command"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+  useLocationSearch,
+  useCurrentLocation,
+  useCurrentWeather,
+  useWeatherForecast,
+  type Location,
+} from "@/lib/hooks/use-weather"
+import { WeatherSettingsDialog, type WeatherSettings } from "./weather-settings-dialog"
+import { cn } from "@/lib/utils"
 
-// Default weather variables by category
-const DEFAULT_CURRENT_VARIABLES = [
-  "temperature_2m",
-  "relative_humidity_2m",
-  "precipitation",
-  "wind_speed_10m",
-  "wind_direction_10m",
-  "surface_pressure",
-  "cloud_cover",
-]
-
-const DEFAULT_HOURLY_VARIABLES = ["temperature_2m", "precipitation", "wind_speed_10m", "relative_humidity_2m"]
-
-const DEFAULT_DAILY_VARIABLES = ["temperature_2m_max", "temperature_2m_min", "precipitation_sum", "wind_speed_10m_max"]
-
-// Weather variable display configuration
-const VARIABLE_DISPLAY_CONFIG: Record<
-  string,
-  { icon: any; label: string; color: string; unit: string; formatter?: (value: number) => string }
-> = {
-  temperature_2m: {
-    icon: Thermometer,
-    label: "Temperature",
-    color: "text-red-500",
-    unit: "°C",
-    formatter: (value) => `${Math.round(value)}°C`,
-  },
-  temperature_2m_max: {
-    icon: Thermometer,
-    label: "Max Temperature",
-    color: "text-red-500",
-    unit: "°C",
-    formatter: (value) => `${Math.round(value)}°C`,
-  },
-  temperature_2m_min: {
-    icon: Thermometer,
-    label: "Min Temperature",
-    color: "text-blue-500",
-    unit: "°C",
-    formatter: (value) => `${Math.round(value)}°C`,
-  },
-  relative_humidity_2m: {
-    icon: Droplets,
-    label: "Humidity",
-    color: "text-blue-500",
-    unit: "%",
-    formatter: (value) => `${Math.round(value)}%`,
-  },
-  precipitation: {
-    icon: CloudRain,
-    label: "Precipitation",
-    color: "text-blue-600",
-    unit: "mm",
-    formatter: (value) => `${value.toFixed(1)} mm`,
-  },
-  precipitation_sum: {
-    icon: CloudRain,
-    label: "Total Precipitation",
-    color: "text-blue-600",
-    unit: "mm",
-    formatter: (value) => `${value.toFixed(1)} mm`,
-  },
-  wind_speed_10m: {
-    icon: Wind,
-    label: "Wind Speed",
-    color: "text-green-500",
-    unit: "km/h",
-    formatter: (value) => `${Math.round(value)} km/h`,
-  },
-  wind_speed_10m_max: {
-    icon: Wind,
-    label: "Max Wind Speed",
-    color: "text-green-500",
-    unit: "km/h",
-    formatter: (value) => `${Math.round(value)} km/h`,
-  },
-  windspeed_10m_max: {
-    icon: Wind,
-    label: "Max Wind Speed",
-    color: "text-green-500",
-    unit: "km/h",
-    formatter: (value) => `${Math.round(value)} km/h`,
-  },
-  wind_direction_10m: {
-    icon: Wind,
-    label: "Wind Direction",
-    color: "text-green-500",
-    unit: "°",
-    formatter: (value) => `${Math.round(value)}°`,
-  },
-  surface_pressure: {
-    icon: Gauge,
-    label: "Pressure",
-    color: "text-purple-500",
-    unit: "hPa",
-    formatter: (value) => `${Math.round(value)} hPa`,
-  },
-  pressure_msl: {
-    icon: Gauge,
-    label: "Sea Level Pressure",
-    color: "text-purple-500",
-    unit: "hPa",
-    formatter: (value) => `${Math.round(value)} hPa`,
-  },
-  cloud_cover: {
-    icon: Cloud,
-    label: "Cloud Cover",
-    color: "text-gray-500",
-    unit: "%",
-    formatter: (value) => `${Math.round(value)}%`,
-  },
-}
-
-const getWeatherIcon = (condition: string, size = 6) => {
-  switch (condition?.toLowerCase()) {
-    case "sunny":
-    case "clear":
-      return <Sun className={`h-${size} w-${size} text-yellow-500`} />
-    case "cloudy":
-    case "overcast":
-      return <Cloud className={`h-${size} w-${size} text-gray-500`} />
-    case "rainy":
-    case "rain":
-      return <CloudRain className={`h-${size} w-${size} text-blue-500`} />
-    default:
-      return <Sun className={`h-${size} w-${size} text-yellow-500`} />
+const getWeatherIcon = (weatherCode?: number, temperature?: number) => {
+  if (weatherCode !== undefined) {
+    // Open-Meteo weather codes
+    if (weatherCode === 0) return <Sun className="h-8 w-8 text-yellow-500" />
+    if (weatherCode === 1 || weatherCode === 2 || weatherCode === 3) return <Cloud className="h-8 w-8 text-gray-500" />
+    if (weatherCode >= 45 && weatherCode <= 48) return <Cloud className="h-8 w-8 text-gray-400" />
+    if (weatherCode >= 51 && weatherCode <= 67) return <CloudRain className="h-8 w-8 text-blue-500" />
+    if (weatherCode >= 71 && weatherCode <= 77) return <CloudRain className="h-8 w-8 text-blue-200" />
+    if (weatherCode >= 80 && weatherCode <= 82) return <CloudRain className="h-8 w-8 text-blue-600" />
+    if (weatherCode >= 85 && weatherCode <= 86) return <CloudRain className="h-8 w-8 text-blue-300" />
+    if (weatherCode >= 95 && weatherCode <= 99) return <CloudRain className="h-8 w-8 text-purple-500" />
   }
+
+  // Fallback based on temperature
+  return temperature && temperature > 20 ? (
+    <Sun className="h-8 w-8 text-yellow-500" />
+  ) : (
+    <Cloud className="h-8 w-8 text-gray-500" />
+  )
 }
 
-const formatDate = (dateString: string) => {
-  return new Date(dateString).toLocaleDateString("en-US", {
+const formatTime = (date: Date) => {
+  return date.toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit",
+  })
+}
+
+const formatDate = (date: Date) => {
+  return date.toLocaleDateString([], {
+    weekday: "short",
     month: "short",
     day: "numeric",
   })
 }
 
 export function EnhancedWeatherCard() {
-  const [selectedLocation, setSelectedLocation] = useState<WeatherLocation | null>(null)
-  const [selectedTab, setSelectedTab] = useState("current")
-  const [historicalRange, setHistoricalRange] = useState({
-    startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
-    endDate: new Date().toISOString().split("T")[0],
-  })
-
-  // User preferences for weather variables
-  const [selectedCurrentVariables, setSelectedCurrentVariables] = useState<string[]>(DEFAULT_CURRENT_VARIABLES)
-  const [selectedHourlyVariables, setSelectedHourlyVariables] = useState<string[]>(DEFAULT_HOURLY_VARIABLES)
-  const [selectedDailyVariables, setSelectedDailyVariables] = useState<string[]>(DEFAULT_DAILY_VARIABLES)
-
-  // Units preferences
-  const [units, setUnits] = useState<WeatherOptions>({
-    temperatureUnit: "celsius",
-    windSpeedUnit: "kmh",
-    precipitationUnit: "mm",
+  const [selectedLocation, setSelectedLocation] = useState<Location | null>(null)
+  const [searchQuery, setSearchQuery] = useState("")
+  const [searchOpen, setSearchOpen] = useState(false)
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
+  const [weatherSettings, setWeatherSettings] = useState<WeatherSettings>({
+    currentVariables: [
+      "temperature_2m",
+      "relative_humidity_2m",
+      "apparent_temperature",
+      "wind_speed_10m",
+      "surface_pressure",
+      "cloud_cover",
+      "precipitation",
+      "weather_code",
+    ],
+    hourlyVariables: ["temperature_2m", "precipitation", "wind_speed_10m", "relative_humidity_2m"],
+    dailyVariables: ["temperature_2m_max", "temperature_2m_min", "precipitation_sum", "wind_speed_10m_max"],
+    forecastDays: 7,
+    options: {
+      temperatureUnit: "celsius",
+      windSpeedUnit: "kmh",
+      precipitationUnit: "mm",
+      timezone: "auto",
+    },
   })
 
   // Location search
-  const [locationSearchOpen, setLocationSearchOpen] = useState(false)
-  const [locationSearchQuery, setLocationSearchQuery] = useState("")
-  const { locations, isLoading: searchLoading, searchLocations } = useLocationSearch()
-  const { location: currentLocation, getCurrentLocation, isLoading: currentLocationLoading } = useCurrentLocation()
+  const { locations, loading: searchLoading, searchLocations, clearLocations } = useLocationSearch()
 
-  // Fetch available weather variables
-  const { variables: availableVariables, isLoading: variablesLoading } = useWeatherVariables()
+  // Current location
+  const { location: currentLocation, isLoading: locationLoading, getCurrentLocation } = useCurrentLocation()
 
-  // Current weather hook with user-selected variables
+  // Weather data
   const {
-    data: currentWeather,
-    isLoading: currentLoading,
-    error: currentError,
-    refetch: refetchCurrent,
-  } = useCurrentWeather(selectedLocation, selectedCurrentVariables, units)
+    data: weather,
+    isLoading: weatherLoading,
+    error: weatherError,
+    refetch: refetchWeather,
+  } = useCurrentWeather(selectedLocation || currentLocation, weatherSettings.currentVariables, weatherSettings.options)
 
-  // Weather forecast hook with user-selected variables
+  // Forecast data
   const {
-    data: forecastData,
+    data: forecast,
     isLoading: forecastLoading,
     error: forecastError,
     refetch: refetchForecast,
   } = useWeatherForecast(
-    selectedLocation,
+    selectedLocation || currentLocation,
     {
-      dailyVariables: selectedDailyVariables,
-      hourlyVariables: selectedHourlyVariables,
+      hourlyVariables: weatherSettings.hourlyVariables,
+      dailyVariables: weatherSettings.dailyVariables,
+      days: weatherSettings.forecastDays,
     },
-    7,
-    units,
+    weatherSettings.options,
   )
-
-  // Historical weather hook with user-selected variables
-  const {
-    data: historicalData,
-    isLoading: historicalLoading,
-    error: historicalError,
-    refetch: refetchHistorical,
-  } = useHistoricalWeather(
-    selectedLocation,
-    historicalRange.startDate,
-    historicalRange.endDate,
-    {
-      dailyVariables: selectedDailyVariables,
-    },
-    units,
-  )
-
-  // Set default location on mount
-  useEffect(() => {
-    if (!selectedLocation) {
-      // Try to get current location first
-      getCurrentLocation()
-    }
-  }, [])
-
-  // Set current location when available
-  useEffect(() => {
-    if (currentLocation && !selectedLocation) {
-      setSelectedLocation(currentLocation)
-    }
-  }, [currentLocation, selectedLocation])
 
   // Handle location search
+  const handleSearch = useCallback(
+    (query: string) => {
+      setSearchQuery(query)
+      if (query.length > 2) {
+        searchLocations(query)
+      } else {
+        clearLocations()
+      }
+    },
+    [searchLocations, clearLocations],
+  )
+
+  // Handle location selection
+  const handleLocationSelect = useCallback(
+    (location: Location) => {
+      setSelectedLocation(location)
+      setSearchOpen(false)
+      setSearchQuery(location.name)
+      clearLocations()
+      setLastUpdated(new Date())
+    },
+    [clearLocations],
+  )
+
+  // Handle current location
+  const handleCurrentLocation = useCallback(async () => {
+    try {
+      await getCurrentLocation()
+      setSelectedLocation(null)
+      setSearchQuery("Current Location")
+      setLastUpdated(new Date())
+    } catch (error) {
+      console.error("Failed to get current location:", error)
+    }
+  }, [getCurrentLocation])
+
+  // Handle refresh
+  const handleRefresh = useCallback(async () => {
+    await Promise.all([refetchWeather(), refetchForecast()])
+    setLastUpdated(new Date())
+  }, [refetchWeather, refetchForecast])
+
+  // Handle settings change
+  const handleSettingsChange = useCallback((newSettings: WeatherSettings) => {
+    setWeatherSettings(newSettings)
+    setLastUpdated(new Date())
+  }, [])
+
+  // Auto-get current location on mount
   useEffect(() => {
-    if (locationSearchQuery.trim()) {
-      const timeoutId = setTimeout(() => {
-        searchLocations(locationSearchQuery)
-      }, 300)
-      return () => clearTimeout(timeoutId)
-    }
-  }, [locationSearchQuery, searchLocations])
+    handleCurrentLocation()
+  }, [handleCurrentLocation])
 
-  const handleLocationSelect = (location: WeatherLocation) => {
-    setSelectedLocation(location)
-    setLocationSearchOpen(false)
-    setLocationSearchQuery("")
-  }
-
-  const handleRefresh = () => {
-    switch (selectedTab) {
-      case "current":
-        refetchCurrent()
-        break
-      case "forecast":
-        refetchForecast()
-        break
-      case "historical":
-        refetchHistorical()
-        break
-    }
-  }
-
-  // Format value based on variable type
-  const formatValue = (variable: string, value: number) => {
-    const config = VARIABLE_DISPLAY_CONFIG[variable]
-    if (config?.formatter) {
-      return config.formatter(value)
-    }
-    return `${value} ${config?.unit || ""}`
-  }
+  const isLoading = weatherLoading || forecastLoading
+  const hasLocation = selectedLocation || currentLocation
+  const locationName = selectedLocation?.name || (currentLocation ? "Current Location" : "No location")
+  const hasError = weatherError || forecastError
 
   return (
     <Card className="w-full">
       <CardHeader>
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div>
-            <CardTitle className="flex items-center gap-2">
-              <MapPin className="h-5 w-5" />
-              Weather Analytics
-            </CardTitle>
-            <CardDescription>Real-time weather data and agricultural insights</CardDescription>
-          </div>
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-2">
+            <Thermometer className="h-5 w-5 text-orange-500" />
+            Weather Forecast
+          </CardTitle>
           <div className="flex items-center gap-2">
-            {/* Location Selector */}
-            <Popover open={locationSearchOpen} onOpenChange={setLocationSearchOpen}>
+            <WeatherSettingsDialog settings={weatherSettings} onSettingsChange={handleSettingsChange}>
+              <Button variant="ghost" size="sm">
+                <Settings className="h-4 w-4" />
+              </Button>
+            </WeatherSettingsDialog>
+            <Button variant="ghost" size="sm" onClick={handleRefresh} disabled={isLoading}>
+              <RefreshCw className={cn("h-4 w-4", isLoading && "animate-spin")} />
+            </Button>
+          </div>
+        </div>
+        <CardDescription>Real-time weather information and forecasts</CardDescription>
+      </CardHeader>
+
+      <CardContent className="space-y-6">
+        {/* Location Search */}
+        <div className="space-y-3">
+          <div className="flex gap-2">
+            <Popover open={searchOpen} onOpenChange={setSearchOpen}>
               <PopoverTrigger asChild>
-                <Button variant="outline" className="w-[250px] justify-start">
-                  <MapPin className="mr-2 h-4 w-4" />
-                  {selectedLocation
-                    ? selectedLocation.name ||
-                      `${selectedLocation.latitude.toFixed(2)}, ${selectedLocation.longitude.toFixed(2)}`
-                    : "Select location..."}
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  aria-expanded={searchOpen}
+                  className="flex-1 justify-between bg-transparent"
+                >
+                  <div className="flex items-center gap-2">
+                    <MapPin className="h-4 w-4" />
+                    <span className="truncate">{searchQuery || "Search location..."}</span>
+                  </div>
+                  <Search className="h-4 w-4 shrink-0 opacity-50" />
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-[300px] p-0">
+              <PopoverContent className="w-full p-0" align="start">
                 <Command>
-                  <div className="flex items-center border-b px-3">
-                    <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
-                    <Input
-                      placeholder="Search locations..."
-                      value={locationSearchQuery}
-                      onChange={(e) => setLocationSearchQuery(e.target.value)}
-                      className="border-0 focus-visible:ring-0"
-                    />
-                  </div>
+                  <CommandInput placeholder="Search locations..." value={searchQuery} onValueChange={handleSearch} />
                   <CommandList>
-                    <CommandEmpty>{searchLoading ? "Searching..." : "No locations found."}</CommandEmpty>
-                    <CommandGroup>
-                      <CommandItem onSelect={() => getCurrentLocation()} disabled={currentLocationLoading}>
-                        <Navigation className="mr-2 h-4 w-4" />
-                        {currentLocationLoading ? "Getting location..." : "Use current location"}
-                      </CommandItem>
-                      {locations.map((location, index) => (
-                        <CommandItem key={index} onSelect={() => handleLocationSelect(location)}>
-                          <MapPin className="mr-2 h-4 w-4" />
-                          {location.name || `${location.latitude.toFixed(2)}, ${location.longitude.toFixed(2)}`}
-                        </CommandItem>
-                      ))}
-                    </CommandGroup>
+                    {searchLoading ? (
+                      <div className="p-2">
+                        <Loader2 className="h-4 w-4 animate-spin mx-auto" />
+                      </div>
+                    ) : locations.length > 0 ? (
+                      <CommandGroup>
+                        {locations.map((location) => (
+                          <CommandItem
+                            key={`${location.latitude}-${location.longitude}`}
+                            value={location.name}
+                            onSelect={() => handleLocationSelect(location)}
+                            className="cursor-pointer"
+                          >
+                            <MapPin className="h-4 w-4 mr-2" />
+                            <div>
+                              <div className="font-medium">{location.name}</div>
+                              {location.country && (
+                                <div className="text-xs text-muted-foreground">
+                                  {location.region && `${location.region}, `}
+                                  {location.country}
+                                </div>
+                              )}
+                            </div>
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    ) : searchQuery.length > 2 ? (
+                      <CommandEmpty>No locations found.</CommandEmpty>
+                    ) : null}
                   </CommandList>
                 </Command>
               </PopoverContent>
             </Popover>
-
-            {/* Settings Dialog for Parameter Selection */}
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button variant="outline" size="icon">
-                  <Settings className="h-4 w-4" />
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-[500px]">
-                <DialogHeader>
-                  <DialogTitle>Weather Parameters</DialogTitle>
-                  <DialogDescription>
-                    Customize which weather parameters you want to see in your dashboard.
-                  </DialogDescription>
-                </DialogHeader>
-
-                <Tabs defaultValue="current-params" className="w-full">
-                  <TabsList className="grid w-full grid-cols-3">
-                    <TabsTrigger value="current-params">Current</TabsTrigger>
-                    <TabsTrigger value="forecast-params">Forecast</TabsTrigger>
-                    <TabsTrigger value="units-params">Units</TabsTrigger>
-                  </TabsList>
-
-                  <TabsContent value="current-params" className="space-y-4">
-                    <div className="space-y-2">
-                      <h4 className="text-sm font-medium">Current Weather Parameters</h4>
-                      <ScrollArea className="h-[200px] rounded-md border p-2">
-                        <div className="space-y-2">
-                          {availableVariables?.hourly?.map((variable: string) => (
-                            <div key={variable} className="flex items-center space-x-2">
-                              <Checkbox
-                                id={`current-${variable}`}
-                                checked={selectedCurrentVariables.includes(variable)}
-                                onCheckedChange={(checked) => {
-                                  if (checked) {
-                                    setSelectedCurrentVariables([...selectedCurrentVariables, variable])
-                                  } else {
-                                    setSelectedCurrentVariables(selectedCurrentVariables.filter((v) => v !== variable))
-                                  }
-                                }}
-                              />
-                              <Label htmlFor={`current-${variable}`} className="text-sm">
-                                {VARIABLE_DISPLAY_CONFIG[variable]?.label || variable}
-                              </Label>
-                            </div>
-                          ))}
-                        </div>
-                      </ScrollArea>
-                    </div>
-                  </TabsContent>
-
-                  <TabsContent value="forecast-params" className="space-y-4">
-                    <div className="space-y-2">
-                      <h4 className="text-sm font-medium">Daily Forecast Parameters</h4>
-                      <ScrollArea className="h-[120px] rounded-md border p-2">
-                        <div className="space-y-2">
-                          {availableVariables?.daily?.map((variable: string) => (
-                            <div key={variable} className="flex items-center space-x-2">
-                              <Checkbox
-                                id={`daily-${variable}`}
-                                checked={selectedDailyVariables.includes(variable)}
-                                onCheckedChange={(checked) => {
-                                  if (checked) {
-                                    setSelectedDailyVariables([...selectedDailyVariables, variable])
-                                  } else {
-                                    setSelectedDailyVariables(selectedDailyVariables.filter((v) => v !== variable))
-                                  }
-                                }}
-                              />
-                              <Label htmlFor={`daily-${variable}`} className="text-sm">
-                                {VARIABLE_DISPLAY_CONFIG[variable]?.label || variable}
-                              </Label>
-                            </div>
-                          ))}
-                        </div>
-                      </ScrollArea>
-                    </div>
-
-                    <div className="space-y-2">
-                      <h4 className="text-sm font-medium">Hourly Forecast Parameters</h4>
-                      <ScrollArea className="h-[120px] rounded-md border p-2">
-                        <div className="space-y-2">
-                          {availableVariables?.hourly?.map((variable: string) => (
-                            <div key={variable} className="flex items-center space-x-2">
-                              <Checkbox
-                                id={`hourly-${variable}`}
-                                checked={selectedHourlyVariables.includes(variable)}
-                                onCheckedChange={(checked) => {
-                                  if (checked) {
-                                    setSelectedHourlyVariables([...selectedHourlyVariables, variable])
-                                  } else {
-                                    setSelectedHourlyVariables(selectedHourlyVariables.filter((v) => v !== variable))
-                                  }
-                                }}
-                              />
-                              <Label htmlFor={`hourly-${variable}`} className="text-sm">
-                                {VARIABLE_DISPLAY_CONFIG[variable]?.label || variable}
-                              </Label>
-                            </div>
-                          ))}
-                        </div>
-                      </ScrollArea>
-                    </div>
-                  </TabsContent>
-
-                  <TabsContent value="units-params" className="space-y-4">
-                    <div className="space-y-4">
-                      <div className="space-y-2">
-                        <h4 className="text-sm font-medium">Temperature Unit</h4>
-                        <RadioGroup
-                          value={units.temperatureUnit}
-                          onValueChange={(value) =>
-                            setUnits({ ...units, temperatureUnit: value as "celsius" | "fahrenheit" })
-                          }
-                        >
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="celsius" id="celsius" />
-                            <Label htmlFor="celsius">Celsius (°C)</Label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="fahrenheit" id="fahrenheit" />
-                            <Label htmlFor="fahrenheit">Fahrenheit (°F)</Label>
-                          </div>
-                        </RadioGroup>
-                      </div>
-
-                      <div className="space-y-2">
-                        <h4 className="text-sm font-medium">Wind Speed Unit</h4>
-                        <RadioGroup
-                          value={units.windSpeedUnit}
-                          onValueChange={(value) =>
-                            setUnits({ ...units, windSpeedUnit: value as "kmh" | "mph" | "ms" | "kn" })
-                          }
-                        >
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="kmh" id="kmh" />
-                            <Label htmlFor="kmh">Kilometers per hour (km/h)</Label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="mph" id="mph" />
-                            <Label htmlFor="mph">Miles per hour (mph)</Label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="ms" id="ms" />
-                            <Label htmlFor="ms">Meters per second (m/s)</Label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="kn" id="kn" />
-                            <Label htmlFor="kn">Knots (kn)</Label>
-                          </div>
-                        </RadioGroup>
-                      </div>
-
-                      <div className="space-y-2">
-                        <h4 className="text-sm font-medium">Precipitation Unit</h4>
-                        <RadioGroup
-                          value={units.precipitationUnit}
-                          onValueChange={(value) => setUnits({ ...units, precipitationUnit: value as "mm" | "inch" })}
-                        >
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="mm" id="mm" />
-                            <Label htmlFor="mm">Millimeters (mm)</Label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="inch" id="inch" />
-                            <Label htmlFor="inch">Inches (in)</Label>
-                          </div>
-                        </RadioGroup>
-                      </div>
-                    </div>
-                  </TabsContent>
-                </Tabs>
-
-                <DialogFooter>
-                  <Button
-                    type="submit"
-                    onClick={() => {
-                      // Refresh data with new parameters
-                      handleRefresh()
-                    }}
-                  >
-                    Apply Changes
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
-
-            <Button variant="outline" size="sm" onClick={handleRefresh}>
-              <RefreshCw className="h-4 w-4" />
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={handleCurrentLocation}
+              disabled={locationLoading}
+              title="Use current location"
+            >
+              {locationLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Navigation className="h-4 w-4" />}
             </Button>
+          </div>
+
+          {/* Location Info */}
+          <div className="flex items-center justify-between text-sm">
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <MapPin className="h-3 w-3" />
+              <span>{locationName}</span>
+            </div>
+            {lastUpdated && <div className="text-xs text-muted-foreground">Updated: {formatTime(lastUpdated)}</div>}
           </div>
         </div>
-      </CardHeader>
 
-      <CardContent>
-        {!selectedLocation ? (
-          <div className="flex flex-col items-center justify-center py-8 space-y-4">
-            <MapPin className="h-12 w-12 text-muted-foreground" />
-            <div className="text-center">
-              <h3 className="text-lg font-medium">No Location Selected</h3>
-              <p className="text-sm text-muted-foreground">Please select a location to view weather data</p>
+        <Separator />
+
+        {/* Weather Display */}
+        {!hasLocation ? (
+          <Alert>
+            <AlertTriangle className="h-4 w-4" />
+            <AlertDescription>
+              Please select a location or enable location services to view weather information.
+            </AlertDescription>
+          </Alert>
+        ) : hasError ? (
+          <Alert variant="destructive">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertDescription>
+              {weatherError || forecastError}
+              <Button onClick={handleRefresh} className="mt-2 w-full bg-transparent" variant="outline">
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Try Again
+              </Button>
+            </AlertDescription>
+          </Alert>
+        ) : isLoading ? (
+          <div className="space-y-4">
+            <div className="flex items-center gap-4">
+              <Skeleton className="h-16 w-16 rounded-full" />
+              <div className="space-y-2">
+                <Skeleton className="h-8 w-24" />
+                <Skeleton className="h-4 w-32" />
+              </div>
             </div>
-            <Button onClick={() => setLocationSearchOpen(true)}>
-              <Plus className="mr-2 h-4 w-4" />
-              Select Location
-            </Button>
+            <div className="grid grid-cols-2 gap-4">
+              {[...Array(4)].map((_, i) => (
+                <Skeleton key={i} className="h-16 w-full" />
+              ))}
+            </div>
           </div>
-        ) : (
-          <Tabs value={selectedTab} onValueChange={setSelectedTab}>
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="current">Current</TabsTrigger>
-              <TabsTrigger value="forecast">7-Day Forecast</TabsTrigger>
-              <TabsTrigger value="historical">Historical</TabsTrigger>
-            </TabsList>
+        ) : weather ? (
+          <div className="space-y-6">
+            {/* Current Weather */}
+            <div className="flex items-center gap-4 p-4 rounded-lg bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20">
+              {getWeatherIcon(weather.data.weather_code, weather.data.temperature_2m)}
+              <div className="flex-1">
+                <div className="text-3xl font-bold">
+                  {weather.data.temperature_2m !== undefined
+                    ? `${Math.round(weather.data.temperature_2m)}°${weatherSettings.options.temperatureUnit === "fahrenheit" ? "F" : "C"}`
+                    : "N/A"}
+                </div>
+                <div className="text-muted-foreground">
+                  Feels like{" "}
+                  {weather.data.apparent_temperature !== undefined
+                    ? `${Math.round(weather.data.apparent_temperature)}°${weatherSettings.options.temperatureUnit === "fahrenheit" ? "F" : "C"}`
+                    : "N/A"}
+                </div>
+              </div>
+            </div>
 
-            {/* Current Weather Tab */}
-            <TabsContent value="current" className="space-y-4">
-              {currentLoading ? (
-                <div className="space-y-4">
-                  <Skeleton className="h-32 w-full" />
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    {[...Array(4)].map((_, i) => (
-                      <Skeleton key={i} className="h-20 w-full" />
-                    ))}
+            {/* Weather Metrics */}
+            <div className="grid grid-cols-2 gap-4">
+              {weather.data.relative_humidity_2m !== undefined && (
+                <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/30">
+                  <Droplets className="h-5 w-5 text-blue-500" />
+                  <div>
+                    <div className="text-sm text-muted-foreground">Humidity</div>
+                    <div className="font-semibold">{Math.round(weather.data.relative_humidity_2m)}%</div>
                   </div>
                 </div>
-              ) : currentError ? (
-                <Alert variant="destructive">
-                  <AlertTriangle className="h-4 w-4" />
-                  <AlertDescription>{currentError}</AlertDescription>
-                </Alert>
-              ) : currentWeather ? (
-                <div className="space-y-4">
-                  {/* Main Weather Display */}
-                  <div className="flex items-center justify-between p-6 bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-950 dark:to-blue-900 rounded-lg">
-                    <div className="flex items-center gap-4">
-                      {getWeatherIcon("sunny", 12)}
-                      <div>
-                        {currentWeather.temperature_2m !== undefined && (
-                          <div className="text-3xl font-bold">
-                            {formatValue("temperature_2m", currentWeather.temperature_2m)}
+              )}
+
+              {weather.data.wind_speed_10m !== undefined && (
+                <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/30">
+                  <Wind className="h-5 w-5 text-gray-500" />
+                  <div>
+                    <div className="text-sm text-muted-foreground">Wind Speed</div>
+                    <div className="font-semibold">
+                      {Math.round(weather.data.wind_speed_10m)} {weatherSettings.options.windSpeedUnit}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {weather.data.surface_pressure !== undefined && (
+                <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/30">
+                  <Gauge className="h-5 w-5 text-purple-500" />
+                  <div>
+                    <div className="text-sm text-muted-foreground">Pressure</div>
+                    <div className="font-semibold">{Math.round(weather.data.surface_pressure)} hPa</div>
+                  </div>
+                </div>
+              )}
+
+              {weather.data.cloud_cover !== undefined && (
+                <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/30">
+                  <Cloud className="h-5 w-5 text-gray-400" />
+                  <div>
+                    <div className="text-sm text-muted-foreground">Cloud Cover</div>
+                    <div className="font-semibold">{Math.round(weather.data.cloud_cover)}%</div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Forecast */}
+            {forecast?.daily && forecast.daily.length > 0 && (
+              <div className="space-y-3">
+                <h3 className="font-semibold">{weatherSettings.forecastDays}-Day Forecast</h3>
+                <div className="space-y-2">
+                  {forecast.daily.slice(0, Math.min(5, weatherSettings.forecastDays)).map((day, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center justify-between p-3 rounded-lg hover:bg-muted/50 transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="text-sm font-medium w-16">
+                          {index === 0 ? "Today" : formatDate(new Date(day.date))}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className="text-right">
+                          <div className="font-semibold">
+                            {day.data.temperature_2m_max !== undefined ? Math.round(day.data.temperature_2m_max) : "--"}
+                            °
                           </div>
+                          <div className="text-sm text-muted-foreground">
+                            {day.data.temperature_2m_min !== undefined ? Math.round(day.data.temperature_2m_min) : "--"}
+                            °
+                          </div>
+                        </div>
+                        {day.data.precipitation_sum !== undefined && day.data.precipitation_sum > 0 && (
+                          <Badge variant="secondary" className="text-xs">
+                            {Math.round(day.data.precipitation_sum)}
+                            {weatherSettings.options.precipitationUnit}
+                          </Badge>
                         )}
-                        <div className="text-sm text-muted-foreground">{new Date().toLocaleString()}</div>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <div className="text-sm font-medium">{selectedLocation.name || "Selected Location"}</div>
-                      <div className="text-xs text-muted-foreground">
-                        {selectedLocation.latitude.toFixed(2)}, {selectedLocation.longitude.toFixed(2)}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Weather Metrics Grid - Dynamically generated based on selected variables */}
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    {Object.entries(currentWeather).map(([variable, value]) => {
-                      // Skip temperature_2m as it's already shown in the main display
-                      if (variable === "temperature_2m") return null
-
-                      const config = VARIABLE_DISPLAY_CONFIG[variable]
-                      if (!config) return null
-
-                      const Icon = config.icon
-
-                      return (
-                        <Card key={variable}>
-                          <CardContent className="p-4 text-center">
-                            <Icon className={`h-6 w-6 mx-auto mb-2 ${config.color}`} />
-                            <div className="text-sm text-muted-foreground">{config.label}</div>
-                            <div className="text-lg font-semibold">{formatValue(variable, value as number)}</div>
-                          </CardContent>
-                        </Card>
-                      )
-                    })}
-                  </div>
-
-                  {/* Selected Parameters Badge List */}
-                  <div className="flex flex-wrap gap-2 mt-4">
-                    <span className="text-sm text-muted-foreground">Selected parameters:</span>
-                    {selectedCurrentVariables.map((variable) => (
-                      <Badge key={variable} variant="outline">
-                        {VARIABLE_DISPLAY_CONFIG[variable]?.label || variable}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              ) : null}
-            </TabsContent>
-
-            {/* Forecast Tab */}
-            <TabsContent value="forecast" className="space-y-4">
-              {forecastLoading ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-7 gap-2">
-                  {[...Array(7)].map((_, i) => (
-                    <Skeleton key={i} className="h-32 w-full" />
                   ))}
                 </div>
-              ) : forecastError ? (
-                <Alert variant="destructive">
-                  <AlertTriangle className="h-4 w-4" />
-                  <AlertDescription>{forecastError}</AlertDescription>
-                </Alert>
-              ) : forecastData?.daily ? (
-                <div className="space-y-4">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-7 gap-2">
-                    {forecastData.daily.slice(0, 7).map((day: any, index: number) => (
-                      <Card key={index} className="text-center">
-                        <CardContent className="p-4">
-                          <div className="text-sm font-medium mb-2">{formatDate(day.date)}</div>
-                          <div className="flex justify-center mb-2">{getWeatherIcon("sunny", 6)}</div>
-                          <div className="space-y-1">
-                            {/* Dynamically render selected daily variables */}
-                            {Object.entries(day).map(([variable, value]) => {
-                              if (variable === "date") return null
-                              const config = VARIABLE_DISPLAY_CONFIG[variable]
-                              if (!config) return null
-
-                              return (
-                                <div key={variable} className={`text-sm ${config.color}`}>
-                                  {formatValue(variable, value as number)}
-                                </div>
-                              )
-                            })}
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-
-                  {/* Selected Parameters Badge List */}
-                  <div className="flex flex-wrap gap-2 mt-4">
-                    <span className="text-sm text-muted-foreground">Selected parameters:</span>
-                    {selectedDailyVariables.map((variable) => (
-                      <Badge key={variable} variant="outline">
-                        {VARIABLE_DISPLAY_CONFIG[variable]?.label || variable}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              ) : null}
-            </TabsContent>
-
-            {/* Historical Tab */}
-            <TabsContent value="historical" className="space-y-4">
-              <div className="flex gap-4 items-center">
-                <div className="flex items-center gap-2">
-                  <Calendar className="h-4 w-4" />
-                  <span className="text-sm">Date Range:</span>
-                </div>
-                <input
-                  type="date"
-                  value={historicalRange.startDate}
-                  onChange={(e) => setHistoricalRange((prev) => ({ ...prev, startDate: e.target.value }))}
-                  className="px-3 py-1 border rounded text-sm"
-                />
-                <span className="text-sm">to</span>
-                <input
-                  type="date"
-                  value={historicalRange.endDate}
-                  onChange={(e) => setHistoricalRange((prev) => ({ ...prev, endDate: e.target.value }))}
-                  className="px-3 py-1 border rounded text-sm"
-                />
-                <Button variant="outline" size="sm" onClick={() => refetchHistorical()}>
-                  Apply
-                </Button>
               </div>
-
-              {historicalLoading ? (
-                <Skeleton className="h-64 w-full" />
-              ) : historicalError ? (
-                <Alert variant="destructive">
-                  <AlertTriangle className="h-4 w-4" />
-                  <AlertDescription>{historicalError}</AlertDescription>
-                </Alert>
-              ) : historicalData?.daily ? (
-                <div className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {/* Dynamically generate summary cards based on selected variables */}
-                    {selectedDailyVariables.slice(0, 3).map((variable) => {
-                      const config = VARIABLE_DISPLAY_CONFIG[variable]
-                      if (!config) return null
-
-                      const Icon = config.icon
-                      let value: number
-
-                      // Calculate average or sum based on variable type
-                      if (variable.includes("sum")) {
-                        value = historicalData.daily.reduce((sum: number, day: any) => sum + (day[variable] || 0), 0)
-                      } else {
-                        value =
-                          historicalData.daily.reduce((sum: number, day: any) => sum + (day[variable] || 0), 0) /
-                          historicalData.daily.length
-                      }
-
-                      return (
-                        <Card key={variable}>
-                          <CardContent className="p-4 text-center">
-                            <Icon className={`h-6 w-6 mx-auto mb-2 ${config.color}`} />
-                            <div className="text-sm text-muted-foreground">
-                              {variable.includes("sum") ? `Total ${config.label}` : `Avg ${config.label}`}
-                            </div>
-                            <div className="text-lg font-semibold">{formatValue(variable, value)}</div>
-                          </CardContent>
-                        </Card>
-                      )
-                    })}
-                  </div>
-
-                  <div className="text-sm text-muted-foreground">
-                    Showing data for {historicalData.daily.length} days from {historicalRange.startDate} to{" "}
-                    {historicalRange.endDate}
-                  </div>
-
-                  {/* Selected Parameters Badge List */}
-                  <div className="flex flex-wrap gap-2 mt-4">
-                    <span className="text-sm text-muted-foreground">Selected parameters:</span>
-                    {selectedDailyVariables.map((variable) => (
-                      <Badge key={variable} variant="outline">
-                        {VARIABLE_DISPLAY_CONFIG[variable]?.label || variable}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              ) : null}
-            </TabsContent>
-          </Tabs>
+            )}
+          </div>
+        ) : (
+          <Alert>
+            <AlertTriangle className="h-4 w-4" />
+            <AlertDescription>
+              Unable to load weather data. Please try refreshing or selecting a different location.
+            </AlertDescription>
+          </Alert>
         )}
       </CardContent>
     </Card>

@@ -1,177 +1,134 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import * as React from "react"
+import { Check, ChevronsUpDown, Plus } from "lucide-react"
+
+import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Badge } from "@/components/ui/badge"
-import { Loader2, Building2, Plus } from "lucide-react"
-import { organizationApi, type Organization } from "@/lib/api/organization-api"
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+  CommandSeparator,
+} from "@/components/ui/command"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { useOrganizationSelector } from "@/hooks/use-organizations"
 import { CreateOrganizationDialog } from "./create-organization-dialog"
-import { toast } from "sonner"
+import { Skeleton } from "@/components/ui/skeleton"
 
 interface OrganizationSelectorProps {
-  selectedOrgId?: string
-  onOrganizationSelect: (organization: Organization | null) => void
-  showCreateButton?: boolean
+  onOrganizationChange?: (organizationId: string | null) => void
+  className?: string
 }
 
-export function OrganizationSelector({
-  selectedOrgId,
-  onOrganizationSelect,
-  showCreateButton = true,
-}: OrganizationSelectorProps) {
-  const [organizations, setOrganizations] = useState<Organization[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+export function OrganizationSelector({ onOrganizationChange, className }: OrganizationSelectorProps) {
+  const [open, setOpen] = React.useState(false)
+  const [showCreateDialog, setShowCreateDialog] = React.useState(false)
 
-  useEffect(() => {
-    loadOrganizations()
-  }, [])
+  const { organizations, selectedOrganization, loading, error, selectOrganization, refreshOrganizations } =
+    useOrganizationSelector({
+      autoSelectFirst: true,
+      persistSelection: true,
+    })
 
-  const loadOrganizations = async () => {
-    try {
-      setLoading(true)
-      setError(null)
-      const response = await organizationApi.getUserOrganizations()
-      setOrganizations(response.data.organizations)
+  // Notify parent component when organization changes
+  React.useEffect(() => {
+    onOrganizationChange?.(selectedOrganization?._id || null)
+  }, [selectedOrganization, onOrganizationChange])
 
-      // Auto-select first organization if none selected
-      if (!selectedOrgId && response.data.organizations.length > 0) {
-        onOrganizationSelect(response.data.organizations[0])
-      }
-    } catch (err: any) {
-      console.error("Error loading organizations:", err)
-      setError(err.message || "Failed to load organizations")
-      toast.error("Failed to load organizations")
-    } finally {
-      setLoading(false)
-    }
+  const handleSelect = (organization: any) => {
+    selectOrganization(organization)
+    setOpen(false)
   }
 
-  const handleOrganizationCreated = (newOrganization: Organization) => {
-    setOrganizations((prev) => [newOrganization, ...prev])
-    onOrganizationSelect(newOrganization)
+  const handleCreateSuccess = () => {
+    setShowCreateDialog(false)
+    refreshOrganizations()
   }
 
-  if (loading) {
+  if (loading && organizations.length === 0) {
     return (
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex items-center justify-center">
-            <Loader2 className="h-6 w-6 animate-spin" />
-            <span className="ml-2">Loading organizations...</span>
-          </div>
-        </CardContent>
-      </Card>
+      <div className={cn("flex items-center space-x-2", className)}>
+        <Skeleton className="h-8 w-[200px]" />
+      </div>
     )
   }
 
-  if (error) {
+  if (error && organizations.length === 0) {
     return (
-      <Card>
-        <CardContent className="pt-6">
-          <div className="text-center">
-            <p className="text-destructive mb-4">{error}</p>
-            <Button onClick={loadOrganizations} variant="outline">
-              Try Again
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      <div className={cn("flex items-center space-x-2", className)}>
+        <Button variant="outline" size="sm" onClick={refreshOrganizations}>
+          Retry Loading Organizations
+        </Button>
+      </div>
     )
   }
-
-  if (organizations.length === 0) {
-    return (
-      <Card>
-        <CardHeader className="text-center">
-          <Building2 className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-          <CardTitle>No Organizations Found</CardTitle>
-          <CardDescription>
-            You need to create or join an organization to access farm management features.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="text-center">
-          {showCreateButton && (
-            <CreateOrganizationDialog
-              onOrganizationCreated={handleOrganizationCreated}
-              trigger={
-                <Button size="lg">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Create Your First Organization
-                </Button>
-              }
-            />
-          )}
-        </CardContent>
-      </Card>
-    )
-  }
-
-  const selectedOrg = organizations.find((org) => org._id === selectedOrgId)
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Building2 className="h-5 w-5" />
-          Organization
-        </CardTitle>
-        <CardDescription>Select an organization to manage its farms and operations</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="flex gap-2">
-          <Select
-            value={selectedOrgId || ""}
-            onValueChange={(orgId) => {
-              const org = organizations.find((o) => o._id === orgId)
-              onOrganizationSelect(org || null)
-            }}
+    <>
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            role="combobox"
+            aria-expanded={open}
+            className={cn("w-[200px] justify-between", className)}
           >
-            <SelectTrigger className="flex-1">
-              <SelectValue placeholder="Select an organization" />
-            </SelectTrigger>
-            <SelectContent>
-              {organizations.map((org) => (
-                <SelectItem key={org._id} value={org._id}>
-                  <div className="flex items-center gap-2">
-                    <span>{org.name}</span>
-                    <Badge variant="outline" className="text-xs">
-                      {org.membership?.role.name}
-                    </Badge>
-                  </div>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            {selectedOrganization ? (
+              <span className="truncate">{selectedOrganization.name}</span>
+            ) : (
+              "Select organization..."
+            )}
+            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-[200px] p-0">
+          <Command>
+            <CommandInput placeholder="Search organizations..." />
+            <CommandList>
+              <CommandEmpty>No organizations found.</CommandEmpty>
+              <CommandGroup>
+                {organizations.map((organization) => (
+                  <CommandItem
+                    key={organization._id}
+                    value={organization.name}
+                    onSelect={() => handleSelect(organization)}
+                  >
+                    <Check
+                      className={cn(
+                        "mr-2 h-4 w-4",
+                        selectedOrganization?._id === organization._id ? "opacity-100" : "opacity-0",
+                      )}
+                    />
+                    <div className="flex flex-col">
+                      <span className="font-medium">{organization.name}</span>
+                      {organization.description && (
+                        <span className="text-xs text-muted-foreground truncate">{organization.description}</span>
+                      )}
+                    </div>
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+              <CommandSeparator />
+              <CommandGroup>
+                <CommandItem onSelect={() => setShowCreateDialog(true)}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Create Organization
+                </CommandItem>
+              </CommandGroup>
+            </CommandList>
+          </Command>
+        </PopoverContent>
+      </Popover>
 
-          {showCreateButton && (
-            <CreateOrganizationDialog
-              onOrganizationCreated={handleOrganizationCreated}
-              trigger={
-                <Button variant="outline" size="icon">
-                  <Plus className="h-4 w-4" />
-                </Button>
-              }
-            />
-          )}
-        </div>
-
-        {selectedOrg && (
-          <div className="p-4 bg-muted rounded-lg">
-            <div className="flex items-center justify-between mb-2">
-              <h4 className="font-medium">{selectedOrg.name}</h4>
-              <Badge variant="secondary">{selectedOrg.membership?.role.name}</Badge>
-            </div>
-            {selectedOrg.description && <p className="text-sm text-muted-foreground mb-2">{selectedOrg.description}</p>}
-            <div className="flex items-center gap-4 text-sm text-muted-foreground">
-              {selectedOrg.industry && <span className="capitalize">{selectedOrg.industry}</span>}
-              {selectedOrg.size && <span className="capitalize">{selectedOrg.size}</span>}
-            </div>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+      <CreateOrganizationDialog
+        open={showCreateDialog}
+        onOpenChange={setShowCreateDialog}
+        onSuccess={handleCreateSuccess}
+      />
+    </>
   )
 }

@@ -1,12 +1,12 @@
-"use client"
-
 import { redirect } from "next/navigation"
-import { useEffect } from "react"
+import { getSession } from "@/lib/auth"
 
-export default function HomePage() {
-  useEffect(() => {
+export default async function HomePage() {
+  const session = await getSession()
+
+  if (session) {
     redirect("/dashboard")
-  }, [])
-
-  return null
+  } else {
+    redirect("/auth")
+  }
 }

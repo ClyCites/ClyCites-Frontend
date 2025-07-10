@@ -1,12 +1,12 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import Link from "next/link"
+import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Spinner } from "@/components/ui/spinner"
-import { CheckCircle, AlertCircle, Mail } from "lucide-react"
+import { CheckCircle, XCircle, AlertCircle } from "lucide-react"
 import { authService } from "@/lib/auth/auth-service"
 
 interface VerifyEmailPageProps {
@@ -16,6 +16,7 @@ interface VerifyEmailPageProps {
 }
 
 export default function VerifyEmailPage({ params }: VerifyEmailPageProps) {
+  const router = useRouter()
   const [isLoading, setIsLoading] = useState(true)
   const [isSuccess, setIsSuccess] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -23,14 +24,15 @@ export default function VerifyEmailPage({ params }: VerifyEmailPageProps) {
   useEffect(() => {
     const verifyEmail = async () => {
       try {
-        const response = await authService.verifyEmail(params.token)
-        if (response.success) {
+        const result = await authService.verifyEmail(params.token)
+
+        if (result.success) {
           setIsSuccess(true)
         } else {
-          setError(response.message || "Email verification failed")
+          setError(result.message)
         }
       } catch (error) {
-        setError(error instanceof Error ? error.message : "An error occurred during verification")
+        setError("An unexpected error occurred during email verification")
       } finally {
         setIsLoading(false)
       }
@@ -44,85 +46,69 @@ export default function VerifyEmailPage({ params }: VerifyEmailPageProps) {
     }
   }, [params.token])
 
-  if (isLoading) {
-    return (
-      <div className="flex min-h-screen w-full flex-col items-center justify-center bg-background p-4">
-        <div className="w-full max-w-md">
-          <Card>
-            <CardHeader className="text-center">
-              <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-blue-100">
-                <Mail className="h-6 w-6 text-blue-600" />
-              </div>
-              <CardTitle>Verifying Your Email</CardTitle>
-              <CardDescription>Please wait while we verify your email address...</CardDescription>
-            </CardHeader>
-            <CardContent className="flex justify-center">
-              <Spinner size="lg" />
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    )
-  }
-
-  if (isSuccess) {
-    return (
-      <div className="flex min-h-screen w-full flex-col items-center justify-center bg-background p-4">
-        <div className="w-full max-w-md">
-          <Card>
-            <CardHeader className="text-center">
-              <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
-                <CheckCircle className="h-6 w-6 text-green-600" />
-              </div>
-              <CardTitle>Email Verified Successfully!</CardTitle>
-              <CardDescription>
-                Your email address has been verified. You can now sign in to your account and access all features.
-              </CardDescription>
-            </CardHeader>
-            <CardFooter className="flex flex-col space-y-4">
-              <Link href="/auth" className="w-full">
-                <Button className="w-full">Continue to Login</Button>
-              </Link>
-              <p className="text-sm text-muted-foreground text-center">
-                Welcome to AgriIntel Dashboard! Start managing your farm with AI-powered insights.
-              </p>
-            </CardFooter>
-          </Card>
-        </div>
-      </div>
-    )
+  const handleContinue = () => {
+    router.push("/auth")
   }
 
   return (
-    <div className="flex min-h-screen w-full flex-col items-center justify-center bg-background p-4">
-      <div className="w-full max-w-md">
-        <Card>
-          <CardHeader className="text-center">
-            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-100">
-              <AlertCircle className="h-6 w-6 text-red-600" />
+    <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-12 sm:px-6 lg:px-8">
+      <Card className="w-full max-w-md">
+        <CardHeader className="text-center">
+          <CardTitle className="text-2xl font-bold">Email Verification</CardTitle>
+          <CardDescription>
+            {isLoading ? "Verifying your email address..." : "Email verification result"}
+          </CardDescription>
+        </CardHeader>
+
+        <CardContent className="space-y-4">
+          {isLoading && (
+            <div className="flex flex-col items-center space-y-4">
+              <Spinner size="lg" />
+              <p className="text-sm text-muted-foreground">Please wait while we verify your email...</p>
             </div>
-            <CardTitle>Email Verification Failed</CardTitle>
-            <CardDescription>
-              We couldn't verify your email address. The verification link may be invalid or expired.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {error && (
+          )}
+
+          {!isLoading && isSuccess && (
+            <div className="space-y-4">
+              <Alert>
+                <CheckCircle className="h-4 w-4" />
+                <AlertDescription>
+                  Your email has been successfully verified! You can now sign in to your account.
+                </AlertDescription>
+              </Alert>
+
+              <Button onClick={handleContinue} className="w-full">
+                Continue to Sign In
+              </Button>
+            </div>
+          )}
+
+          {!isLoading && error && (
+            <div className="space-y-4">
               <Alert variant="destructive">
+                <XCircle className="h-4 w-4" />
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
-            )}
-          </CardContent>
-          <CardFooter className="flex flex-col space-y-4">
-            <Link href="/auth" className="w-full">
-              <Button className="w-full">Back to Login</Button>
-            </Link>
-            <p className="text-sm text-muted-foreground text-center">
-              Need help? Contact our support team for assistance.
-            </p>
-          </CardFooter>
-        </Card>
-      </div>
+
+              <div className="space-y-2">
+                <Button onClick={handleContinue} className="w-full">
+                  Go to Sign In
+                </Button>
+                <Button variant="outline" onClick={() => router.push("/forgot-password")} className="w-full">
+                  Request New Verification Email
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {!isLoading && !isSuccess && !error && (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>Something went wrong during email verification. Please try again.</AlertDescription>
+            </Alert>
+          )}
+        </CardContent>
+      </Card>
     </div>
   )
 }
