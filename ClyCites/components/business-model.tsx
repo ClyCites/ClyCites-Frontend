@@ -13,8 +13,8 @@ import { ReactNode } from "react";
 interface TabButtonProps {
   active: boolean;
   onClick: () => void;
-  icon: ReactNode; // Assuming icon is a React component or JSX
-  children: ReactNode; // To allow any type of children (strings, JSX, etc.)
+  icon: ReactNode;
+  children: ReactNode;
 }
 
 // Replace the Tabs section with a simple button-based navigation
