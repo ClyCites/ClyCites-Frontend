@@ -17,7 +17,6 @@ interface TabButtonProps {
   children: ReactNode;
 }
 
-// Replace the Tabs section with a simple button-based navigation
 const TabButton = ({ active, onClick, icon, children }: TabButtonProps) => (
   <Button variant={active ? "default" : "outline"} onClick={onClick} className="flex items-center gap-2">
     {icon}
