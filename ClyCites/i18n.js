@@ -5,7 +5,6 @@ import enTranslation from './locales/en/translation.json';
 import esTranslation from './locales/es/translation.json';
 import frTranslation from './locales/fr/translation.json';
 
-// Initialize i18next
 i18n
   .use(initReactI18next)
   .init({
@@ -14,7 +13,7 @@ i18n
       es: { translation: esTranslation },
       fr: { translation: frTranslation },
     },
-    lng: 'en', // Default language
+    lng: 'en',
     fallbackLng: 'en',
     interpolation: {
       escapeValue: false,
