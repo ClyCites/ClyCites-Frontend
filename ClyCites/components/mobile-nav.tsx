@@ -30,7 +30,7 @@ export function MobileNav() {
       </SheetTrigger>
       <SheetContent side="left" className="pr-0 bg-white dark:bg-gray-900 border-r">
         <MobileNavLogo />
-        <ScrollArea className="my-4 h-[calc(100vh-8rem)] pb-10 pl-6">
+        <ScrollArea className="p-0 sm:pl-6 sm:pb-10 sm:my-4 sm:h-[calc(100vh-8rem)] [&>div>div]:min-w-[80%!important]  md:[&>div>div]:min-w-[100%!important]" >
           <div className="flex flex-col space-y-4">
             <Link
               href="/"

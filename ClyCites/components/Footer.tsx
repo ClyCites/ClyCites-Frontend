@@ -34,7 +34,7 @@ export function Footer() {
       whileInView="visible"
       viewport={{ once: true }}
       variants={containerVariants}
-      className="bg-gradient-to-br from-gray-900 to-gray-950 text-white"
+      className="bg-gradient-to-br from-gray-900 to-gray-950 text-white pt-4"
     >
       {/* Newsletter Section */}
       <div className="relative px-4 md:px-8">
@@ -65,7 +65,7 @@ export function Footer() {
       </div>
 
       {/* Main Footer */}
-      <div className="relative px-4 md:px-8">
+      <div className="relative px-4 md:px-8 py-6">
         <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-5">
           <motion.div variants={itemVariants} className="lg:col-span-2">
             <Link href="/" className="inline-flex items-center gap-2">
@@ -276,7 +276,7 @@ export function Footer() {
 
       {/* Bottom Footer */}
       <motion.div variants={itemVariants} className="border-t border-gray-800">
-        <div className="container py-6 flex flex-col md:flex-row justify-between items-center">
+          <div className="container py-6 flex flex-col md:flex-row justify-evenly items-center">
           <p className="text-sm text-gray-400">© {new Date().getFullYear()} ClyCites. All rights reserved.</p>
           <div className="flex gap-6 mt-4 md:mt-0">
             <Link href="/privacy-policy" className="text-sm text-gray-400 hover:text-emerald-400 transition-colors">
