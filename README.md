@@ -290,7 +290,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📞 Contact
 
-- **Email**: info@open-elements.com
+- **Email**: clycites@gmail.com
 - **GitHub Issues**: [Create an issue](https://github.com/Saga211/ClyCites-Frontend/issues)
 - **Discussions**: [Join the discussion](https://github.com/Saga211/ClyCites-Frontend/discussions)
 
