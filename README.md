@@ -291,8 +291,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 📞 Contact
 
 - **Email**: clycites@gmail.com
-- **GitHub Issues**: [Create an issue](https://github.com/ClyCites/issues)
-- **Discussions**: [Join the discussion](https://github.com/ClyCites/discussions)
+- **GitHub Issues**: [Create an issue](https://github.com/ClyCites/ClyCites-Frontend/issues)
+- **Discussions**: [Join the discussion](https://github.com/ClyCites/ClyCites-Frontend/discussions)
 
 ---
 
