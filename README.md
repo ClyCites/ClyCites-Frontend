@@ -1,4 +1,3 @@
-# ClyCites Frontend
 
 <div align="center">
   <img src="https://raw.githubusercontent.com/Saga211/ClyCites-Frontend/staging/public/logo.png" alt="ClyCites Logo" width="200">
