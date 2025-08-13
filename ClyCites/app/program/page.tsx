@@ -150,7 +150,7 @@ export default function ProgramPage() {
   return (
     <>
       {/* Hero Section */}
-      <section className="py-16 sm:py-24 bg-emerald-50 dark:bg-emerald-950/30">
+      <section className="py-16 sm:py-24 bg-emerald-50 dark:bg-emerald-950/30 flex justify-center">
         <div className="container">
           <div className="max-w-3xl mx-auto text-center">
             <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 dark:text-white">Programs</h1>
@@ -162,55 +162,74 @@ export default function ProgramPage() {
       </section>
 
       {/* Featured Programs Section */}
-      <section className="py-16 sm:py-24 bg-white dark:bg-gray-950">
+      <section className="py-16 sm:py-24 bg-white dark:bg-gray-950 flex justify-center">
         <div className="container">
           <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-12 text-center">Featured Programs</h2>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {featuredPrograms.map((program, index) => (
-              <Card key={index} className="border-0 shadow-md overflow-hidden group">
-                <div className="relative h-48">
-                  <Image
-                    src={program.image || "/placeholder.svg"}
-                    alt={program.title}
-                    fill
-                    className="object-cover transition-transform duration-500 group-hover:scale-105"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
-                  <div className="absolute top-4 right-4">
-                    <Badge className="bg-emerald-500 hover:bg-emerald-600">{program.status}</Badge>
-                  </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+          {featuredPrograms.map((program, index) => (
+            <Card
+              key={index}
+              className="border border-gray-200 dark:border-gray-700 rounded-2xl shadow-lg overflow-hidden group transition-transform duration-300 hover:-translate-y-1 hover:shadow-2xl"
+            >
+              {/* Image Section */}
+              <div className="relative h-52">
+                <Image
+                  src={program.image || "/placeholder.svg"}
+                  alt={program.title}
+                  fill
+                  className="object-cover transition-transform duration-500 group-hover:scale-110"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
+                <div className="absolute top-4 right-4">
+                  <Badge className="bg-emerald-500 hover:bg-emerald-600 text-white shadow-md">
+                    {program.status}
+                  </Badge>
                 </div>
-                <CardHeader>
-                  <CardTitle>{program.title}</CardTitle>
-                  <CardDescription className="flex items-center gap-2">
-                    <Calendar className="h-4 w-4" />
-                    <span>{program.startDate}</span>
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-gray-600 dark:text-gray-300 mb-4">{program.description}</p>
-                  <div className="flex items-center gap-2 text-sm text-gray-500">
-                    <MapPin className="h-4 w-4" />
-                    <span>{program.location}</span>
-                  </div>
-                </CardContent>
-                <CardFooter>
-                  <Button asChild className="w-full bg-emerald-600 hover:bg-emerald-700">
-                    <Link href="#">
-                      Learn More
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    </Link>
-                  </Button>
-                </CardFooter>
-              </Card>
-            ))}
-          </div>
+              </div>
+
+              {/* Card Header */}
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg font-semibold text-gray-900 dark:text-white group-hover:text-emerald-600 transition-colors duration-200">
+                  {program.title}
+                </CardTitle>
+                <CardDescription className="flex items-center gap-2 text-gray-500 text-sm">
+                  <Calendar className="h-4 w-4" />
+                  <span>{program.startDate}</span>
+                </CardDescription>
+              </CardHeader>
+
+              {/* Card Content */}
+              <CardContent>
+                <p className="text-gray-600 dark:text-gray-300 mb-4 line-clamp-3">
+                  {program.description}
+                </p>
+                <div className="flex items-center gap-2 text-sm text-gray-500">
+                  <MapPin className="h-4 w-4" />
+                  <span>{program.location}</span>
+                </div>
+              </CardContent>
+
+              {/* Card Footer */}
+              <CardFooter>
+                <Button
+                  asChild
+                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium transition-colors duration-200"
+                >
+                  <Link href="#" aria-label={`Learn more about ${program.title}`}>
+                    Learn More
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Link>
+                </Button>
+              </CardFooter>
+            </Card>
+          ))}
+        </div>
         </div>
       </section>
 
       {/* All Programs Section */}
-      <section className="py-16 sm:py-24 bg-gray-50 dark:bg-gray-900">
+      <section className="py-16 sm:py-24 bg-white dark:bg-gray-900 flex justify-center">
         <div className="container">
           <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-12 text-center">All Programs</h2>
 
@@ -286,7 +305,7 @@ export default function ProgramPage() {
       </section>
 
       {/* Join Research Network Section */}
-      <section className="py-16 sm:py-24 bg-emerald-900 dark:bg-emerald-950 text-white">
+      <section className="py-16 sm:py-24 bg-emerald-900 dark:bg-emerald-950 text-white flex justify-center">
         <div className="container">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
             <div>
@@ -329,7 +348,7 @@ export default function ProgramPage() {
       </section>
 
       {/* Success Stories Section */}
-      <section className="py-16 sm:py-24 bg-white dark:bg-gray-950">
+      <section className="py-16 sm:py-24 bg-white dark:bg-gray-950 flex justify-center">
         <div className="container">
           <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-12 text-center">Success Stories</h2>
 
@@ -428,7 +447,7 @@ export default function ProgramPage() {
       </section>
 
       {/* Call to Action */}
-      <section className="py-16 sm:py-24 bg-gray-50 dark:bg-gray-900">
+      <section className="py-16 sm:py-24 bg-emerald-50 dark:bg-gray-900 flex justify-center">
         <div className="container">
           <div className="max-w-3xl mx-auto text-center">
             <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-6">Ready to Join a Program?</h2>
@@ -437,7 +456,7 @@ export default function ProgramPage() {
               thrive in digital agriculture.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button asChild size="lg" className="bg-emerald-600 hover:bg-emerald-700">
+              <Button asChild size="lg" className="bg-emerald-600 hover:bg-emerald-700 text-white">
                 <Link href="/contact">Apply Now</Link>
               </Button>
               <Button asChild variant="outline" size="lg">

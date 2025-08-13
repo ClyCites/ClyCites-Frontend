@@ -7,7 +7,7 @@ import { Team } from "@/components/team"
 export default function AboutPage() {
   return (
     <>
-      <section className="py-16 sm:py-24 bg-emerald-50">
+      <section className="py-16 sm:py-24 bg-emerald-50 flex justify-center">
         <div className="container">
           <div className="max-w-3xl mx-auto text-center">
             <h1 className="text-4xl sm:text-5xl font-bold text-gray-900">About Us</h1>
@@ -19,7 +19,7 @@ export default function AboutPage() {
         </div>
       </section>
 
-      <section className="py-16 sm:py-24 bg-white">
+      <section className="py-16 sm:py-24 bg-white flex justify-center">
         <div className="container">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
             <div>
@@ -48,7 +48,7 @@ export default function AboutPage() {
         </div>
       </section>
 
-      <section className="py-16 sm:py-24 bg-emarald-50">
+      <section className="py-16 sm:py-24 bg-emarald-50 flex justify-center">
         <div className="container">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
             <div className="order-2 lg:order-1 relative">
@@ -60,7 +60,7 @@ export default function AboutPage() {
                 className="rounded-xl shadow-lg"
               />
             </div>
-            <div className="order-1 lg:order-2">
+            <div className="order-1 lg:order-2 ">
               <h2 className="text-3xl sm:text-4xl font-bold text-gray-900">Our Mission</h2>
               <p className="mt-6 text-lg text-gray-600">
                 We are on a mission to empower communities across Africa with information about the quality of the
@@ -102,7 +102,7 @@ export default function AboutPage() {
         </div>
       </section>
 
-      <section className="py-16 sm:py-24 bg-white">
+      <section className="py-16 sm:py-24 bg-white flex justify-center">
         <div className="container">
           <div className="max-w-3xl mx-auto text-center">
             <h2 className="text-3xl sm:text-4xl font-bold text-gray-900">Our Values</h2>

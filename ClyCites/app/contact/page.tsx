@@ -11,7 +11,7 @@ export default function ContactPage() {
   return (
     <>
       {/* Hero Section */}
-      <section className="py-16 sm:py-24 bg-emerald-50 dark:bg-emerald-950/30">
+      <section className="py-16 sm:py-24 bg-emerald-50 dark:bg-emerald-950/30 flex justify-center">
         <div className="container">
           <div className="max-w-3xl mx-auto text-center">
             <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 dark:text-white">Contact Us</h1>
@@ -24,7 +24,7 @@ export default function ContactPage() {
       </section>
 
       {/* Contact Section */}
-      <section className="py-16 sm:py-24 bg-white dark:bg-gray-950">
+      <section className="py-16 sm:py-24 bg-white dark:bg-gray-950 flex justify-center">
         <div className="container">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-start">
             {/* Contact Form */}
@@ -188,7 +188,7 @@ export default function ContactPage() {
       </section>
 
       {/* FAQ Section */}
-      <section className="py-16 sm:py-24 bg-gray-50 dark:bg-gray-900">
+      <section className="py-16 sm:py-24 bg-emerald-50 dark:bg-gray-900 flex justify-center">
         <div className="container">
           <div className="max-w-3xl mx-auto">
             <h2 className="text-3xl font-bold text-center text-gray-900 dark:text-white mb-12">
