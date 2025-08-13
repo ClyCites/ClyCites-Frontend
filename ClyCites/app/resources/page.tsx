@@ -113,7 +113,7 @@ export default function ResourcesPage() {
   return (
     <>
       {/* Hero Section */}
-      <section className="py-16 sm:py-24 bg-emerald-50 dark:bg-emerald-950/30">
+      <section className="py-16 sm:py-24 bg-emerald-50 dark:bg-emerald-950/30 flex justify-center">
         <div className="container">
           <div className="max-w-3xl mx-auto text-center">
             <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 dark:text-white">Resources</h1>
@@ -126,7 +126,7 @@ export default function ResourcesPage() {
       </section>
 
       {/* Search and Filter Section */}
-      <section className="py-10 bg-white dark:bg-gray-950 border-b dark:border-gray-800">
+      <section className="py-10 bg-white dark:bg-gray-950 border-b dark:border-gray-800 flex justify-center">
         <div className="container">
           <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
             <div className="w-full md:w-1/2 relative">
@@ -149,7 +149,7 @@ export default function ResourcesPage() {
       </section>
 
       {/* Resources Section */}
-      <section className="py-16 sm:py-24 bg-white dark:bg-gray-950">
+      <section className="py-16 sm:py-24 bg-white dark:bg-gray-950 flex justify-center">
         <div className="container">
           <Tabs defaultValue="all" className="w-full">
             <TabsList className="mb-8 flex flex-wrap justify-start">
@@ -219,7 +219,7 @@ export default function ResourcesPage() {
       </section>
 
       {/* Featured Resources */}
-      <section className="py-16 sm:py-24 bg-gray-50 dark:bg-gray-900">
+      <section className="py-16 sm:py-24 bg-white dark:bg-gray-900 flex justify-center">
         <div className="container">
           <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-12 text-center">Featured Resources</h2>
 
@@ -311,7 +311,7 @@ export default function ResourcesPage() {
       </section>
 
       {/* Newsletter Section */}
-      <section className="py-16 sm:py-24 bg-emerald-900 dark:bg-emerald-950 text-white">
+      <section className="py-16 sm:py-24 bg-emerald-900 dark:bg-emerald-950 text-white flex justify-center">
         <div className="container">
           <div className="max-w-3xl mx-auto text-center">
             <h2 className="text-3xl font-bold mb-6">Stay Updated</h2>
