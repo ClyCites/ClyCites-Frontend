@@ -107,7 +107,7 @@ export function Hero() {
         </svg>
       </div>
 
-      <div className="relative z-10 mt-0 md:mt-[-120px] px-4 md:px-8">
+      <div className="relative z-10 mt-0 md:mt-[-120px] container mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           ref={ref}
           initial="hidden"
