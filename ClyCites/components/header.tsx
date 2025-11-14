@@ -21,6 +21,7 @@ export function Header() {
   const [isScrolled, setIsScrolled] = React.useState(false)
   const { setTheme, theme } = useTheme()
   const [showGetStartedDialog, setShowGetStartedDialog] = React.useState(false)
+  const [mounted, setMounted] = React.useState(false)
 
   React.useEffect(() => {
     const handleScroll = () => {
@@ -30,8 +31,12 @@ export function Header() {
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
 
+  React.useEffect(() => {
+    setMounted(true)
+  }, [])
+
   return (
-    <header className={cn("w-full fixed top-0 z-50 bg-white dark:bg-gray-900 border-b shadow-sm")}>
+    <header className={cn("w-full fixed top-0 z-50 bg-white dark:bg-gray-900 border-b shadow-sm")}> 
       {/* Top Bar */}
       <div className="bg-emerald-900 dark:bg-emerald-950 text-white py-1.5 px-3">
         <div className="container flex items-center justify-between text-sm">
@@ -46,7 +51,7 @@ export function Header() {
               Login
             </Link>
             <span className="text-emerald-500">|</span>
-            <Link href="/register" className="text-emerald-100 hover:text-white transition-colors">
+            <Link href="/signup" className="text-emerald-100 hover:text-white transition-colors">
               Register
             </Link>
           </div>
@@ -94,11 +99,9 @@ export function Header() {
                   className="rounded-full"
                   onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
                 >
-                  {theme === "dark" ? (
-                    <Sun className="h-4 w-4 text-yellow-500" />
-                  ) : (
-                    <Moon className="h-4 w-4 text-gray-700" />
-                  )}
+                  {/* Render both icons and toggle visibility via CSS to avoid SSR/CSR mismatch */}
+                  <Sun className="h-4 w-4 text-yellow-500 hidden dark:block" />
+                  <Moon className="h-4 w-4 text-gray-700 block dark:hidden" />
                   <span className="sr-only">Toggle theme</span>
                 </Button>
               </TooltipTrigger>
