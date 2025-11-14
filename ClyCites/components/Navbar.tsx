@@ -195,9 +195,15 @@ const Navbar = () => {
 
       {/* Action Buttons */}
       <div className="flex gap-4">
+        <Link
+          href="/login"
+          className="bg-white border border-blue-600 text-blue-600 hover:bg-blue-50 font-medium py-2 px-4 rounded-md transition-colors"
+        >
+          Log in
+        </Link>
         <button
           type="button"
-          className="ml-4 bg-blue-100 hover:bg-green-700 text-black font-bold py-2 px-4 rounded"
+          className="bg-blue-100 hover:bg-green-700 text-black font-bold py-2 px-4 rounded"
         >
           Get Involved
           <img src="/user.svg" alt="icon" className="inline-block w-4 h-4 ml-2" />
