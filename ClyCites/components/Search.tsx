@@ -6,6 +6,7 @@ import { Search, X } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
+import { useTranslation } from "react-i18next"
 
 type Suggestion = {
   label: string
@@ -19,12 +20,13 @@ const defaultSuggestions: Suggestion[] = [
 ]
 
 export function SearchBar({
-  placeholder = "Search products, markets, or news...",
+  placeholder,
   onSearch,
 }: {
   placeholder?: string
   onSearch?: (q: string) => void
 }) {
+  const { t } = useTranslation()
   const [query, setQuery] = React.useState("")
   const [open, setOpen] = React.useState(false)
   const router = useRouter()
@@ -53,7 +55,7 @@ export function SearchBar({
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onFocus={() => setOpen(true)}
-            placeholder={placeholder}
+            placeholder={placeholder ?? t("search.placeholder")}
             aria-label="Search"
             className="h-12 bg-white text-gray-900 placeholder:text-gray-400 pr-10"
           />

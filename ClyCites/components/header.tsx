@@ -15,6 +15,8 @@ import { MainNav } from "@/components/main-nav"
 import { SearchCommand } from "@/components/search-command"
 import { Badge } from "@/components/ui/badge"
 import { GetStartedDialog } from "@/components/get-started-dialog"
+import { useTranslation } from "react-i18next"
+import { LanguageSwitcher } from "@/components/LanguageSwitcher"
 
 export function Header() {
   const pathname = usePathname()
@@ -22,6 +24,7 @@ export function Header() {
   const { setTheme, theme } = useTheme()
   const [showGetStartedDialog, setShowGetStartedDialog] = React.useState(false)
   const [mounted, setMounted] = React.useState(false)
+  const { t } = useTranslation()
 
   React.useEffect(() => {
     const handleScroll = () => {
@@ -48,11 +51,11 @@ export function Header() {
           </div>
           <div className="flex items-center space-x-4">
             <Link href="/login" className="text-emerald-100 hover:text-white transition-colors">
-              Login
+              {t("header.login")}
             </Link>
             <span className="text-emerald-500">|</span>
             <Link href="/signup" className="text-emerald-100 hover:text-white transition-colors">
-              Register
+              {t("header.register")}
             </Link>
           </div>
         </div>
@@ -105,7 +108,7 @@ export function Header() {
                   <span className="sr-only">Toggle theme</span>
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>Change theme</TooltipContent>
+              <TooltipContent>{t("header.changeTheme")}</TooltipContent>
             </Tooltip>
 
             <Tooltip>
@@ -115,17 +118,18 @@ export function Header() {
                   <span className="sr-only">Notifications</span>
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>Notifications</TooltipContent>
+              <TooltipContent>{t("header.notifications")}</TooltipContent>
             </Tooltip>
+            <LanguageSwitcher />
             <div className="hidden md:flex items-center gap-4">
               <Button asChild variant="outline" className="rounded-full">
-                <Link href="/login">Login</Link>
+                <Link href="/login">{t("header.login")}</Link>
               </Button>
               <Button
                 className="rounded-full bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-600"
                 onClick={() => setShowGetStartedDialog(true)}
               >
-                Get Started
+                {t("header.getStarted")}
               </Button>
             </div>
           </TooltipProvider>
