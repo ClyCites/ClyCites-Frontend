@@ -1,318 +1,107 @@
 <div align="center">
-  <br />
-    <a href="https://youtu.be/cuzw4vL1z5E?feature=shared" target="_blank">
-      <img src="https://github.com/adrianhajdin/travel_ui_ux/assets/151519281/c72ebf75-847d-4a98-8f8a-24be02dac752" alt="Project Banner">
-    </a>
-  <br />
-
+  <h1>🌱 ClyCites - Digital Agriculture Platform</h1>
+  
   <div>
-    <img src="https://img.shields.io/badge/-Typescript-black?style=for-the-badge&logoColor=white&logo=typescript&color=3178C6" alt="typescript" />
-    <img src="https://img.shields.io/badge/-Next_JS-black?style=for-the-badge&logoColor=white&logo=nextdotjs&color=000000" alt="nextdotjs" />
-    <img src="https://img.shields.io/badge/-Tailwind_CSS-black?style=for-the-badge&logoColor=white&logo=tailwindcss&color=06B6D4" alt="tailwindcss" />
+    <img src="https://img.shields.io/badge/Next.js-000000?style=for-the-badge&logo=nextdotjs&logoColor=white" alt="Next.js" />
+    <img src="https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" />
+    <img src="https://img.shields.io/badge/Tailwind_CSS-06B6D4?style=for-the-badge&logo=tailwind-css&logoColor=white" alt="Tailwind CSS" />
+    <img src="https://img.shields.io/badge/React-61DAFB?style=for-the-badge&logo=react&logoColor=black" alt="React" />
   </div>
-
-  <h3 align="center">Travel Website</h3>
-
-   <div align="center">
-     Build this project step by step with our detailed tutorial on <a href="https://www.youtube.com/@javascriptmastery/videos" target="_blank"><b>JavaScript Mastery</b></a> YouTube. Join the JSM family!
-    </div>
+  
+  <p>Empowering farmers with digital solutions for marketing and selling farm produce</p>
 </div>
 
-## 📋 <a name="table">Table of Contents</a>
+## 📋 Table of Contents
 
-1. 🤖 [Introduction](#introduction)
-2. ⚙️ [Tech Stack](#tech-stack)
-3. 🔋 [Features](#features)
-4. 🤸 [Quick Start](#quick-start)
-5. 🕸️ [Snippets](#snippets)
-6. 🔗 [Links](#links)
-7. 🚀 [More](#more)
+- [Introduction](#introduction)
+- [Features](#features)
+- [Tech Stack](#tech-stack)
+- [Getting Started](#getting-started)
+  - [Prerequisites](#prerequisites)
+  - [Installation](#installation)
+  - [Running the Project](#running-the-project)
+- [Contributing](#contributing)
+- [License](#license)
+- [Support](#support)
 
-## 🚨 Tutorial
+## Introduction <a name="introduction"></a>
 
-This repository contains the code corresponding to an in-depth tutorial available on our YouTube channel, <a href="https://www.youtube.com/@javascriptmastery/videos" target="_blank"><b>JavaScript Mastery</b></a>. 
+ClyCites is an open-source digital agriculture platform designed to connect farmers with potential buyers, providing tools for marketing and selling farm produce efficiently. Our platform bridges the gap between farmers and consumers, making agricultural trade more accessible and transparent.
 
-If you prefer visual learning, this is the perfect resource for you. Follow our tutorial to learn how to build projects like these step-by-step in a beginner-friendly manner!
+## Features <a name="features"></a>
 
-<a href="https://youtu.be/cuzw4vL1z5E?feature=shared" target="_blank"><img src="https://github.com/sujatagunale/EasyRead/assets/151519281/1736fca5-a031-4854-8c09-bc110e3bc16d" /></a>
+- **Digital Marketplace**: Connect with buyers and sellers across multiple African cities
+- **Community Network**: Join over 1,500+ community champions
+- **Data Insights**: Access to comprehensive agricultural data and research
+- **Responsive Design**: Optimized for all devices from mobile to desktop
+- **Multilingual Support**: Available in multiple languages for better accessibility
 
-## <a name="introduction">🤖 Introduction</a>
+## Tech Stack <a name="tech-stack"></a>
 
-Built with Next.js, TailwindCSS, and TypeScript, this landing page not only looks great but also serves as a hands-on project to reinforce one's understanding of these technologies.
+- **Frontend**: Next.js 13+ with TypeScript
+- **Styling**: Tailwind CSS with custom animations
+- **State Management**: React Context API
+- **Internationalization**: i18next
+- **UI Components**: Custom components with shadcn/ui
 
-If you're getting started and need assistance or face any bugs, join our active Discord community with over 27k+ members. It's a place where people help each other out.
+## Getting Started <a name="getting-started"></a>
 
-<a href="https://discord.com/invite/n6EdbFJ" target="_blank"><img src="https://github.com/sujatagunale/EasyRead/assets/151519281/618f4872-1e10-42da-8213-1d69e486d02e" /></a>
+### Prerequisites <a name="prerequisites"></a>
 
-## <a name="tech-stack">⚙️ Tech Stack</a>
+- Node.js 16.8 or later
+- npm 8.0.0 or later
+- Git
 
-- Next.js
-- Tailwind CSS
+### Installation <a name="installation"></a>
 
-## <a name="features">🔋 Features</a>
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/KubanjaElijahEldred/ClyCites-Frontend.git
+   cd ClyCites-Frontend
+   ```
 
-👉 **Appealing Hero Section**: Visually striking hero section that captures attention and sets the tone for the website
+2. Install dependencies:
+   ```bash
+   npm install
+   # or
+   yarn install
+   ```
 
-👉 **Camp Exploration Section**: Showcase various camps in a dedicated section, allowing users to explore different options.
+### Running the Project <a name="running-the-project"></a>
 
-👉 **Engaging Travel Guide Section**: A compelling travel guide section with informative content and captivating visuals.
+1. Start the development server:
+   ```bash
+   npm run dev
+   # or
+   yarn dev
+   ```
 
-👉 **Feature-Rich Section**: A complex and feature-rich section offering advanced functionalities or in-depth information.
+2. Open [http://localhost:3000](http://localhost:3000) in your browser to see the result.
 
-👉 **Call to Action for Mobile Apps**: A call-to-action section encouraging users to explore the mobile app version, complete with download links.
+## Contributing <a name="contributing"></a>
 
-👉 **Footer**: Comprehensive footer section containing site and social media links for easy navigation and connectivity.
+We welcome contributions from the community! Please read our [Contributing Guidelines](CONTRIBUTING.md) to get started.
 
-and many more, including code architecture and reusability 
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
-## <a name="quick-start">🤸 Quick Start</a>
+## License <a name="license"></a>
 
-Follow these steps to set up the project locally on your machine.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-**Prerequisites**
+## Support <a name="support"></a>
 
-Make sure you have the following installed on your machine:
-
-- [Git](https://git-scm.com/)
-- [Node.js](https://nodejs.org/en)
-- [npm](https://www.npmjs.com/) (Node Package Manager)
-
-**Cloning the Repository**
-
-```bash
-git clone https://github.com/adrianhajdin/travel_ui_ux.git
-cd travel_ui_ux
-```
-
-**Installation**
-
-Install the project dependencies using npm:
-
-```bash
-npm install
-```
-
-**Running the Project**
-
-```bash
-npm run dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) in your browser to view the project.
-
-## <a name="snippets">🕸️ Snippets</a>
-
-<details>
-<summary><code>constants.index.ts</code></summary>
-
-```typescript
-// NAVIGATION
-export const NAV_LINKS = [
-  { href: '/', key: 'home', label: 'Home' },
-  { href: '/', key: 'how_hilink_work', label: 'How Hilink Work?' },
-  { href: '/', key: 'services', label: 'Services' },
-  { href: '/', key: 'pricing ', label: 'Pricing ' },
-  { href: '/', key: 'contact_us', label: 'Contact Us' },
-];
-
-// CAMP SECTION
-export const PEOPLE_URL = [
-  '/person-1.png',
-  '/person-2.png',
-  '/person-3.png',
-  '/person-4.png',
-];
-
-// FEATURES SECTION
-export const FEATURES = [
-  {
-    title: 'Real maps can be offline',
-    icon: '/map.svg',
-    variant: 'green',
-    description:
-      'We provide a solution for you to be able to use our application when climbing, yes offline maps you can use at any time there is no signal at the location',
-  },
-  {
-    title: 'Set an adventure schedule',
-    icon: '/calendar.svg',
-    variant: 'green',
-    description:
-      "Schedule an adventure with friends. On holidays, there are many interesting offers from Hilink. That way, there's no more discussion",
-  },
-  {
-    title: 'Technology using augment reality',
-    icon: '/tech.svg',
-    variant: 'green',
-    description:
-      'Technology uses augmented reality as a guide to your hiking trail in the forest to the top of the mountain. Already supported by the latest technology without an internet connection',
-  },
-  {
-    title: 'Many new locations every month',
-    icon: '/location.svg',
-    variant: 'orange',
-    description:
-      'Lots of new locations every month, because we have a worldwide community of climbers who share their best experiences with climbing',
-  },
-];
-
-// FOOTER SECTION
-export const FOOTER_LINKS = [
-  {
-    title: 'Learn More',
-    links: [
-      'About Hilink',
-      'Press Releases',
-      'Environment',
-      'Jobs',
-      'Privacy Policy',
-      'Contact Us',
-    ],
-  },
-  {
-    title: 'Our Community',
-    links: ['Climbing xixixi', 'Hiking hilink', 'Hilink kinthill'],
-  },
-];
-
-export const FOOTER_CONTACT_INFO = {
-  title: 'Contact Us',
-  links: [
-    { label: 'Admin Officer', value: '123-456-7890' },
-    { label: 'Email Officer', value: 'hilink@akinthil.com' },
-  ],
-};
-
-export const SOCIALS = {
-  title: 'Social',
-  links: [
-    '/facebook.svg',
-    '/instagram.svg',
-    '/twitter.svg',
-    '/youtube.svg',
-    '/wordpress.svg',
-  ],
-};
-```
-
-</details>
-
-<details>
-<summary><code>globals.css</code></summary>
-
-```typescript
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
-
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-body {
-  font-family: Inter;
-}
-
-@layer utilities {
-  .btn_white { 
-    @apply  border-white bg-white px-8 py-3 text-green-50
-  }
-  .btn_white_text  { 
-    @apply  border-white bg-white px-8 py-3 text-gray-90
-  }
-  .btn_green  { 
-    @apply  border-green-50 bg-green-50 px-8 py-5 text-white
-  }
-  .btn_dark_green { 
-    @apply  bg-green-90 px-8 py-4 text-white transition-all hover:bg-black
-  }
-  .btn_dark_green_outline  { 
-    @apply border-gray-20 bg-green-90 px-8 py-5 text-white
-  }
-  
-  .max-container {
-    @apply mx-auto max-w-[1440px];
-  }
-
-  .padding-container {
-    @apply px-6 lg:px-20 3xl:px-0;
-  }
-
-  .flexCenter {
-    @apply flex items-center justify-center;
-  }
-
-  .flexBetween {
-    @apply flex items-center justify-between;
-  }
-
-  .flexStart {
-    @apply flex items-center justify-start;
-  }
-
-  .flexEnd {
-    @apply flex items-center justify-end;
-  }
-
-  /* FONTS */
-  .regular-64 {
-    @apply text-[64px] font-[400] leading-[120%];
-  }
-
-  .regular-40 {
-    @apply text-[40px] font-[400] leading-[120%];
-  }
-
-  .regular-32 {
-    @apply text-[32px] font-[400];
-  }
-
-  .regular-24 {
-    @apply text-[24px] font-[400];
-  }
-
-  .regular-20 {
-    @apply text-[20px] font-[400];
-  }
-
-  .regular-18 {
-    @apply text-[18px] font-[400];
-  }
-
-  .regular-16 {
-    @apply text-[16px] font-[400];
-  }
-
-  .regular-14 {
-    @apply text-[14px] font-[400];
-  }
-
-  .medium-14 {
-    @apply text-[14px] font-[600];
-  }
-
-  .bold-88 {
-    @apply text-[88px] font-[700] leading-[120%];
-  }
-
-  .bold-64 {
-    @apply text-[64px] font-[700] leading-[120%];
-  }
-
-  .bold-52 {
-    @apply text-[52px] font-[700] leading-[120%];
-  }
-
-  .bold-40 {
-    @apply text-[40px] font-[700] leading-[120%];
-  }
-
-  .bold-32 {
-    @apply text-[32px] font-[700] leading-[120%];
-  }
+For support, please open an issue in our [GitHub repository](https://github.com/KubanjaElijahEldred/ClyCites-Frontend/issues) or contact us at [support@clycites.com](mailto:support@clycites.com).
+
+---
+
+<div align="center">
+  <p>Made with ❤️ by the ClyCites Team</p>
+  <p>© 2023 ClyCites. All rights reserved.</p>
+</div>
 
   .bold-20 {
     @apply text-[20px] font-[700];
