@@ -1,0 +1,12 @@
+{
+  "header": {
+    "login": "Se connecter",
+    "register": "S'inscrire",
+    "changeTheme": "Changer le thème",
+    "notifications": "Notifications",
+    "getStarted": "Commencer"
+  },
+  "search": {
+    "placeholder": "Rechercher des produits, marchés ou actualités..."
+  }
+}

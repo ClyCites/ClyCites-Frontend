@@ -6,6 +6,7 @@ import { motion, useAnimation } from "framer-motion"
 import { useInView } from "react-intersection-observer"
 
 import { Button } from "@/components/ui/button"
+import { SearchBar } from "@/components/Search"
 
 export function Hero() {
   const { ref, inView } = useInView({
@@ -106,7 +107,7 @@ export function Hero() {
         </svg>
       </div>
 
-      <div className="relative z-10 mt-0 md:mt-[-120px] px-4 md:px-8">
+      <div className="relative z-10 mt-0 md:mt-[-120px] container mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           ref={ref}
           initial="hidden"
@@ -135,6 +136,9 @@ export function Hero() {
               digitally. It helps farmers to market and sell their farm produces digitally at the comfort of their farm
               and communicate with potential customers.
             </motion.p>
+            <motion.div variants={itemVariants} className="mt-6 max-w-xl">
+              <SearchBar />
+            </motion.div>
             <motion.div variants={itemVariants} className="mt-10 flex flex-col sm:flex-row gap-4">
               <Button asChild size="lg" className="rounded-full group">
                 <Link href="/get-started">
