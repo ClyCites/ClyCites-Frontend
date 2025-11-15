@@ -5,6 +5,7 @@ import "./globals.css"
 import { Header } from "@/components/header"
 import { Footer } from "@/components/Footer"
 import { ThemeProvider } from "@/components/theme-provider"
+import { I18nProvider } from "@/components/I18nProvider"
 
 export const metadata: Metadata = {
   title: "ClyCites - Digital Agriculture Platform",
@@ -20,9 +21,11 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className="min-h-screen bg-background font-sans antialiased">
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
-          <Header />
-          <main className="relative overflow-hidden pt-[104px]">{children}</main>
-          <Footer />
+          <I18nProvider>
+            <Header />
+            <main className="relative overflow-hidden pt-[104px]">{children}</main>
+            <Footer />
+          </I18nProvider>
         </ThemeProvider>
       </body>
     </html>
