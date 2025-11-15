@@ -1,0 +1,12 @@
+{
+  "header": {
+    "login": "Login",
+    "register": "Register",
+    "changeTheme": "Change theme",
+    "notifications": "Notifications",
+    "getStarted": "Get Started"
+  },
+  "search": {
+    "placeholder": "Search products, markets, or news..."
+  }
+}
