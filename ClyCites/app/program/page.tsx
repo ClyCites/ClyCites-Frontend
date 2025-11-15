@@ -1,3 +1,4 @@
+"use client"
 import Image from "next/image"
 import Link from "next/link"
 import { ArrowRight, Calendar, MapPin, Users, Award, BookOpen, Sparkles } from "lucide-react"
