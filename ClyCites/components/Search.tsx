@@ -13,11 +13,8 @@ type Suggestion = {
   value: string
 }
 
-const defaultSuggestions: Suggestion[] = [
-  { label: "Maize prices in Kampala", value: "maize prices kampala" },
-  { label: "Nearest produce markets", value: "markets near me" },
-  { label: "Farming news", value: "news" },
-]
+// Suggestions will be loaded from the API based on user input
+const defaultSuggestions: Suggestion[] = []
 
 export function SearchBar({
   placeholder,
@@ -43,9 +40,21 @@ export function SearchBar({
 
   const clear = () => setQuery("")
 
-  const filtered = defaultSuggestions.filter((s) =>
-    s.label.toLowerCase().includes(query.toLowerCase())
-  )
+  // TODO: Replace with API call to fetch suggestions based on query
+  const [suggestions, setSuggestions] = React.useState<Suggestion[]>([])
+  
+  React.useEffect(() => {
+    // This is where you would fetch suggestions from your API
+    // Example:
+    // fetch(`/api/suggestions?q=${encodeURIComponent(query)}`)
+    //   .then(res => res.json())
+    //   .then(data => setSuggestions(data))
+    
+    // For now, we'll use an empty array
+    setSuggestions([])
+  }, [query])
+  
+  const filtered = query.trim() ? suggestions : []
 
   return (
     <div className="w-full">
@@ -82,7 +91,9 @@ export function SearchBar({
           <Command className="rounded-lg border bg-white">
             <CommandInput placeholder="Type to filter suggestions..." value={query} onValueChange={setQuery} />
             <CommandList>
-              <CommandEmpty>No suggestions found.</CommandEmpty>
+              <CommandEmpty>
+                {query.trim() ? "No results found. Try a different search term." : "Type to search..."}
+              </CommandEmpty>
               <CommandGroup heading="Suggestions">
                 {filtered.map((s) => (
                   <CommandItem

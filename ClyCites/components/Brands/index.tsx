@@ -1,52 +1,102 @@
-import { Brand } from "@/types/brand";
-import Image from "next/image";
+"use client"
 
-const brandsData: Brand[] = [
-  {
-    id: 1,
-    name: "RENU",
-    href: "https://renu.ac.ug/",
-    image: "/images/bugema.png",
-  },
-  {
-    id: 2,
-    name: "SDA",
-    href: "https://www.adventist.org/",
-    image: "/images/bugema.png",
-  },
-  {
-    id: 3,
-    name: "NCHE",
-    href: "https://unche.or.ug/",
-    image: "/images/bugema.png",
-  },
-  {
-    id: 4,
-    name: "Bugema University",
-    href: "https://bugemauniv.ac.ug",
-    image: "/images/bugema.png",
-  },
-  {
-    id: 5,
-    name: "Flair ERMS",
-    href: "",
-    image: "/images/bugema.png",
-  },
-];
+import { useEffect, useState } from "react"
+import Image from "next/image"
+import { Brand } from "@/types/brand"
+
+type ApiResponse = {
+  data: Brand[]
+  success: boolean
+  message?: string
+}
+
+const fetchBrands = async (): Promise<Brand[]> => {
+  try {
+    // TODO: Replace with your actual API endpoint
+    // const response = await fetch('/api/brands')
+    // const data: ApiResponse = await response.json()
+    // if (!data.success) throw new Error(data.message || 'Failed to fetch brands')
+    // return data.data || []
+    
+    // For now, return an empty array
+    return []
+  } catch (error) {
+    console.error('Error fetching brands:', error)
+    // Return an empty array in case of error
+    return []
+  }
+}
 
 const Brands = () => {
+  const [brands, setBrands] = useState<Brand[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const loadBrands = async () => {
+      try {
+        setIsLoading(true)
+        const data = await fetchBrands()
+        setBrands(data)
+      } catch (err) {
+        console.error('Failed to load brands:', err)
+        setError('Failed to load partner information')
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    loadBrands()
+  }, [])
+
+  if (isLoading) {
+    return (
+      <section className="pt-5 bg-gray-100">
+        <div className="container">
+          <h1 className="bold text-center justify-center font-semibold text-gray-600">
+            CLCITES IS SUPPORTED BY
+          </h1>
+          <div className="flex justify-center py-8">
+            <div className="animate-pulse text-gray-500">Loading partners...</div>
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  if (error) {
+    return (
+      <section className="pt-5 bg-gray-100">
+        <div className="container">
+          <h1 className="bold text-center justify-center font-semibold text-gray-600">
+            CLCITES IS SUPPORTED BY
+          </h1>
+          <div className="flex justify-center py-8">
+            <div className="text-red-500">{error}</div>
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  if (brands.length === 0) {
+    // Don't show anything if there are no brands
+    return null
+  }
+
   return (
     <section className="pt-5 bg-gray-100">
       <div className="container">
-      <h1 className="bold text-center justify-center font-semibold text-gray-600">ClYCITES IS SUPPORTED BY</h1>
+        <h1 className="bold text-center justify-center font-semibold text-gray-600">
+          CLCITES IS SUPPORTED BY
+        </h1>
         <div className="-mx-4 flex flex-wrap">
           <div className="w-full px-4">
             <div
               className="wow fadeInUp flex flex-wrap items-center justify-center rounded-md bg-dark py-4 px-8 dark:bg-primary dark:bg-opacity-5 sm:px-10 md:py-[10px] md:px-[50px] xl:p-[20px] 2xl:py-[40px] 2xl:px-[70px]"
-              data-wow-delay=".1s
-              "
+              data-wow-delay=".1s"
             >
-              {brandsData.map((brand) => (
+              {brands.map((brand) => (
                 <SingleBrand key={brand.id} brand={brand} />
               ))}
             </div>
@@ -54,8 +104,8 @@ const Brands = () => {
         </div>
       </div>
     </section>
-  );
-};
+  )
+}
 
 export default Brands;
 
