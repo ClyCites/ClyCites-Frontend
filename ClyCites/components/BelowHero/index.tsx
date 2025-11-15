@@ -31,20 +31,16 @@ const AboutSectionLife2 = () => {
           }, []);
 
   return (
-    <section className="top-0 bg-gray-100">
-            <div className="container  -my-4">
-                  <div className="container mx-auto">
-                        <div className="flex flex-wrap items-center justify-center al -mx-6 gap-2 lg:gap-6">
-                              <div className={`w-full px-4 lg:w-1/2 xl:w-1/6 transition-transform duration-300 lg:hover:scale-105 cursor-pointer rounded bg-gray-300 ${animate ?"slider-up slide-up-faster":"" }`}>
-                                    <div className="wow fadeInUp relative mx-auto mb-6 aspect-[25/24] lg:m-0 flex flex-col justify-center items-center text-center" data-wow-delay=".15s ">
-
-                                          {/* <FaWpforms className="w-10 h-8  text-black dark:text-white items-center"/> */}
-
-                                          <h3 className="mb-2 mt-3 text-xl font-bold text-black sm:text-2xl lg:text-xl xl:text-2xl">
-                                          8+
+    <section className="w-full bg-gray-100 py-4 md:py-8">
+            <div className="container mx-auto px-4">
+                  <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-4 gap-3 md:gap-4 lg:gap-6">
+                        <div className={`transition-transform duration-300 hover:scale-105 cursor-pointer rounded-lg bg-white shadow-sm hover:shadow-md ${animate ? "slider-up slide-up-faster" : ""}`}>
+                                    <div className="relative p-4 md:p-6 flex flex-col justify-center items-center text-center h-full">
+                                          <h3 className="text-2xl md:text-3xl font-bold text-emerald-700">
+                                            8+
                                           </h3>
-                                          <p className="mb-4 text-base text-black ">
-                                          African Cities
+                                          <p className="mt-2 text-sm md:text-base text-gray-600">
+                                            African Cities
                                           </p>
                                           {/* <Link href="https://apply.bugemauniv.ac.ug/">
                                                 <button className="px-6 py-2 text-white bg-[#e72725] rounded hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
@@ -52,17 +48,14 @@ const AboutSectionLife2 = () => {
                                                 </button>
                                           </Link> */}
                                     </div>
-                              </div>
-                              <div className={`w-full px-4 lg:w-1/2 xl:w-1/6 transition-transform duration-300 lg:hover:scale-105 cursor-pointer rounded bg-gray-300 ${animate ?"slider-up slide-up-faster":"" }`}>
-                                    <div className="wow fadeInUp relative mx-auto mb-6 aspect-[25/24] lg:m-0 flex flex-col justify-center items-center text-center" data-wow-delay=".15s ">
-
-                                          {/* <FaWpforms className="w-10 h-8  text-black dark:text-white items-center"/> */}
-
-                                          <h3 className="mb-2 mt-3 text-xl font-bold text-black sm:text-2xl lg:text-xl xl:text-2xl">
-                                          1500+
+                        </div>
+                        <div className={`transition-transform duration-300 hover:scale-105 cursor-pointer rounded-lg bg-white shadow-sm hover:shadow-md ${animate ? "slider-up slide-up-faster" : ""}`}>
+                                    <div className="relative p-4 md:p-6 flex flex-col justify-center items-center text-center h-full">
+                                          <h3 className="text-2xl md:text-3xl font-bold text-emerald-700">
+                                            1500+
                                           </h3>
-                                          <p className="mb-4 text-base text-black ">
-                                          Community Champions
+                                          <p className="mt-2 text-sm md:text-base text-gray-600">
+                                            Community Champions
                                           </p>
                                           {/* <Link href="https://apply.bugemauniv.ac.ug/">
                                                 <button className="px-6 py-2 text-white bg-[#e72725] rounded hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
@@ -70,15 +63,14 @@ const AboutSectionLife2 = () => {
                                                 </button>
                                           </Link> */}
                                     </div>
-                              </div>
-                              <div className={`w-full px-4 lg:w-1/2 xl:w-1/6 transition-transform duration-300 lg:hover:scale-105 cursor-pointer rounded bg-gray-300 ${animate ?"slider-up slide-up-fast":"" } `}>
-                                    <div className="wow fadeInUp relative mx-auto mb-6 aspect-[25/24] lg:m-0 flex flex-col justify-center items-center text-center" data-wow-delay=".15s">
-                                          {/* <FaMoneyCheckDollar className="w-10 h-8 text-black dark:text-white items-center"/> */}
-                                          <h3 className="mb-2 mt-3 text-xl font-bold text-black sm:text-2xl lg:text-xl xl:text-2xl">
-                                                67+
+                        </div>
+                        <div className={`transition-transform duration-300 hover:scale-105 cursor-pointer rounded-lg bg-white shadow-sm hover:shadow-md ${animate ? "slider-up slide-up-fast" : ""}`}>
+                                    <div className="relative p-4 md:p-6 flex flex-col justify-center items-center text-center h-full">
+                                          <h3 className="text-2xl md:text-3xl font-bold text-emerald-700">
+                                            67+
                                           </h3>
-                                          <p className="mb-4 text-base text-black">
-                                          Data Records
+                                          <p className="mt-2 text-sm md:text-base text-gray-600">
+                                            Data Records
                                           </p>
                                     
                                           {/* <Link href="/finances.pdf" target="_blank" rel="noopener noreferrer">
@@ -87,15 +79,14 @@ const AboutSectionLife2 = () => {
                                                 </button>
                                           </Link> */}
                                     </div>
-                              </div>
-                              <div className={`w-full px-4 lg:w-1/2 xl:w-1/6 transition-transform duration-300 lg:hover:scale-105 cursor-pointer rounded bg-gray-300 ${animate ?"slider-up slide-up-slow":"" }`}>
-                                    <div className="wow fadeInUp relative mx-auto mb-6 aspect-[25/24] lg:m-0 flex flex-col justify-center items-center text-center" data-wow-delay=".15s">
-                                          {/* <IoBookOutline className="w-10 h-8 text-black dark:text-white items-center"/> */}
-                                          <h3 className="mb-2 mt-3 text-xl font-bold text-black sm:text-2xl lg:text-xl xl:text-2xl">
-                                          10+
+                        </div>
+                        <div className={`transition-transform duration-300 hover:scale-105 cursor-pointer rounded-lg bg-white shadow-sm hover:shadow-md ${animate ? "slider-up slide-up-slow" : ""}`}>
+                                    <div className="relative p-4 md:p-6 flex flex-col justify-center items-center text-center h-full">
+                                          <h3 className="text-2xl md:text-3xl font-bold text-emerald-700">
+                                            10+
                                           </h3>
-                                          <p className="mb-4 text-base text-black dark:text-gray-300">
-                                          Research Papers
+                                          <p className="mt-2 text-sm md:text-base text-gray-600">
+                                            Research Papers
                                           </p>
                                           {/* <Link href="https://erms.bugemauniv.ac.ug/student/">
                                                 <button className="px-6 py-2 text-white bg-[#e72725] rounded hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
@@ -104,7 +95,7 @@ const AboutSectionLife2 = () => {
                                           </Link> */}
                                           
                                     </div>
-                              </div>
+                        </div>
                               <div className={`w-full px-4 lg:w-1/2 xl:w-1/6 transition-transform duration-300 lg:hover:scale-105 cursor-pointer rounded bg-gray-300 ${animate ?"slider-up slide-up-slower":"" } `}>
                                     <div className="wow fadeInUp relative mx-auto mb-12 aspect-[25/24] lg:m-0 flex flex-col justify-center items-center text-center" data-wow-delay=".15s">
                                           {/* <FaScroll className="w-10 h-8 text-black dark:text-white "/> */}
@@ -121,7 +112,6 @@ const AboutSectionLife2 = () => {
                                           </Link> */}
                                           
                                     </div>
-                              </div>
                         </div>
                   </div>
             </div>
