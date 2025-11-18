@@ -145,7 +145,7 @@ export function Impact() {
 
   return (
     <section className="py-20 sm:py-32 bg-gradient-to-br from-emerald-50 to-white dark:from-emerald-950 dark:to-gray-950">
-      <div className="container px-4 sm:px-6 lg:px-8">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           ref={ref}
           initial="hidden"
