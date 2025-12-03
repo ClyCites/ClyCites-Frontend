@@ -50,12 +50,12 @@ export function SearchCommand({ className, ...props }: DialogProps & { className
         <span className="hidden xl:inline-flex">Search...</span>
         <span className="sr-only">Search</span>
         <kbd className="pointer-events-none absolute right-1.5 top-2 hidden h-6 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100 xl:flex">
-          <span className="text-xs">⌘</span>K
+          {/* <span className="text-xs">⌘</span>K */}
         </kbd>
       </Button>
       <CommandDialog open={open} onOpenChange={setOpen}>
         <CommandInput placeholder="Search across ClyCites..." />
-        <CommandList>
+        <CommandList className="max-h-80 overflow-y-auto">
           <CommandEmpty>No results found.</CommandEmpty>
           <CommandGroup heading="Pages">
             <CommandItem onSelect={() => runCommand(() => router.push("/"))}>Home</CommandItem>
