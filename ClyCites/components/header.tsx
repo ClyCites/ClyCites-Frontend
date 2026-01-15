@@ -15,12 +15,16 @@ import { MainNav } from "@/components/main-nav"
 import { SearchCommand } from "@/components/search-command"
 import { Badge } from "@/components/ui/badge"
 import { GetStartedDialog } from "@/components/get-started-dialog"
+import { useTranslation } from "react-i18next"
+import { LanguageSwitcher } from "@/components/LanguageSwitcher"
 
 export function Header() {
   const pathname = usePathname()
   const [isScrolled, setIsScrolled] = React.useState(false)
   const { setTheme, theme } = useTheme()
   const [showGetStartedDialog, setShowGetStartedDialog] = React.useState(false)
+  const [mounted, setMounted] = React.useState(false)
+  const { t } = useTranslation()
 
   React.useEffect(() => {
     const handleScroll = () => {
@@ -30,8 +34,12 @@ export function Header() {
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
 
+  React.useEffect(() => {
+    setMounted(true)
+  }, [])
+
   return (
-    <header className={cn("w-full fixed top-0 z-50 bg-white dark:bg-gray-900 border-b shadow-sm")}>
+    <header className={cn("w-full fixed top-0 z-50 bg-white dark:bg-gray-900 border-b shadow-sm")}> 
       {/* Top Bar */}
       <div className="bg-emerald-900 dark:bg-emerald-950 text-white py-1.5 px-3">
         <div className="container flex items-center justify-between text-sm">
@@ -43,11 +51,11 @@ export function Header() {
           </div>
           <div className="flex items-center space-x-4">
             <Link href="/login" className="text-emerald-100 hover:text-white transition-colors">
-              Login
+              {t("header.login")}
             </Link>
             <span className="text-emerald-500">|</span>
-            <Link href="/register" className="text-emerald-100 hover:text-white transition-colors">
-              Register
+            <Link href="/signup" className="text-emerald-100 hover:text-white transition-colors">
+              {t("header.register")}
             </Link>
           </div>
         </div>
@@ -94,15 +102,13 @@ export function Header() {
                   className="rounded-full"
                   onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
                 >
-                  {theme === "dark" ? (
-                    <Sun className="h-4 w-4 text-yellow-500" />
-                  ) : (
-                    <Moon className="h-4 w-4 text-gray-700" />
-                  )}
+                  {/* Render both icons and toggle visibility via CSS to avoid SSR/CSR mismatch */}
+                  <Sun className="h-4 w-4 text-yellow-500 hidden dark:block" />
+                  <Moon className="h-4 w-4 text-gray-700 block dark:hidden" />
                   <span className="sr-only">Toggle theme</span>
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>Change theme</TooltipContent>
+              <TooltipContent>{t("header.changeTheme")}</TooltipContent>
             </Tooltip>
 
             <Tooltip>
@@ -112,17 +118,18 @@ export function Header() {
                   <span className="sr-only">Notifications</span>
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>Notifications</TooltipContent>
+              <TooltipContent>{t("header.notifications")}</TooltipContent>
             </Tooltip>
+            <LanguageSwitcher />
             <div className="hidden md:flex items-center gap-4">
               <Button asChild variant="outline" className="rounded-full">
-                <Link href="/login">Login</Link>
+                <Link href="/login">{t("header.login")}</Link>
               </Button>
               <Button
                 className="rounded-full bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-600"
                 onClick={() => setShowGetStartedDialog(true)}
               >
-                Get Started
+                {t("header.getStarted")}
               </Button>
             </div>
           </TooltipProvider>

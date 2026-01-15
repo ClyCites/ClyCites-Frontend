@@ -1,0 +1,12 @@
+{
+  "header": {
+    "login": "Iniciar sesión",
+    "register": "Registrarse",
+    "changeTheme": "Cambiar tema",
+    "notifications": "Notificaciones",
+    "getStarted": "Comenzar"
+  },
+  "search": {
+    "placeholder": "Buscar productos, mercados o noticias..."
+  }
+}

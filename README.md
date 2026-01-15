@@ -19,7 +19,6 @@
 - [Tech Stack](#tech-stack)
 - [Project Structure](#project-structure)
 - [Getting Started](#getting-started)
-- [Environment Variables](#environment-variables)
 - [Available Scripts](#available-scripts)
 - [Contributing](#contributing)
 - [License](#license)
@@ -57,22 +56,34 @@ The platform addresses critical challenges in the agricultural sector by providi
 
 ### Styling & UI
 - **Tailwind CSS 3.4.17** - Utility-first CSS framework
-- **Radix UI** - Accessible component primitives
+- **Radix UI** - Accessible component primitives (multiple components)
 - **Framer Motion 12.9.1** - Animation library
-- **Lucide React** - Icon library
-- **next-themes** - Theme switching
+- **Lucide React 0.503.0** - Icon library
+- **next-themes 0.4.6** - Theme switching
+- **Tailwind CSS Animate** - Animation utilities
+- **Tailwind Merge 3.2.0** - Utility class merging
+- **Class Variance Authority 0.7.1** - Component variant styling
+- **Clsx 2.1.1** - Conditional class names
+
+### Form & Data Handling
+- **React Hook Form** - Form handling (via dependencies)
+- **Zod** - Schema validation (via dependencies)
+- **Sonner 1.5.0** - Toast notifications
+- **Recharts 2.15.3** - Chart components
+- **React Day Picker 9.6.7** - Date picker component
+- **Embla Carousel 8.6.0** - Carousel components
+
+### Internationalization & Utilities
+- **i18next 23.15.1** - Internationalization
+- **react-i18next 15.0.1** - React i18n bindings
+- **React Intersection Observer 9.16.0** - Intersection detection
+- **Cmdk 1.1.1** - Command palette component
 
 ### Development Tools
 - **ESLint** - Code linting
-- **PostCSS** - CSS processing
-- **Autoprefixer** - CSS vendor prefixing
-
-### Additional Libraries
-- **Recharts** - Chart components
-- **React Hook Form** - Form handling
-- **Zod** - Schema validation
-- **Axios** - HTTP client
-- **i18next** - Internationalization
+- **PostCSS 8.5.3** - CSS processing
+- **Autoprefixer 10.4.21** - CSS vendor prefixing
+- **TypeScript 5** - Type-safe JavaScript
 
 ## 📁 Project Structure
 
@@ -81,22 +92,42 @@ ClyCites-Frontend/
 ├── ClyCites/                    # Main frontend application
 │   ├── app/                     # Next.js app directory
 │   │   ├── about/              # About page
+│   │   ├── community-resources/ # Community resources page
 │   │   ├── contact/            # Contact page
-│   │   ├── disease/            # Disease detection
-│   │   ├── nutrition/          # Nutrition resources
-│   │   ├── program/            # Program information
-│   │   └── resources/          # General resources
+│   │   ├── disease/            # Disease detection page
+│   │   ├── developer-resources/ # Developer resources page
+│   │   ├── get-started/        # Getting started page
+│   │   ├── login/              # Login page
+│   │   ├── nutrition/          # Nutrition resources page
+│   │   ├── partner-signup/     # Partner signup page
+│   │   ├── policy-resources/   # Policy resources page
+│   │   ├── program/            # Program information page
+│   │   ├── research-tools/     # Research tools page
+│   │   ├── resources/          # General resources page
+│   │   ├── search/             # Search functionality
+│   │   ├── signup/             # Signup page
+│   │   ├── submodules/         # Submodule integrations
+│   │   ├── layout.tsx          # Root layout component
+│   │   ├── page.tsx            # Home page
+│   │   └── globals.css         # Global styles
 │   ├── components/             # React components
-│   │   ├── ui/                # Reusable UI components
-│   │   ├── Hero.tsx           # Hero section
-│   │   ├── Features.tsx       # Features showcase
-│   │   └── ...                # Other components
-│   ├── lib/                   # Utility functions
-│   ├── public/                # Static assets
-│   └── types/                 # TypeScript definitions
-├── ClyCites-Emarket/          # E-Market sub-application
-├── ClyCites-AgricAssis/       # Agricultural Assistant
-├── ClyCites-Expertportal/     # Expert Portal
+│   │   ├── ui/                # Reusable UI components (Radix UI based)
+│   │   ├── BelowHero/         # Below hero section components
+│   │   ├── Features/          # Feature showcase components
+│   │   ├── Hero/              # Hero section components
+│   │   └── ...                # Other feature components
+│   ├── lib/                   # Utility functions and configurations
+│   ├── public/                # Static assets (images, icons, etc.)
+│   ├── types/                 # TypeScript type definitions
+│   ├── constants/             # Application constants
+│   ├── locales/               # Internationalization files
+│   └── assets/                # Additional assets
+├── ClyCites-AgricAssis/       # Agricultural Assistant (sub-application)
+├── ClyCites-Emarket/          # E-Market (sub-application)
+├── ClyCites-Expertportal/     # Expert Portal (sub-application)
+├── ClyCites-accounts/         # Accounts management (sub-application)
+├── .github/                   # GitHub workflows and templates
+├── assets/                    # Project-wide assets
 └── README.md                  # This file
 ```
 
@@ -118,20 +149,9 @@ Make sure you have the following installed on your machine:
    cd ClyCites-Frontend
    ```
 
-2. **Install dependencies for the main application**
+2. **Install dependencies**
    ```bash
    cd ClyCites
-   npm install
-   ```
-
-3. **Install dependencies for sub-applications (optional)**
-   ```bash
-   # E-Market
-   cd ../ClyCites-Emarket
-   npm install
-   
-   # Agricultural Assistant
-   cd ../ClyCites-AgricAssis
    npm install
    ```
 
@@ -153,69 +173,8 @@ npm run build
 npm start
 ```
 
-## 🔧 Environment Variables
-
-Create a `.env.local` file in the root of each sub-application with the following variables:
-
-### Main Application (ClyCites)
-```env
-# API Configuration
-NEXT_PUBLIC_API_URL=http://localhost:8000
-NEXT_PUBLIC_APP_URL=http://localhost:3000
-
-# Authentication
-NEXTAUTH_SECRET=your-secret-key
-NEXTAUTH_URL=http://localhost:3000
-
-# External Services
-NEXT_PUBLIC_WEATHER_API_KEY=your-weather-api-key
-NEXT_PUBLIC_MAPS_API_KEY=your-maps-api-key
-```
-
-### E-Market Application
-```env
-# Database
-DATABASE_URL="postgresql://username:password@localhost:5432/clycites_emarket"
-
-# Authentication
-NEXTAUTH_SECRET=your-secret-key
-NEXTAUTH_URL=http://localhost:3001
-
-# File Upload
-UPLOADTHING_SECRET=your-uploadthing-secret
-UPLOADTHING_APP_ID=your-uploadthing-app-id
-```
-
-### Agricultural Assistant
-```env
-# API Configuration
-NEXT_PUBLIC_API_URL=http://localhost:8000
-NEXT_PUBLIC_WEATHER_API_KEY=your-weather-api-key
-
-# Authentication
-NEXTAUTH_SECRET=your-secret-key
-NEXTAUTH_URL=http://localhost:3002
-```
-
 ## 📜 Available Scripts
 
-### Main Application
-```bash
-npm run dev          # Start development server
-npm run build        # Build for production
-npm run start        # Start production server
-npm run lint         # Run ESLint
-```
-
-### E-Market Application
-```bash
-npm run dev          # Start development server with Turbopack
-npm run build        # Build for production
-npm run start        # Start production server
-npm run lint         # Run ESLint
-```
-
-### Agricultural Assistant
 ```bash
 npm run dev          # Start development server
 npm run build        # Build for production
@@ -265,8 +224,10 @@ We welcome contributions from the community! Please read our [Code of Conduct](C
 - **Code Style**: Follow the existing ESLint configuration
 - **TypeScript**: Use strict TypeScript for all new code
 - **Components**: Use Radix UI primitives for accessibility
+- **Styling**: Use Tailwind CSS with component variants
 - **Testing**: Add tests for new features and bug fixes
 - **Documentation**: Update README and component documentation
+- **Internationalization**: Use i18next for multi-language support
 
 ### Issue Reporting
 
