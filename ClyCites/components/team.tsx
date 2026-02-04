@@ -48,7 +48,7 @@ const team = [
 
 export function Team() {
   return (
-    <section className="py-16 sm:py-24 bg-white">
+    <section className="py-16 sm:py-24 bg-white flex justify-center">
       <div className="container">
         <div className="text-center max-w-3xl mx-auto">
           <h2 className="text-3xl sm:text-4xl font-bold text-gray-900">Meet Our Team</h2>

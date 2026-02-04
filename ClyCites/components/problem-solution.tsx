@@ -32,7 +32,7 @@ export function ProblemSolution() {
   }
 
   return (
-    <section className="py-20 sm:py-32 bg-white dark:bg-gray-950 relative overflow-hidden">
+    <section id="solutions" className="py-12 sm:py-20 bg-white dark:bg-gray-950 relative overflow-hidden">
       {/* Background pattern */}
       <div className="absolute inset-0 z-0 opacity-20">
         <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
@@ -45,7 +45,7 @@ export function ProblemSolution() {
         </svg>
       </div>
 
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="max-w-7xl mx-auto">
           <motion.div
             ref={ref}

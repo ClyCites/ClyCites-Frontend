@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 export default function DiseasePage() {
   return (
     <>
-      <section className="py-16 sm:py-24 bg-emerald-50">
+      <section className="py-16 sm:py-24 bg-emerald-50 flex justify-center">
         <div className="container">
           <div className="max-w-3xl mx-auto text-center">
             <h1 className="text-4xl sm:text-5xl font-bold text-gray-900">Disease Control</h1>
@@ -17,7 +17,7 @@ export default function DiseasePage() {
         </div>
       </section>
 
-      <section className="py-16 sm:py-24 bg-white">
+      <section className="py-16 sm:py-24 bg-white flex justify-center">
         <div className="container">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-16">
             <div className="lg:col-span-1">
@@ -50,7 +50,7 @@ export default function DiseasePage() {
         </div>
       </section>
 
-      <section className="py-16 sm:py-24 bg-gray-50">
+      <section className="py-16 sm:py-24 bg-white flex justify-center">
         <div className="container">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-16 items-center">
             <div className="lg:col-span-1">
@@ -74,7 +74,7 @@ export default function DiseasePage() {
         </div>
       </section>
 
-      <section className="py-24 sm:py-32 bg-white">
+      <section className="py-24 sm:py-32 bg-white flex justify-center">
         <div className="container">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-16 items-center">
             <div className="lg:col-span-2 relative order-2 lg:order-1">
@@ -98,7 +98,7 @@ export default function DiseasePage() {
         </div>
       </section>
 
-      <section className="py-16 sm:py-24 bg-emerald-900 text-white">
+      <section className="py-16 sm:py-24 bg-emerald-900 text-white flex justify-center">
         <div className="container">
           <div className="text-center max-w-3xl mx-auto">
             <h2 className="text-3xl sm:text-4xl font-bold">Key Benefits</h2>
