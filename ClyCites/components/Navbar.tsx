@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
+import Image from "next/image"
 import { Menu, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ThemeSwitcher } from "@/components/theme-switcher"
@@ -40,9 +41,13 @@ export function Navbar() {
           <div className="flex justify-between items-center h-16 md:h-20">
             {/* Logo */}
             <Link href="/" className="flex items-center gap-2 group">
-              <div className="w-10 h-10 bg-gradient-to-br from-emerald-600 to-emerald-700 rounded-lg flex items-center justify-center group-hover:shadow-lg group-hover:shadow-emerald-500/50 transition-shadow">
-                <span className="text-white font-bold text-lg">C</span>
-              </div>
+              <Image
+                src="/images/logo.jpeg"
+                alt="ClyCites"
+                width={50}
+                height={50}
+                className="rounded-full border-2 border-emerald-500 group-hover:shadow-lg group-hover:shadow-emerald-500/50 transition-shadow"
+              />
               <span className="hidden sm:inline font-bold text-lg bg-gradient-to-r from-emerald-700 to-emerald-500 bg-clip-text text-transparent">
                 ClyCites
               </span>

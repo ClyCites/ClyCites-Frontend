@@ -144,14 +144,14 @@ export function Impact() {
   }
 
   return (
-    <section className="py-20 sm:py-32 bg-gradient-to-br from-emerald-50 to-white dark:from-emerald-950 dark:to-gray-950">
+    <section className="py-12 sm:py-20 bg-gradient-to-br from-emerald-50 to-white dark:from-emerald-950 dark:to-gray-950">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           ref={ref}
           initial="hidden"
           animate={inView ? "visible" : "hidden"}
           variants={containerVariants}
-          className="max-w-3xl mx-auto text-center mb-16"
+          className="max-w-3xl mx-auto text-center mb-12"
         >
           <motion.h2 variants={itemVariants} className="text-3xl sm:text-4xl font-bold mb-4">
             Our Impact

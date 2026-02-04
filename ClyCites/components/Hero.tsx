@@ -71,7 +71,7 @@ export function Hero() {
   }, [floatingCircleControls, floatingSquareControls, floatingTriangleControls])
 
   return (
-    <section className="relative overflow-hidden bg-gradient-to-b from-emerald-50 to-white py-20 sm:py-28 lg:py-32 ">
+    <section className="relative overflow-hidden bg-gradient-to-b from-emerald-50 to-white dark:from-gray-900 dark:to-gray-950 py-12 sm:py-16 lg:py-20 ">
       {/* Animated background elements */}
       <motion.div
         className="absolute top-20 right-[10%] w-24 h-24 rounded-full bg-emerald-200 opacity-20 blur-xl"
@@ -116,13 +116,13 @@ export function Hero() {
         >
           <div className="max-w-xl">
             <motion.div variants={itemVariants}>
-              <span className="inline-block px-4 py-2 rounded-full bg-emerald-100 text-emerald-800 font-medium text-sm mb-6">
+              <span className="inline-block px-4 py-2 rounded-full bg-emerald-100 dark:bg-emerald-900/50 text-emerald-800 dark:text-emerald-300 font-medium text-sm mb-6">
                 Digital Agriculture Platform
               </span>
             </motion.div>
             <motion.h1
               variants={itemVariants}
-              className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-gray-900 leading-tight"
+              className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-gray-900 dark:text-white leading-tight"
             >
               Agriculture in your{" "}
               <span className="text-emerald-600 relative">
@@ -130,7 +130,7 @@ export function Hero() {
                 <span className="absolute -bottom-2 left-0 w-full h-2 bg-emerald-200 opacity-50 rounded-full"></span>
               </span>
             </motion.h1>
-            <motion.p variants={itemVariants} className="mt-6 text-lg text-gray-600">
+            <motion.p variants={itemVariants} className="mt-6 text-lg text-gray-600 dark:text-gray-300">
               ClyCites is an opensource platform that helps professional and upcoming farmers to get into the trade
               digitally. It helps farmers to market and sell their farm produces digitally at the comfort of their farm
               and communicate with potential customers.
@@ -154,8 +154,8 @@ export function Hero() {
                   </div>
                 ))}
               </div>
-              <div className="text-sm text-gray-600">
-                <span className="font-semibold text-gray-900">1,500+</span> farmers already joined
+              <div className="text-sm text-gray-600 dark:text-gray-300">
+                <span className="font-semibold text-gray-900 dark:text-white">1,500+</span> farmers already joined
               </div>
             </motion.div>
           </div>
