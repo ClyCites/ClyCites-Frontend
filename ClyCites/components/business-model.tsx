@@ -347,7 +347,7 @@ export function BusinessModel() {
   }, [])
 
   return (
-    <section className="py-20 sm:py-32 bg-gradient-to-br from-background to-muted">
+    <section id="products" className="py-20 sm:py-32 bg-gradient-to-br from-background to-muted">
       <div className="container px-4 sm:px-6 lg:px-8">
         <motion.div
           ref={ref}

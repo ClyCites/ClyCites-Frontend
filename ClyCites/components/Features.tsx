@@ -93,7 +93,7 @@ export function Features() {
   }
 
   return (
-    <section className="py-20 sm:py-32 bg-white dark:bg-gray-950 relative overflow-hidden">
+    <section id="features" className="py-20 sm:py-32 bg-white dark:bg-gray-950 relative overflow-hidden">
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
         <div className="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] bg-emerald-100 dark:bg-emerald-900/20 rounded-full blur-3xl opacity-30"></div>
         <div className="absolute -bottom-[10%] -right-[10%] w-[40%] h-[40%] bg-emerald-100 dark:bg-emerald-900/20 rounded-full blur-3xl opacity-30"></div>

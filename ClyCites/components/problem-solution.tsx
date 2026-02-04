@@ -32,7 +32,7 @@ export function ProblemSolution() {
   }
 
   return (
-    <section className="py-20 sm:py-32 bg-white dark:bg-gray-950 relative overflow-hidden">
+    <section id="solutions" className="py-20 sm:py-32 bg-white dark:bg-gray-950 relative overflow-hidden">
       {/* Background pattern */}
       <div className="absolute inset-0 z-0 opacity-20">
         <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
