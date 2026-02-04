@@ -347,8 +347,8 @@ export function BusinessModel() {
   }, [])
 
   return (
-    <section className="py-20 sm:py-32 bg-gradient-to-br from-background to-muted">
-      <div className="container px-4 sm:px-6 lg:px-8">
+    <section id="products" className="py-12 sm:py-20 bg-gradient-to-br from-background to-muted">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           ref={ref}
           initial="hidden"
@@ -361,7 +361,7 @@ export function BusinessModel() {
               transition: { duration: 0.6, ease: "easeOut" },
             },
           }}
-          className="max-w-3xl mx-auto text-center mb-16"
+          className="max-w-3xl mx-auto text-center mb-12"
         >
           <h2 className="text-3xl sm:text-4xl font-bold mb-4">Business & Revenue Model</h2>
           <p className="text-lg text-muted-foreground">

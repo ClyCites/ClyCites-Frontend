@@ -8,14 +8,13 @@ import { CTA } from "@/components/cta"
 
 export default function Home() {
   return (
-    <>
+    <div className="pt-24 md:pt-28">
       <Hero />
       <Features />
       <ProblemSolution />
-      {/* <Team /> */}
       <BusinessModel />
       <Impact />
       <CTA />
-    </>
+    </div>
   )
 }
