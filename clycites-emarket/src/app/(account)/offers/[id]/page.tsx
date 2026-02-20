@@ -35,21 +35,22 @@ export default function OfferDetailPage({ params }: { params: Promise<{ id: stri
   const { data: offer, isLoading, isError, refetch } = useOffer(id);
   const [showCounter, setShowCounter] = useState(false);
 
-  const { mutate: accept,   isPending: accepting  } = useAcceptOffer();
-  const { mutate: reject,   isPending: rejecting  } = useRejectOffer();
-  const { mutate: withdraw, isPending: withdrawing } = useWithdrawOffer();
-  const { mutate: counter,  isPending: countering } = useCounterOffer();
+  const { mutate: accept,   isPending: accepting  } = useAcceptOffer(id);
+  const { mutate: reject,   isPending: rejecting  } = useRejectOffer(id);
+  const { mutate: withdraw, isPending: withdrawing } = useWithdrawOffer(id);
+  const { mutate: counter,  isPending: countering } = useCounterOffer(id);
 
   const { register, handleSubmit, formState: { errors } } = useForm<CounterForm>({
-    resolver: zodResolver(counterSchema),
-    defaultValues: { price: offer?.price, quantity: offer?.quantity },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    resolver: zodResolver(counterSchema) as any,
+    defaultValues: { price: offer?.offeredPrice, quantity: offer?.quantity },
   });
 
   if (isLoading) return <LoadingState text="Loading offer…" className="min-h-[60vh]" />;
   if (isError || !offer) return <ErrorState title="Offer not found" onRetry={refetch} className="min-h-[60vh]" />;
 
   const buyerId  = typeof offer.buyer  === "string" ? offer.buyer  : (offer.buyer  as { id?: string })?.id;
-  const farmerId = typeof offer.farmer === "string" ? offer.farmer : (offer.farmer as { id?: string })?.id;
+  const farmerId = typeof offer.seller === "string" ? offer.seller : (offer.seller as { id?: string })?.id;
   const isBuyer  = user?.id === buyerId;
   const isSeller = user?.id === farmerId;
 
@@ -80,7 +81,7 @@ export default function OfferDetailPage({ params }: { params: Promise<{ id: stri
   };
 
   const onCounterSubmit = (data: CounterForm) => {
-    counter({ offerId: id, data }, {
+    counter({ counterPrice: data.price, note: data.message }, {
       onSuccess: () => { toast({ title: "Counter offer sent!", variant: "success" }); setShowCounter(false); },
       onError:   (e) => toast({ title: "Error", description: e.message, variant: "destructive" }),
     });
@@ -126,7 +127,7 @@ export default function OfferDetailPage({ params }: { params: Promise<{ id: stri
               <CardContent className="space-y-3 text-sm">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Price</span>
-                  <span className="font-semibold text-primary">{formatCurrency(offer.price, offer.currency)}</span>
+                  <span className="font-semibold text-primary">{formatCurrency(offer.offeredPrice, offer.currency)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Quantity</span>
@@ -134,7 +135,7 @@ export default function OfferDetailPage({ params }: { params: Promise<{ id: stri
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Total</span>
-                  <span className="font-bold">{formatCurrency(offer.price * offer.quantity, offer.currency)}</span>
+                  <span className="font-bold">{formatCurrency(offer.offeredPrice * offer.quantity, offer.currency)}</span>
                 </div>
                 {offer.expiresAt && (
                   <div className="flex justify-between">

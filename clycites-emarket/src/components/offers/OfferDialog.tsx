@@ -28,25 +28,23 @@ interface OfferDialogProps {
 }
 
 export function OfferDialog({ listing, open, onOpenChange }: OfferDialogProps) {
-  const { mutate: createOffer, isPending } = useCreateOffer();
+  const { mutate: createOffer, isPending } = useCreateOffer(listing.id);
 
   const productName = typeof listing.product === "string" ? "Product" : (listing.product?.name ?? "Product");
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm<OfferForm>({
-    resolver: zodResolver(offerSchema),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    resolver: zodResolver(offerSchema) as any,
     defaultValues: { quantity: listing.quantity, price: listing.price },
   });
 
   const onSubmit = (data: OfferForm) => {
     createOffer(
       {
-        listingId: listing.id,
-        data: {
-          quantity:  data.quantity,
-          price:     data.price,
-          message:   data.message,
-          expiresAt: data.expiresAt || undefined,
-        },
+        offeredPrice: data.price,
+        quantity:     data.quantity,
+        message:      data.message,
+        expiresAt:    data.expiresAt || undefined,
       },
       {
         onSuccess: () => {

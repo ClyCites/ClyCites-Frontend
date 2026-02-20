@@ -34,10 +34,11 @@ export default function EditListingPage({ params }: { params: Promise<{ id: stri
   const { id } = use(params);
   const router = useRouter();
   const { data: listing, isLoading, isError } = useListing(id);
-  const { mutate: updateListing, isPending } = useUpdateListing();
+  const { mutate: updateListing, isPending } = useUpdateListing(id);
 
   const { register, handleSubmit, setValue, reset, formState: { errors } } = useForm<FormData>({
-    resolver: zodResolver(schema),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    resolver: zodResolver(schema) as any,
   });
 
   // Pre-fill form once listing loads
@@ -62,18 +63,15 @@ export default function EditListingPage({ params }: { params: Promise<{ id: stri
   const onSubmit = (data: FormData) => {
     updateListing(
       {
-        id,
-        data: {
-          quantity:    data.quantity,
-          unit:        data.unit,
-          price:       data.price,
-          currency:    data.currency,
-          harvestDate: data.harvestDate || undefined,
-          expiryDate:  data.expiryDate  || undefined,
-          location:    (data.region || data.district)
-            ? { region: data.region || "", district: data.district || "" }
-            : undefined,
-        },
+        quantity:    data.quantity,
+        unit:        data.unit,
+        price:       data.price,
+        currency:    data.currency,
+        harvestDate: data.harvestDate || undefined,
+        expiryDate:  data.expiryDate  || undefined,
+        location:    (data.region || data.district)
+          ? { region: data.region || "", district: data.district || "" }
+          : undefined,
       },
       {
         onSuccess: () => {

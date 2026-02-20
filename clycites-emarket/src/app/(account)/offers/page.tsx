@@ -22,11 +22,11 @@ const columns: Column<Offer>[] = [
     },
   },
   {
-    key: "price",
+    key: "offeredPrice",
     header: "Offered Price",
     sortable: true,
     render: (row) => (
-      <span className="font-semibold text-primary">{formatCurrency(row.price, row.currency)}</span>
+      <span className="font-semibold text-primary">{formatCurrency(row.offeredPrice, row.currency)}</span>
     ),
   },
   {
@@ -54,7 +54,7 @@ export default function OffersPage() {
   const [page, setPage] = useState(1);
 
   const filters: OfferFilters = {
-    role:   tab,
+    direction: tab,
     status: status !== "all" ? (status as OfferStatus) : undefined,
     page,
     limit:  15,

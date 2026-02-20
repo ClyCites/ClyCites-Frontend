@@ -39,12 +39,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // On mount — if token exists, load user
   useEffect(() => {
+    let isMounted = true;
     const token = getToken();
     if (token) {
-      refreshUser().finally(() => setIsLoading(false));
+      refreshUser().finally(() => {
+        if (isMounted) setIsLoading(false);
+      });
     } else {
       setIsLoading(false);
     }
+    return () => {
+      isMounted = false;
+    };
   }, [refreshUser]);
 
   const login = useCallback(async (email: string, password: string) => {

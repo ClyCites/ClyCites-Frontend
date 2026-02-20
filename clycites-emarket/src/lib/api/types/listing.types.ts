@@ -36,6 +36,7 @@ export interface Listing {
 export interface ListingCreateRequest {
   product: string;
   quantity: number;
+  unit?: string;
   price: number;
   currency?: string;
   harvestDate?: string;

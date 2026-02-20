@@ -22,7 +22,7 @@ function FiltersContent({ filters, onFilterChange }: FiltersPanelProps) {
 
   const clearAll = () => onFilterChange({ page: 1, limit: filters.limit });
 
-  const hasActiveFilters = !!(filters.search || filters.region || filters.district || filters.minPrice || filters.maxPrice || filters.sortBy);
+  const hasActiveFilters = !!(filters.search || filters.region || filters.district || filters.minPrice || filters.maxPrice || filters.sort);
 
   return (
     <div className="space-y-5">
@@ -51,7 +51,7 @@ function FiltersContent({ filters, onFilterChange }: FiltersPanelProps) {
       {/* Sort */}
       <div className="space-y-1.5">
         <Label className="text-xs font-medium">Sort by</Label>
-        <Select value={filters.sortBy ?? ""} onValueChange={(v) => update("sortBy", v)}>
+        <Select value={filters.sort ?? ""} onValueChange={(v) => update("sort", v)}>
           <SelectTrigger>
             <SelectValue placeholder="Default" />
           </SelectTrigger>

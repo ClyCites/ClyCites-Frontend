@@ -51,6 +51,7 @@ export interface OfferCreateRequest {
   quantity: number;
   currency?: string;
   message?: string;
+  expiresAt?: string;
 }
 
 export interface OfferCounterRequest {

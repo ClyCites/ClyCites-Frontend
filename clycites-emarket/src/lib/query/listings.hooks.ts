@@ -82,28 +82,40 @@ export function useUpdateListing(id: string) {
   });
 }
 
-// ── Quick status mutations (optimistic) ──────────────────────────────────────
+// ── Quick status mutations (id passed as mutation variable) ─────────────────
 
-function useListingStatusMutation(
-  action: (id: string) => Promise<Listing>,
-  id: string
-) {
+export function usePublishListing() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: () => action(id),
-    onMutate: async () => {
-      await qc.cancelQueries({ queryKey: queryKeys.listing(id) });
-    },
-    onSettled: () => {
+    mutationFn: (id: string) => listingsApi.publish(id),
+    onSettled: (_, __, id) => {
       qc.invalidateQueries({ queryKey: queryKeys.listing(id) });
       qc.invalidateQueries({ queryKey: queryKeys.myListings() });
     },
   });
 }
 
-export const usePublishListing  = (id: string) => useListingStatusMutation(listingsApi.publish, id);
-export const usePauseListing    = (id: string) => useListingStatusMutation(listingsApi.pause, id);
-export const useExpireListing   = (id: string) => useListingStatusMutation(listingsApi.expire, id);
+export function usePauseListing() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => listingsApi.pause(id),
+    onSettled: (_, __, id) => {
+      qc.invalidateQueries({ queryKey: queryKeys.listing(id) });
+      qc.invalidateQueries({ queryKey: queryKeys.myListings() });
+    },
+  });
+}
+
+export function useExpireListing() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => listingsApi.expire(id),
+    onSettled: (_, __, id) => {
+      qc.invalidateQueries({ queryKey: queryKeys.listing(id) });
+      qc.invalidateQueries({ queryKey: queryKeys.myListings() });
+    },
+  });
+}
 
 // ── Delete listing ────────────────────────────────────────────────────────────
 

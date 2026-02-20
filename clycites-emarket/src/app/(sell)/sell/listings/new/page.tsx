@@ -33,7 +33,8 @@ export default function NewListingPage() {
   const { mutate: createListing, isPending } = useCreateListing();
 
   const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<FormData>({
-    resolver: zodResolver(schema),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    resolver: zodResolver(schema) as any,
     defaultValues: { currency: "UGX", unit: "kg" },
   });
 

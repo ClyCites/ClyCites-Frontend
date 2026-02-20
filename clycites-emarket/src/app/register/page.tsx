@@ -29,7 +29,9 @@ export default function RegisterPage() {
 
   const onSubmit = async (data: RegisterForm) => {
     try {
-      await authApi.register({ name: data.name, email: data.email, password: data.password });
+      const [firstName, ...restParts] = data.name.trim().split(" ");
+      const lastName = restParts.join(" ") || firstName;
+      await authApi.register({ firstName, lastName, email: data.email, password: data.password });
       toast({ title: "Account created!", description: "Please log in.", variant: "success" });
       router.push("/login");
     } catch (err: unknown) {

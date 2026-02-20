@@ -59,16 +59,16 @@ export function Navbar() {
                   <Avatar className="h-8 w-8">
                     <AvatarImage src={(user as { avatar?: string }).avatar} />
                     <AvatarFallback className="bg-primary/10 text-primary text-xs">
-                      {getInitials(user.name)}
+                      {getInitials(`${user.firstName} ${user.lastName}`)}
                     </AvatarFallback>
                   </Avatar>
-                  <span className="text-sm font-medium hidden lg:block">{user.name}</span>
+                  <span className="text-sm font-medium hidden lg:block">{user.firstName} {user.lastName}</span>
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-52">
                 <DropdownMenuLabel className="font-normal">
                   <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium">{user.name}</p>
+                    <p className="text-sm font-medium">{user.firstName} {user.lastName}</p>
                     <p className="text-xs text-muted-foreground">{user.email}</p>
                   </div>
                 </DropdownMenuLabel>

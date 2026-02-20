@@ -20,8 +20,8 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
   const { id } = use(params);
   const { user } = useAuth();
   const { data: order, isLoading, isError, refetch } = useOrder(id);
-  const { mutate: cancelOrder,    isPending: cancelling  } = useCancelOrder();
-  const { mutate: confirmDelivery, isPending: confirming } = useConfirmDelivery();
+  const { mutate: cancelOrder,    isPending: cancelling  } = useCancelOrder(id);
+  const { mutate: confirmDelivery, isPending: confirming } = useConfirmDelivery(id);
 
   if (isLoading) return <LoadingState text="Loading order…" className="min-h-[60vh]" />;
   if (isError || !order) return <ErrorState title="Order not found" onRetry={refetch} className="min-h-[60vh]" />;
@@ -104,10 +104,8 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
             <CardContent className="text-sm space-y-1">
               {order.deliveryAddress ? (
                 <>
-                  <p className="font-medium">{order.deliveryAddress.name}</p>
-                  <p className="text-muted-foreground">{order.deliveryAddress.address}</p>
+                  {order.deliveryAddress.address && <p className="text-muted-foreground">{order.deliveryAddress.address}</p>}
                   <p className="text-muted-foreground">{[order.deliveryAddress.city, order.deliveryAddress.region].filter(Boolean).join(", ")}</p>
-                  {order.deliveryAddress.phone && <p className="text-muted-foreground">{order.deliveryAddress.phone}</p>}
                 </>
               ) : (
                 <p className="text-muted-foreground">No delivery address provided.</p>
@@ -123,7 +121,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
           <div className="mt-6 flex flex-col sm:flex-row gap-3">
             {canConfirm && (
               <Button className="flex-1" onClick={() => {
-                confirmDelivery(id, {
+                confirmDelivery(undefined, {
                   onSuccess: () => toast({ title: "Delivery confirmed!", variant: "success" }),
                   onError:   (e) => toast({ title: "Error", description: e.message, variant: "destructive" }),
                 });
@@ -147,7 +145,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                     <AlertDialogCancel>Keep Order</AlertDialogCancel>
                     <AlertDialogAction
                       className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                      onClick={() => cancelOrder({ id, data: { reason: "Buyer requested cancellation" } }, {
+                      onClick={() => cancelOrder({ reason: "Buyer requested cancellation" }, {
                         onSuccess: () => toast({ title: "Order cancellation requested." }),
                         onError:   (e) => toast({ title: "Error", description: e.message, variant: "destructive" }),
                       })}

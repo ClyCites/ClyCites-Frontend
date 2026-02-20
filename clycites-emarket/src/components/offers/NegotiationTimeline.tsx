@@ -23,9 +23,7 @@ export function NegotiationTimeline({ offer, className }: NegotiationTimelinePro
   return (
     <div className={cn("relative space-y-0", className)}>
       {history.map((event, idx) => {
-        const actorName = typeof event.actor === "string"
-          ? event.actor
-          : (event.actor as { name?: string })?.name ?? "User";
+        const actorName = event.actorName ?? event.actorId ?? "User";
 
         const isLast = idx === history.length - 1;
 
@@ -56,13 +54,7 @@ export function NegotiationTimeline({ offer, className }: NegotiationTimelinePro
                     <span className="font-medium text-xs">{formatCurrency(event.price)}</span>
                   </div>
                 )}
-                {event.quantity != null && (
-                  <div className="flex justify-between gap-4">
-                    <span className="text-muted-foreground text-xs">Quantity</span>
-                    <span className="font-medium text-xs">{event.quantity}</span>
-                  </div>
-                )}
-                {event.message && <p className="text-xs text-foreground mt-1 italic">&ldquo;{event.message}&rdquo;</p>}
+                {event.note && <p className="text-xs text-foreground mt-1 italic">&ldquo;{event.note}&rdquo;</p>}
               </div>
             </div>
           </div>
