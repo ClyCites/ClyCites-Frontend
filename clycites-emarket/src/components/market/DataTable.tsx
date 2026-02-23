@@ -96,7 +96,7 @@ export function DataTable<T extends { id?: string | number }>({
                 <TableRow key={i}>
                   {columns.map((col) => (
                     <TableCell key={String(col.key)}>
-                      <Skeleton className="h-4 w-full max-w-[120px]" />
+                      <Skeleton className="h-4 w-full max-w-30" />
                     </TableCell>
                   ))}
                 </TableRow>

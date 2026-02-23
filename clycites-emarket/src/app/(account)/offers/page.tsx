@@ -5,6 +5,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DataTable, Column } from "@/components/market/DataTable";
 import { OfferStatusBadge } from "@/components/offers/OfferStatusBadge";
+import { OfferStatsWidget } from "@/components/offers/OfferStatsWidget";
 import { useOffers } from "@/lib/query/offers.hooks";
 import { Offer, OfferFilters, OfferStatus } from "@/lib/api/types/offer.types";
 import { formatCurrency, formatRelativeTime } from "@/lib/utils";
@@ -71,6 +72,8 @@ export default function OffersPage() {
           <p className="text-muted-foreground mt-1">Track your buy and sell negotiations.</p>
         </div>
       </Reveal>
+
+      <OfferStatsWidget className="mb-6" />
 
       <Reveal>
         <Tabs value={tab} onValueChange={(v) => { setTab(v as "sent" | "received"); setPage(1); }}>

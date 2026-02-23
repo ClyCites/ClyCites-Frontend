@@ -34,7 +34,7 @@ export function ListingCard({ listing, onMakeOffer }: ListingCardProps) {
   return (
     <Card className="group overflow-hidden hover:shadow-md transition-shadow flex flex-col h-full">
       {/* Image */}
-      <Link href={`/market/listings/${listing.id}`} className="relative block aspect-[4/3] bg-muted overflow-hidden">
+      <Link href={`/market/listings/${listing.id}`} className="relative block aspect-4/3 bg-muted overflow-hidden">
         {imageSrc ? (
           <Image
             src={imageSrc}

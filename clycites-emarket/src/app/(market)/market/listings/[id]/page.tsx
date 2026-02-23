@@ -39,7 +39,7 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
         <div className="lg:col-span-3 space-y-6">
           <Reveal>
             {/* Image */}
-            <div className="relative aspect-[16/9] rounded-2xl overflow-hidden bg-muted border">
+            <div className="relative aspect-video rounded-2xl overflow-hidden bg-muted border">
               {imageSrc ? (
                 <Image src={imageSrc} alt={productName} fill className="object-cover" sizes="(max-width: 1024px) 100vw, 60vw" />
               ) : (

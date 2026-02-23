@@ -27,13 +27,6 @@ export function useOfferMessages(offerId: string) {
   });
 }
 
-export function useOfferStats() {
-  return useQuery({
-    queryKey: queryKeys.offerStats(),
-    queryFn: () => offersApi.stats(),
-  });
-}
-
 // ── Create offer (buyer) ──────────────────────────────────────────────────────
 
 export function useCreateOffer(listingId: string) {
@@ -99,5 +92,12 @@ export function useMarkMessagesRead(offerId: string) {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: queryKeys.offerMessages(offerId) });
     },
+  });
+}
+
+export function useOfferStats() {
+  return useQuery({
+    queryKey: queryKeys.offerStats,
+    queryFn: () => offersApi.stats(),
   });
 }

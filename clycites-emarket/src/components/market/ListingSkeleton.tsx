@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 function ListingSkeletonCard() {
   return (
     <Card className="overflow-hidden flex flex-col">
-      <Skeleton className="aspect-[4/3] w-full rounded-none" />
+      <Skeleton className="aspect-4/3 w-full rounded-none" />
       <CardContent className="p-4 space-y-3 flex-1">
         <Skeleton className="h-4 w-3/4" />
         <Skeleton className="h-6 w-1/3" />

@@ -63,7 +63,7 @@ export function OfferMessagesThread({ offer, className }: OfferMessagesThreadPro
       </CardHeader>
       <CardContent className="space-y-4 px-3">
         {/* Messages list */}
-        <ScrollArea ref={scrollRef} className="h-[300px] pr-3">
+        <ScrollArea ref={scrollRef} className="h-75 pr-3">
           {isLoading && (
             <div className="flex items-center justify-center h-full text-sm text-muted-foreground">
               Loading messages...

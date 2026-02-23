@@ -22,9 +22,9 @@ export function useListings(filters: ListingFilters = {}) {
 
 export function useListingsInfinite(filters: Omit<ListingFilters, "page"> = {}) {
   return useInfiniteQuery<
-    PaginatedResponse<Listing>,
+    Listing[] | PaginatedResponse<Listing>,
     Error,
-    InfiniteData<PaginatedResponse<Listing>>,
+    InfiniteData<Listing[] | PaginatedResponse<Listing>>,
     ReturnType<typeof queryKeys.listings>,
     number
   >({
@@ -32,8 +32,10 @@ export function useListingsInfinite(filters: Omit<ListingFilters, "page"> = {}) 
     queryFn: ({ pageParam }) =>
       listingsApi.list({ ...filters, page: pageParam as number }),
     initialPageParam: 1,
-    getNextPageParam: (last) =>
-      last.pagination.hasNextPage ? last.pagination.page + 1 : undefined,
+    getNextPageParam: (last) => {
+      if (Array.isArray(last)) return undefined;
+      return last.pagination?.hasNextPage ? last.pagination.page + 1 : undefined;
+    },
   });
 }
 

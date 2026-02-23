@@ -36,7 +36,7 @@ export function NegotiationTimeline({ offer, className }: NegotiationTimelinePro
                   {getInitials(actorName)}
                 </AvatarFallback>
               </Avatar>
-              {!isLast && <div className="mt-1 w-px flex-1 bg-border min-h-[2rem]" />}
+              {!isLast && <div className="mt-1 w-px flex-1 bg-border min-h-8" />}
             </div>
 
             {/* Content */}

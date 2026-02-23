@@ -21,7 +21,7 @@ export const queryKeys = {
     filters ? (["offers", filters] as const) : (["offers"] as const),
   offer: (id: string) => ["offer", id] as const,
   offerMessages: (id: string) => ["offer", id, "messages"] as const,
-  offerStats: () => ["offerStats"] as const,
+  offerStats: ["offerStats"] as const,
 
   // Orders
   orders: (filters?: OrderFilters) =>

@@ -23,9 +23,12 @@ export default function MarketPage() {
   const { data, isLoading, isError, refetch, fetchNextPage, hasNextPage, isFetchingNextPage } =
     useListingsInfinite({ ...filters, status: "active" });
 
-  const allListings = data?.pages.flatMap((p) =>
-    Array.isArray(p) ? p : (p as { data?: Listing[] }).data ?? []
-  ) ?? [];
+  const allListings = data?.pages.flatMap((page) => {
+    // Handle flat array response
+    if (Array.isArray(page)) return page;
+    // Handle paginated response
+    return (page as { data?: Listing[] })?.data ?? [];
+  }) ?? [];
 
   const handleSearch = () => {
     setFilters((f) => ({ ...f, search: searchInput || undefined, page: 1 }));
