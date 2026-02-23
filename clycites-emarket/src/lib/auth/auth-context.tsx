@@ -9,7 +9,7 @@ import {
   type ReactNode,
 } from "react";
 import { authApi } from "@/lib/api/endpoints/auth.api";
-import { getToken, removeToken, setToken } from "@/lib/api/http";
+import { getToken, removeToken } from "@/lib/api/http";
 import type { User, AuthTokens } from "@/lib/api/types/shared.types";
 
 interface AuthContextValue {
@@ -40,18 +40,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // On mount — if token exists, load user
   useEffect(() => {
     let isMounted = true;
-    const token = getToken();
-    if (token) {
-      refreshUser().finally(() => {
-        if (isMounted) setIsLoading(false);
-      });
-    } else {
-      setIsLoading(false);
-    }
+    
+    const loadUser = async () => {
+      const token = getToken();
+      if (token) {
+        try {
+          const me = await authApi.me();
+          if (isMounted) setUser(me);
+        } catch {
+          if (isMounted) {
+            setUser(null);
+            removeToken();
+          }
+        }
+      }
+      if (isMounted) setIsLoading(false);
+    };
+    
+    loadUser();
+    
     return () => {
       isMounted = false;
     };
-  }, [refreshUser]);
+  }, []);
 
   const login = useCallback(async (email: string, password: string) => {
     const res = await authApi.login({ email, password });
