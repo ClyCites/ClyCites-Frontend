@@ -1,7 +1,7 @@
 "use client";
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Navbar } from "@/components/layout/Navbar";
+import { GlobalTopbar } from "@/components/layout/GlobalTopbar";
 import { Footer } from "@/components/layout/Footer";
 import { useAuth } from "@/lib/auth/auth-context";
 import { LoadingState } from "@/components/shared/LoadingState";
@@ -21,7 +21,7 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
 
   return (
     <div className="flex min-h-screen flex-col">
-      <Navbar />
+      <GlobalTopbar />
       <main className="flex-1">{children}</main>
       <Footer />
     </div>

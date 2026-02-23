@@ -1,10 +1,10 @@
-import { Navbar } from "@/components/layout/Navbar";
+import { GlobalTopbar } from "@/components/layout/GlobalTopbar";
 import { Footer } from "@/components/layout/Footer";
 
 export default function MarketLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-screen flex-col">
-      <Navbar />
+      <GlobalTopbar />
       <main className="flex-1">{children}</main>
       <Footer />
     </div>

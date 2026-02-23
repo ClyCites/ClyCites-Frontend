@@ -1,6 +1,7 @@
 "use client";
 import { useState, useCallback } from "react";
-import { Search } from "lucide-react";
+import { Search, LogIn } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { FiltersPanel } from "@/components/market/FiltersPanel";
@@ -12,15 +13,17 @@ import { EmptyState } from "@/components/shared/EmptyState";
 import { useListingsInfinite } from "@/lib/query/listings.hooks";
 import { ListingFilters, Listing } from "@/lib/api/types/listing.types";
 import { Reveal } from "@/lib/motion";
+import { HttpError } from "@/lib/api/http";
 
 const DEFAULT_FILTERS: ListingFilters = { status: "active", limit: 12, page: 1 };
 
 export default function MarketPage() {
+  const router = useRouter();
   const [filters, setFilters] = useState<ListingFilters>(DEFAULT_FILTERS);
   const [offerTarget, setOfferTarget] = useState<Listing | null>(null);
   const [searchInput, setSearchInput] = useState("");
 
-  const { data, isLoading, isError, refetch, fetchNextPage, hasNextPage, isFetchingNextPage } =
+  const { data, isLoading, isError, error, refetch, fetchNextPage, hasNextPage, isFetchingNextPage } =
     useListingsInfinite({ ...filters, status: "active" });
 
   const allListings = data?.pages.flatMap((page) => {
@@ -29,6 +32,9 @@ export default function MarketPage() {
     // Handle paginated response
     return (page as { data?: Listing[] })?.data ?? [];
   }) ?? [];
+
+  // Check if error is auth-related
+  const isAuthError = error instanceof HttpError && (error.status === 401 || error.status === 403);
 
   const handleSearch = () => {
     setFilters((f) => ({ ...f, search: searchInput || undefined, page: 1 }));
@@ -84,11 +90,29 @@ export default function MarketPage() {
           {isLoading ? (
             <ListingSkeleton count={12} />
           ) : isError ? (
-            <ErrorState
-              title="Failed to load listings"
-              description="Check your connection and try again."
-              onRetry={refetch}
-            />
+            isAuthError ? (
+              <EmptyState
+                title="Sign in to browse listings"
+                description="Create an account or sign in to access the marketplace and connect with farmers."
+                action={
+                  <div className="flex gap-3">
+                    <Button onClick={() => router.push("/login")}>
+                      <LogIn className="mr-2 h-4 w-4" />
+                      Sign In
+                    </Button>
+                    <Button variant="outline" onClick={() => router.push("/register")}>
+                      Create Account
+                    </Button>
+                  </div>
+                }
+              />
+            ) : (
+              <ErrorState
+                title="Failed to load listings"
+                description="Check your connection and try again."
+                onRetry={refetch}
+              />
+            )
           ) : allListings.length === 0 ? (
             <EmptyState
               title="No listings found"
