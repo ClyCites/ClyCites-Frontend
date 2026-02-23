@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { offersApi } from "@/lib/api/endpoints/offers.api";
-import type { OfferFilters, OfferCreateRequest, OfferCounterRequest, OfferActionRequest } from "@/lib/api/types/offer.types";
+import type { OfferFilters, OfferCreateRequest, OfferCounterRequest } from "@/lib/api/types/offer.types";
 import { queryKeys } from "./keys";
 
 export function useOffers(filters: OfferFilters = {}) {
@@ -86,6 +86,16 @@ export function useSendOfferMessage(offerId: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (content: string) => offersApi.sendMessage(offerId, content),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.offerMessages(offerId) });
+    },
+  });
+}
+
+export function useMarkMessagesRead(offerId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => offersApi.markMessagesRead(offerId),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: queryKeys.offerMessages(offerId) });
     },

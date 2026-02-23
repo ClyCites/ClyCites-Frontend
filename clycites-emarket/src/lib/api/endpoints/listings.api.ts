@@ -50,4 +50,8 @@ export const listingsApi = {
   /** Expire listing */
   expire: (id: string) =>
     api.patch<Listing>(`/v1/listings/${id}`, { status: "expired" }),
+
+  /** Get offers on a specific listing */
+  getOffers: (id: string, filters: { page?: number; limit?: number } = {}) =>
+    api.get<PaginatedResponse<unknown>>(`/v1/listings/${id}/offers`, filters as Record<string, string | number | boolean | undefined | null>),
 };

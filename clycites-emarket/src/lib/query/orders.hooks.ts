@@ -39,3 +39,14 @@ export function useConfirmDelivery(id: string) {
     },
   });
 }
+
+export function useUpdateOrderStatus(id: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: { status: string; note?: string }) => ordersApi.updateStatus(id, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.order(id) });
+      qc.invalidateQueries({ queryKey: queryKeys.orders() });
+    },
+  });
+}

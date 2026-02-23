@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { NegotiationTimeline } from "@/components/offers/NegotiationTimeline";
 import { OfferStatusBadge } from "@/components/offers/OfferStatusBadge";
+import { OfferMessagesThread } from "@/components/offers/OfferMessagesThread";
 import { LoadingState } from "@/components/shared/LoadingState";
 import { ErrorState } from "@/components/shared/ErrorState";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
@@ -224,6 +225,11 @@ export default function OfferDetailPage({ params }: { params: Promise<{ id: stri
           )}
         </div>
       </div>
+
+      {/* Messages thread */}
+      <Reveal>
+        <OfferMessagesThread offer={offer} className="mt-6" />
+      </Reveal>
     </div>
   );
 }

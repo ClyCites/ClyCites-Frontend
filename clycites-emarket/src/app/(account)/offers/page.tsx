@@ -5,7 +5,6 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DataTable, Column } from "@/components/market/DataTable";
 import { OfferStatusBadge } from "@/components/offers/OfferStatusBadge";
-import { Badge } from "@/components/ui/badge";
 import { useOffers } from "@/lib/query/offers.hooks";
 import { Offer, OfferFilters, OfferStatus } from "@/lib/api/types/offer.types";
 import { formatCurrency, formatRelativeTime } from "@/lib/utils";
@@ -60,7 +59,7 @@ export default function OffersPage() {
     limit:  15,
   };
 
-  const { data, isLoading, isError, refetch } = useOffers(filters);
+  const { data, isLoading } = useOffers(filters);
   const offers = Array.isArray(data) ? data : (data as { data?: Offer[] })?.data ?? [];
   const totalPages = (data as { pagination?: { totalPages?: number } })?.pagination?.totalPages ?? 1;
 

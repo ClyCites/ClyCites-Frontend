@@ -1,4 +1,4 @@
-import { api, setToken, removeToken } from "../http";
+import { api, http, setToken, removeToken } from "../http";
 import type { User, AuthTokens } from "../types/shared.types";
 
 interface LoginRequest { email: string; password: string; }
@@ -44,4 +44,33 @@ export const authApi = {
 
   verifyEmail: (token: string) =>
     api.post("/v1/auth/verify-email", { token }),
+
+  // ── MFA & Security ───────────────────────────────────────────────────────────
+
+  setupMfa: () => api.post<{ secret: string; qrCodeUrl: string }>("/v1/auth/setup-mfa"),
+
+  verifyMfa: (token: string) => api.post("/v1/auth/verify-mfa", { token }),
+
+  setupTotp: () =>
+    api.post<{ secret: string; qrCodeUri: string; backupCodes: string[] }>("/v1/security/mfa/totp/setup"),
+
+  verifyTotp: (token: string) => api.post("/v1/security/mfa/totp/verify", { token }),
+
+  enableEmailOtp: () => api.post("/v1/security/mfa/email/enable"),
+
+  requestEmailOtp: () => api.post("/v1/security/mfa/email/request"),
+
+  disableMfa: (data?: { confirmToken?: string; password?: string }) =>
+    http("/v1/security/mfa", { method: "DELETE", body: data }),
+
+  // ── Device Management ────────────────────────────────────────────────────────
+
+  getDevices: () =>
+    api.get<{ deviceId: string; name: string; userAgent: string; ip: string; isTrusted: boolean; isBlocked: boolean; lastSeenAt: string; createdAt: string }[]>("/v1/security/devices"),
+
+  verifyDevice: (deviceId: string) => api.post(`/v1/security/devices/${deviceId}/verify`),
+
+  blockDevice: (deviceId: string) => api.post(`/v1/security/devices/${deviceId}/block`),
+
+  revokeDevice: (deviceId: string) => api.delete(`/v1/security/devices/${deviceId}`),
 };

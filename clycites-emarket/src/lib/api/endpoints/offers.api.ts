@@ -55,7 +55,7 @@ export const offersApi = {
 
   /** Mark messages as read */
   markMessagesRead: (offerId: string) =>
-    api.post<void>(`/v1/offers/${offerId}/messages/read`),
+    api.put<void>(`/v1/offers/${offerId}/messages/read`),
 
   /** Get offer stats for current user */
   stats: () => api.get<OfferStats>("/v1/offers/stats"),

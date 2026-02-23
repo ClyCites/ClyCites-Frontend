@@ -32,7 +32,7 @@ export default function NewListingPage() {
   const router = useRouter();
   const { mutate: createListing, isPending } = useCreateListing();
 
-  const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<FormData>({
+  const { register, handleSubmit, setValue, formState: { errors } } = useForm<FormData>({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     resolver: zodResolver(schema) as any,
     defaultValues: { currency: "UGX", unit: "kg" },
@@ -53,7 +53,7 @@ export default function NewListingPage() {
           : undefined,
       },
       {
-        onSuccess: (listing) => {
+        onSuccess: () => {
           toast({ title: "Listing created!", description: "Published to the marketplace.", variant: "success" });
           router.push(`/sell/listings`);
         },

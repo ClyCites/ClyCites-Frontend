@@ -1,16 +1,18 @@
 "use client";
-import { use } from "react";
+import { use, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { OrderStatusStepper } from "@/components/orders/OrderStatusStepper";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { LoadingState } from "@/components/shared/LoadingState";
 import { ErrorState } from "@/components/shared/ErrorState";
-import { useOrder, useCancelOrder, useConfirmDelivery } from "@/lib/query/orders.hooks";
+import { useOrder, useCancelOrder, useConfirmDelivery, useUpdateOrderStatus } from "@/lib/query/orders.hooks";
 import { useAuth } from "@/lib/auth/auth-context";
 import { toast } from "@/components/ui/use-toast";
 import { formatCurrency, formatDate } from "@/lib/utils";
@@ -22,15 +24,20 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
   const { data: order, isLoading, isError, refetch } = useOrder(id);
   const { mutate: cancelOrder,    isPending: cancelling  } = useCancelOrder(id);
   const { mutate: confirmDelivery, isPending: confirming } = useConfirmDelivery(id);
+  const { mutate: updateStatus,   isPending: updating   } = useUpdateOrderStatus(id);
+  const [newStatus, setNewStatus] = useState<string>("");
 
   if (isLoading) return <LoadingState text="Loading order…" className="min-h-[60vh]" />;
   if (isError || !order) return <ErrorState title="Order not found" onRetry={refetch} className="min-h-[60vh]" />;
 
   const buyerId = typeof order.buyer === "string" ? order.buyer : (order.buyer as { id?: string })?.id;
+  const sellerId = typeof order.farmer === "string" ? order.farmer : (order.farmer as { id?: string })?.id;
   const isBuyer = user?.id === buyerId;
+  const isSeller = user?.id === sellerId;
 
   const canCancel  = isBuyer && ["pending", "confirmed"].includes(order.status);
   const canConfirm = isBuyer && order.status === "delivered";
+  const canUpdateStatus = isSeller && !["cancelled", "completed"].includes(order.status);
 
   const productName = typeof order.product === "string" ? order.product : (order.product as { name?: string })?.name ?? "Product";
 
@@ -157,6 +164,51 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
               </AlertDialog>
             )}
           </div>
+        </Reveal>
+      )}
+
+      {/* Seller status update */}
+      {canUpdateStatus && (
+        <Reveal>
+          <Card className="mt-6">
+            <CardHeader>
+              <CardTitle className="text-base">Update Order Status (Seller)</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="flex gap-3 items-end">
+                <div className="flex-1 space-y-1.5">
+                  <Label>New Status</Label>
+                  <Select value={newStatus} onValueChange={setNewStatus}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select status..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {order.status === "pending" && <SelectItem value="confirmed">Confirmed</SelectItem>}
+                      {order.status === "confirmed" && <SelectItem value="processing">Processing</SelectItem>}
+                      {order.status === "processing" && <SelectItem value="shipped">Shipped</SelectItem>}
+                      {order.status === "shipped" && <SelectItem value="delivered">Delivered</SelectItem>}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Button
+                  onClick={() => {
+                    if (!newStatus) return;
+                    updateStatus({ status: newStatus }, {
+                      onSuccess: () => {
+                        toast({ title: "Order status updated!", variant: "success" });
+                        setNewStatus("");
+                      },
+                      onError: (e) => toast({ title: "Error", description: e.message, variant: "destructive" }),
+                    });
+                  }}
+                  disabled={!newStatus || updating}
+                  loading={updating}
+                >
+                  Update Status
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         </Reveal>
       )}
     </div>

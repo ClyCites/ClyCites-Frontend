@@ -8,7 +8,6 @@ import { useOrders } from "@/lib/query/orders.hooks";
 import { Order, OrderFilters, OrderStatus } from "@/lib/api/types/order.types";
 import { formatCurrency, formatRelativeTime } from "@/lib/utils";
 import { Reveal } from "@/lib/motion";
-import { cn } from "@/lib/utils";
 
 const statusVariant: Record<OrderStatus, string> = {
   pending:    "warning",
