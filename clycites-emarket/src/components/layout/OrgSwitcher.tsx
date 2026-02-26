@@ -29,9 +29,9 @@ interface OrgSwitcherProps {
 }
 
 const TIER_COLORS = {
-  free: "bg-gray-100 text-gray-700 border-gray-300",
-  premium: "bg-blue-100 text-blue-700 border-blue-300",
-  enterprise: "bg-purple-100 text-purple-700 border-purple-300",
+  free: "bg-muted text-muted-foreground border-border/80",
+  premium: "bg-secondary/15 text-secondary border-secondary/30",
+  enterprise: "bg-warning/20 text-warning-foreground border-warning/35",
 };
 
 const TIER_LABELS = {
@@ -57,8 +57,8 @@ export function OrgSwitcher({
     <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild>
         <Button
-          variant="ghost"
-          className="flex items-center gap-2 px-3 h-9 max-w-[240px]"
+          variant="outline"
+          className="h-10 max-w-[240px] gap-2 rounded-xl border-border/70 bg-card/80 px-3"
         >
           <Building2 className="h-4 w-4 text-muted-foreground shrink-0" />
           <div className="flex-1 min-w-0 text-left hidden sm:block">
@@ -68,8 +68,8 @@ export function OrgSwitcher({
         </Button>
       </DropdownMenuTrigger>
 
-      <DropdownMenuContent align="start" className="w-80">
-        <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
+      <DropdownMenuContent align="start" className="w-80 rounded-2xl border-border/70">
+        <DropdownMenuLabel className="font-display text-xs font-normal text-muted-foreground">
           YOUR ORGANIZATIONS
         </DropdownMenuLabel>
 
@@ -79,7 +79,7 @@ export function OrgSwitcher({
           return (
             <DropdownMenuItem
               key={org.id}
-              className="cursor-pointer"
+              className="cursor-pointer rounded-xl focus:bg-muted/70"
               onClick={() => {
                 onOrgChange(org.id);
                 setOpen(false);
@@ -88,14 +88,14 @@ export function OrgSwitcher({
               <div className="flex items-start gap-3 py-1.5 w-full">
                 <div
                   className={cn(
-                    "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border-2",
+                    "flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border",
                     isActive
-                      ? "border-primary bg-primary/10"
-                      : "border-muted bg-muted"
+                      ? "border-primary/30 bg-primary/12"
+                      : "border-border/70 bg-muted/80"
                   )}
                 >
                   {org.tier === "enterprise" ? (
-                    <Crown className="h-4 w-4 text-purple-600" />
+                    <Crown className="h-4 w-4 text-warning" />
                   ) : (
                     <Building2 className="h-4 w-4 text-muted-foreground" />
                   )}

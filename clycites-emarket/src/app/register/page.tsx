@@ -8,9 +8,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
-import { ShoppingBasket } from "lucide-react";
+import { Leaf } from "lucide-react";
 import { authApi } from "@/lib/api/endpoints/auth.api";
 import { toast } from "@/components/ui/use-toast";
+import { AuthShell } from "@/components/layout/AuthShell";
 
 const schema = z.object({
   name:     z.string().min(2, "Name must be at least 2 characters"),
@@ -41,51 +42,55 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-muted/30 px-4">
-      <div className="w-full max-w-sm space-y-6">
-        <div className="flex flex-col items-center gap-2 text-center">
-          <ShoppingBasket className="h-10 w-10 text-primary" />
-          <h1 className="text-2xl font-bold">ClyCites e-Market</h1>
-          <p className="text-sm text-muted-foreground">Create your free account</p>
+    <AuthShell
+      title="Create your workspace and start trading."
+      subtitle="Set up your account to access listings, make offers, and manage deliveries."
+    >
+      <div className="mb-6 text-center sm:text-left">
+        <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-border/70 bg-card/70 px-3 py-1.5 lg:hidden">
+          <Leaf className="h-4 w-4 text-primary" />
+          <span className="text-sm font-medium">ClyCites e-Market</span>
         </div>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Sign up</CardTitle>
-            <CardDescription>Fill in your details to get started</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-              <div className="space-y-1.5">
-                <Label>Full Name</Label>
-                <Input placeholder="John Doe" {...register("name")} />
-                {errors.name && <p className="text-xs text-destructive">{errors.name.message}</p>}
-              </div>
-              <div className="space-y-1.5">
-                <Label>Email</Label>
-                <Input type="email" placeholder="you@example.com" {...register("email")} />
-                {errors.email && <p className="text-xs text-destructive">{errors.email.message}</p>}
-              </div>
-              <div className="space-y-1.5">
-                <Label>Password</Label>
-                <Input type="password" placeholder="••••••••" {...register("password")} />
-                {errors.password && <p className="text-xs text-destructive">{errors.password.message}</p>}
-              </div>
-              <div className="space-y-1.5">
-                <Label>Confirm Password</Label>
-                <Input type="password" placeholder="••••••••" {...register("confirm")} />
-                {errors.confirm && <p className="text-xs text-destructive">{errors.confirm.message}</p>}
-              </div>
-              <Button type="submit" className="w-full" loading={isSubmitting}>
-                Create Account
-              </Button>
-            </form>
-          </CardContent>
-          <CardFooter className="text-center text-sm text-muted-foreground">
-            <p>Already have an account? <Link href="/login" className="text-primary font-medium hover:underline">Log in</Link></p>
-          </CardFooter>
-        </Card>
+        <h1 className="font-display text-3xl leading-tight">Create account</h1>
+        <p className="mt-1 text-sm text-muted-foreground">Join the marketplace in a few steps.</p>
       </div>
-    </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="font-display text-2xl">Sign up</CardTitle>
+          <CardDescription>Fill in your details to get started.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            <div className="space-y-1.5">
+              <Label>Full Name</Label>
+              <Input placeholder="John Doe" {...register("name")} />
+              {errors.name && <p className="text-xs text-destructive">{errors.name.message}</p>}
+            </div>
+            <div className="space-y-1.5">
+              <Label>Email</Label>
+              <Input type="email" placeholder="you@example.com" {...register("email")} />
+              {errors.email && <p className="text-xs text-destructive">{errors.email.message}</p>}
+            </div>
+            <div className="space-y-1.5">
+              <Label>Password</Label>
+              <Input type="password" placeholder="••••••••" {...register("password")} />
+              {errors.password && <p className="text-xs text-destructive">{errors.password.message}</p>}
+            </div>
+            <div className="space-y-1.5">
+              <Label>Confirm Password</Label>
+              <Input type="password" placeholder="••••••••" {...register("confirm")} />
+              {errors.confirm && <p className="text-xs text-destructive">{errors.confirm.message}</p>}
+            </div>
+            <Button type="submit" className="w-full" loading={isSubmitting}>
+              Create Account
+            </Button>
+          </form>
+        </CardContent>
+        <CardFooter className="text-center text-sm text-muted-foreground">
+          <p>Already have an account? <Link href="/login" className="text-primary font-medium hover:underline">Log in</Link></p>
+        </CardFooter>
+      </Card>
+    </AuthShell>
   );
 }

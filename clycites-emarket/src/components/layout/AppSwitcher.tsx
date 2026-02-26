@@ -42,7 +42,7 @@ const ALL_MODULES: AppModule[] = [
     description: "Browse and trade agricultural products",
     icon: ShoppingCart,
     href: "/market",
-    color: "text-green-600",
+    color: "text-emerald-600",
   },
   {
     id: "farmers",
@@ -67,7 +67,7 @@ const ALL_MODULES: AppModule[] = [
     description: "Dashboards and insights",
     icon: BarChart3,
     href: "/analytics",
-    color: "text-purple-600",
+    color: "text-cyan-600",
     requiredPermission: "analytics.dashboard.read",
   },
   {
@@ -76,7 +76,7 @@ const ALL_MODULES: AppModule[] = [
     description: "Datasets and expert knowledge",
     icon: FlaskConical,
     href: "/research",
-    color: "text-indigo-600",
+    color: "text-amber-600",
     requiredPermission: "research.dataset.read",
   },
   {
@@ -85,7 +85,7 @@ const ALL_MODULES: AppModule[] = [
     description: "System management and settings",
     icon: Settings,
     href: "/admin",
-    color: "text-gray-600",
+    color: "text-stone-600",
     requiredPermission: "admin.user.read",
   },
   {
@@ -136,8 +136,8 @@ export function AppSwitcher({ userPermissions = [], recentModules = [] }: AppSwi
     <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild>
         <Button
-          variant="ghost"
-          className="flex items-center gap-2 px-3 h-9 border border-border/40 hover:bg-accent/50"
+          variant="outline"
+          className="h-10 rounded-xl border-border/70 bg-card/80 px-3"
         >
           <CurrentIcon className={cn("h-4 w-4", currentModule?.color)} />
           <span className="font-medium text-sm hidden sm:inline">
@@ -147,15 +147,15 @@ export function AppSwitcher({ userPermissions = [], recentModules = [] }: AppSwi
         </Button>
       </DropdownMenuTrigger>
 
-      <DropdownMenuContent align="start" className="w-72">
-        <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
+      <DropdownMenuContent align="start" className="w-72 rounded-2xl border-border/70">
+        <DropdownMenuLabel className="font-display text-xs font-normal text-muted-foreground">
           SWITCH MODULE
         </DropdownMenuLabel>
 
         {/* Recently Used */}
         {recentModulesData.length > 0 && (
           <>
-            <DropdownMenuLabel className="text-xs font-normal text-muted-foreground mt-2">
+            <DropdownMenuLabel className="font-display text-xs font-normal text-muted-foreground mt-2">
               RECENTLY USED
             </DropdownMenuLabel>
             {recentModulesData.map((module) => (
@@ -171,7 +171,7 @@ export function AppSwitcher({ userPermissions = [], recentModules = [] }: AppSwi
         )}
 
         {/* All Modules */}
-        <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
+        <DropdownMenuLabel className="font-display text-xs font-normal text-muted-foreground">
           ALL MODULES
         </DropdownMenuLabel>
         {otherModules.map((module) => (
@@ -197,16 +197,16 @@ function ModuleMenuItem({ module, isActive, onSelect }: ModuleMenuItemProps) {
   const Icon = module.icon;
 
   return (
-    <DropdownMenuItem asChild className="cursor-pointer">
+    <DropdownMenuItem asChild className="cursor-pointer rounded-xl focus:bg-muted/70">
       <Link
         href={module.href}
         onClick={onSelect}
-        className="flex items-start gap-3 py-2.5"
+        className="flex items-start gap-3 py-2"
       >
         <div
           className={cn(
-            "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-muted",
-            isActive && "bg-primary/10"
+            "flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-border/70 bg-muted/80",
+            isActive && "border-primary/25 bg-primary/12"
           )}
         >
           <Icon className={cn("h-4 w-4", module.color)} />

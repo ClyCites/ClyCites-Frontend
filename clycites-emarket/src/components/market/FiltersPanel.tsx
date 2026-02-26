@@ -23,11 +23,19 @@ function FiltersContent({ filters, onFilterChange }: FiltersPanelProps) {
   const clearAll = () => onFilterChange({ page: 1, limit: filters.limit });
 
   const hasActiveFilters = !!(filters.search || filters.region || filters.district || filters.minPrice || filters.maxPrice || filters.sort);
+  const activeFilterCount = [filters.search, filters.region, filters.district, filters.minPrice, filters.maxPrice, filters.sort].filter(Boolean).length;
 
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
-        <h3 className="font-semibold text-sm">Filters</h3>
+        <div>
+          <h3 className="font-display text-sm font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+            Filters
+          </h3>
+          <p className="text-xs text-muted-foreground">
+            {activeFilterCount > 0 ? `${activeFilterCount} active` : "No active filters"}
+          </p>
+        </div>
         {hasActiveFilters && (
           <Button variant="ghost" size="sm" onClick={clearAll} className="h-auto p-0 text-xs text-muted-foreground hover:text-foreground">
             <X className="h-3 w-3 mr-1" />
@@ -112,7 +120,7 @@ export function FiltersPanel({ filters, onFilterChange, className }: FiltersPane
     <>
       {/* Desktop sidebar */}
       <aside className={cn("hidden lg:block w-64 shrink-0", className)}>
-        <div className="sticky top-24 rounded-xl border bg-background p-5">
+        <div className="panel-surface sticky top-24 rounded-3xl p-5">
           <FiltersContent filters={filters} onFilterChange={onFilterChange} />
         </div>
       </aside>
@@ -121,14 +129,14 @@ export function FiltersPanel({ filters, onFilterChange, className }: FiltersPane
       <div className="lg:hidden">
         <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
           <SheetTrigger asChild>
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" className="rounded-xl">
               <SlidersHorizontal className="h-4 w-4" />
               Filters
             </Button>
           </SheetTrigger>
           <SheetContent side="left" className="w-72 overflow-y-auto">
             <SheetHeader>
-              <SheetTitle>Filters</SheetTitle>
+              <SheetTitle className="font-display text-lg">Filters</SheetTitle>
             </SheetHeader>
             <div className="mt-6">
               <FiltersContent filters={filters} onFilterChange={(f) => { onFilterChange(f); }} />

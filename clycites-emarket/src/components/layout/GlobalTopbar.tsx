@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Bell, Search, HelpCircle } from "lucide-react";
+import { Bell, HelpCircle, Leaf, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -22,83 +22,60 @@ import { getInitials } from "@/lib/utils";
 export function GlobalTopbar() {
   const { user, isAuthenticated, logout } = useAuth();
   const { organizations, currentOrgId, switchOrg } = useOrg();
-
-  // Mock permissions - in production these would come from the current org
-  const userPermissions = organizations
-    .find((org) => org.id === currentOrgId)?.permissions ?? [];
+  const currentOrg = organizations.find((org) => org.id === currentOrgId);
+  const userPermissions = currentOrg?.permissions ?? [];
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
-      <div className="flex h-14 items-center gap-4 px-4">
-        {/* Logo */}
-        <Link
-          href="/"
-          className="flex items-center gap-2 font-bold text-lg text-primary shrink-0"
-        >
-          <svg
-            className="h-6 w-6"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-          >
-            <path d="M12 2L2 7l10 5 10-5-10-5z" />
-            <path d="M2 17l10 5 10-5M2 12l10 5 10-5" />
-          </svg>
-          <span className="hidden sm:inline">ClyCites</span>
+    <header className="sticky top-0 z-50 border-b border-border/70 bg-background/75 backdrop-blur-xl">
+      <div className="mx-auto flex h-16 max-w-[1400px] items-center gap-3 px-4 sm:px-6">
+        <Link href="/" className="group flex items-center gap-2.5 shrink-0">
+          <span className="flex h-9 w-9 items-center justify-center rounded-xl border border-primary/25 bg-primary/10 text-primary shadow-[0_10px_16px_-14px_hsl(var(--primary)/0.9)] transition-transform duration-200 group-hover:-translate-y-0.5">
+            <Leaf className="h-4 w-4" />
+          </span>
+          <div className="hidden min-[380px]:block leading-tight">
+            <p className="font-display text-[0.95rem] font-bold text-foreground">ClyCites</p>
+            <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+              Agri Workspace
+            </p>
+          </div>
         </Link>
 
-        {/* App Switcher */}
         {isAuthenticated && (
-          <AppSwitcher
-            userPermissions={userPermissions}
-            recentModules={["market", "farmers"]}
-          />
+          <AppSwitcher userPermissions={userPermissions} recentModules={["market", "farmers"]} />
         )}
 
-        {/* Org Switcher */}
         {isAuthenticated && organizations.length > 0 && currentOrgId && (
-          <OrgSwitcher
-            organizations={organizations}
-            currentOrgId={currentOrgId}
-            onOrgChange={switchOrg}
-          />  
+          <OrgSwitcher organizations={organizations} currentOrgId={currentOrgId} onOrgChange={switchOrg} />
         )}
 
-        {/* Spacer */}
         <div className="flex-1" />
 
-        {/* Global Search */}
         {isAuthenticated && (
           <Button
-            variant="ghost"
+            variant="outline"
             size="sm"
-            className="hidden lg:flex items-center gap-2 text-muted-foreground max-w-xs w-full justify-start border border-border/40"
+            className="hidden xl:flex h-10 min-w-72 items-center justify-start gap-2 rounded-xl border-border/70 bg-card/80 px-3 text-muted-foreground"
           >
             <Search className="h-4 w-4" />
-            <span className="text-sm">Search...</span>
-            <kbd className="ml-auto pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
-              <span className="text-xs">⌘</span>K
+            <span className="text-sm">Search listings, offers, orders...</span>
+            <kbd className="ml-auto inline-flex h-5 select-none items-center rounded border border-border/70 bg-background px-1.5 font-mono text-[10px] font-semibold text-muted-foreground">
+              Ctrl K
             </kbd>
           </Button>
         )}
 
-        {/* Notifications */}
         {isAuthenticated && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="relative">
-                <Bell className="h-5 w-5" />
-                <Badge
-                  variant="destructive"
-                  className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-[10px]"
-                >
+              <Button variant="outline" size="icon" className="relative rounded-xl border-border/70 bg-card/80">
+                <Bell className="h-4 w-4" />
+                <Badge variant="destructive" className="absolute -right-1 -top-1 h-5 min-w-5 justify-center px-1 text-[10px]">
                   3
                 </Badge>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-80">
-              <DropdownMenuLabel>Notifications</DropdownMenuLabel>
+            <DropdownMenuContent align="end" className="w-80 rounded-2xl border-border/70">
+              <DropdownMenuLabel className="font-display text-sm">Notifications</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <div className="p-4 text-center text-sm text-muted-foreground">
                 No new notifications
@@ -107,39 +84,36 @@ export function GlobalTopbar() {
           </DropdownMenu>
         )}
 
-        {/* Help */}
         {isAuthenticated && (
-          <Button variant="ghost" size="icon" asChild>
+          <Button variant="outline" size="icon" asChild className="rounded-xl border-border/70 bg-card/80">
             <Link href="/help">
-              <HelpCircle className="h-5 w-5" />
+              <HelpCircle className="h-4 w-4" />
             </Link>
           </Button>
         )}
 
-        {/* User Menu */}
         {isAuthenticated && user ? (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="flex items-center gap-2 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-                <Avatar className="h-8 w-8">
+              <button className="rounded-full border border-border/70 bg-card/85 p-0.5 transition-all hover:shadow-[0_12px_18px_-14px_hsl(var(--foreground)/0.9)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                <Avatar className="h-9 w-9">
                   <AvatarImage src={(user as { avatar?: string }).avatar} />
-                  <AvatarFallback className="bg-primary/10 text-primary text-xs">
+                  <AvatarFallback className="bg-primary/12 text-primary text-xs">
                     {getInitials(`${user.firstName} ${user.lastName}`)}
                   </AvatarFallback>
                 </Avatar>
               </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuContent align="end" className="w-60 rounded-2xl border-border/70">
               <DropdownMenuLabel className="font-normal">
                 <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium">
+                  <p className="font-medium">
                     {user.firstName} {user.lastName}
                   </p>
                   <p className="text-xs text-muted-foreground">{user.email}</p>
-                  {organizations.find((o) => o.id === currentOrgId) && (
+                  {currentOrg && (
                     <p className="text-xs text-muted-foreground capitalize">
-                      {organizations.find((o) => o.id === currentOrgId)?.role} •{" "}
-                      {organizations.find((o) => o.id === currentOrgId)?.name}
+                      {currentOrg.role} | {currentOrg.name}
                     </p>
                   )}
                 </div>
@@ -149,7 +123,7 @@ export function GlobalTopbar() {
                 <Link href="/settings">Profile & Settings</Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={logout} className="text-destructive">
+              <DropdownMenuItem onClick={logout} className="text-destructive focus:text-destructive">
                 Log out
               </DropdownMenuItem>
             </DropdownMenuContent>

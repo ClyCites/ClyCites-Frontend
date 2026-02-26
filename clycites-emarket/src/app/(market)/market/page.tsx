@@ -1,9 +1,10 @@
 "use client";
 import { useState, useCallback } from "react";
-import { Search, LogIn } from "lucide-react";
+import { LogIn, Search, ShieldCheck, Sprout, Truck } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { FiltersPanel } from "@/components/market/FiltersPanel";
 import { ListingGrid } from "@/components/market/ListingGrid";
 import { ListingSkeleton } from "@/components/market/ListingSkeleton";
@@ -17,6 +18,24 @@ import { HttpError } from "@/lib/api/http";
 
 const DEFAULT_FILTERS: ListingFilters = { status: "active", limit: 12, page: 1 };
 
+const highlights = [
+  {
+    title: "Trusted Produce",
+    description: "Farm-direct listings with clear status and quality signals.",
+    icon: ShieldCheck,
+  },
+  {
+    title: "Fresh Supply",
+    description: "Discover seasonal crops from cooperatives across Uganda.",
+    icon: Sprout,
+  },
+  {
+    title: "Reliable Delivery",
+    description: "Match nearby suppliers and streamline your logistics.",
+    icon: Truck,
+  },
+];
+
 export default function MarketPage() {
   const router = useRouter();
   const [filters, setFilters] = useState<ListingFilters>(DEFAULT_FILTERS);
@@ -27,14 +46,12 @@ export default function MarketPage() {
     useListingsInfinite({ ...filters, status: "active" });
 
   const allListings = data?.pages.flatMap((page) => {
-    // Handle flat array response
     if (Array.isArray(page)) return page;
-    // Handle paginated response
     return (page as { data?: Listing[] })?.data ?? [];
   }) ?? [];
 
-  // Check if error is auth-related
   const isAuthError = error instanceof HttpError && (error.status === 401 || error.status === 403);
+  const activeFilterCount = [filters.search, filters.region, filters.district, filters.minPrice, filters.maxPrice, filters.sort].filter(Boolean).length;
 
   const handleSearch = () => {
     setFilters((f) => ({ ...f, search: searchInput || undefined, page: 1 }));
@@ -45,46 +62,69 @@ export default function MarketPage() {
   }, []);
 
   return (
-    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* Header */}
+    <div className="mx-auto max-w-[1400px] px-4 py-8 sm:px-6 lg:px-8">
       <Reveal>
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold tracking-tight">Marketplace</h1>
-          <p className="text-muted-foreground mt-1">Browse fresh agricultural produce from farmers across Uganda.</p>
-        </div>
-      </Reveal>
+        <section className="relative overflow-hidden rounded-[2rem] border border-border/70 bg-[linear-gradient(140deg,hsl(var(--card)/0.96)_0%,hsl(var(--accent)/0.46)_54%,hsl(var(--card)/0.88)_100%)] p-6 sm:p-8 lg:p-10">
+          <div className="pointer-events-none absolute -left-12 -top-20 h-52 w-52 rounded-full bg-primary/15 blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-14 right-0 h-52 w-52 rounded-full bg-secondary/20 blur-3xl" />
 
-      {/* Search bar */}
-      <Reveal>
-        <div className="flex gap-2 mb-6 max-w-xl">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              className="pl-9"
-              placeholder="Search products, crops…"
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-            />
+          <div className="relative z-10 grid gap-6 lg:grid-cols-[1.2fr_0.8fr] lg:items-end">
+            <div>
+              <Badge variant="outline" className="mb-3 border-primary/30 bg-primary/12 text-primary">
+                Live agricultural marketplace
+              </Badge>
+              <h1 className="font-display text-3xl leading-tight text-foreground sm:text-4xl lg:text-5xl">
+                Source high-quality produce faster, with visibility from listing to delivery.
+              </h1>
+              <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground sm:text-base">
+                Browse active listings, compare pricing, and negotiate offers in one unified workspace.
+              </p>
+
+              <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:items-center">
+                <div className="relative w-full sm:max-w-lg">
+                  <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    className="h-11 rounded-xl pl-9"
+                    placeholder="Search crops, produce types, suppliers..."
+                    value={searchInput}
+                    onChange={(e) => setSearchInput(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                  />
+                </div>
+                <Button size="lg" className="h-11" onClick={handleSearch}>
+                  Search Market
+                </Button>
+              </div>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
+              {highlights.map(({ title, description, icon: Icon }) => (
+                <div key={title} className="panel-surface rounded-2xl p-4">
+                  <div className="mb-2 inline-flex h-8 w-8 items-center justify-center rounded-lg bg-primary/12 text-primary">
+                    <Icon className="h-4 w-4" />
+                  </div>
+                  <p className="font-display text-sm font-semibold">{title}</p>
+                  <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{description}</p>
+                </div>
+              ))}
+            </div>
           </div>
-          <Button onClick={handleSearch}>Search</Button>
-        </div>
+        </section>
       </Reveal>
 
-      <div className="flex gap-6">
-        {/* Sidebar filters */}
+      <div className="mt-8 flex flex-col gap-6 lg:flex-row">
         <FiltersPanel filters={filters} onFilterChange={handleFilterChange} />
 
-        {/* Content */}
-        <div className="flex-1 min-w-0">
-          {/* Mobile filter trigger is rendered inside FiltersPanel */}
-          <div className="flex items-center justify-between mb-4">
-            <div className="lg:hidden">
-              <FiltersPanel filters={filters} onFilterChange={handleFilterChange} />
-            </div>
-            <p className="text-sm text-muted-foreground ml-auto">
+        <div className="min-w-0 flex-1">
+          <div className="mb-4 flex flex-wrap items-center gap-2">
+            <Badge variant="outline" className="bg-card/70">
               {allListings.length} listings
-            </p>
+            </Badge>
+            {activeFilterCount > 0 && (
+              <Badge variant="secondary">
+                {activeFilterCount} filters applied
+              </Badge>
+            )}
           </div>
 
           {isLoading ? (
@@ -127,7 +167,7 @@ export default function MarketPage() {
             <>
               <ListingGrid listings={allListings} onMakeOffer={setOfferTarget} />
               {hasNextPage && (
-                <div className="flex justify-center mt-10">
+                <div className="mt-10 flex justify-center">
                   <Button
                     variant="outline"
                     size="lg"
@@ -143,7 +183,6 @@ export default function MarketPage() {
         </div>
       </div>
 
-      {/* Offer dialog */}
       {offerTarget && (
         <OfferDialog
           listing={offerTarget}
