@@ -123,8 +123,8 @@ function MFASection() {
     setLoading(true);
     try {
       const result = await authApi.setupTotp();
-      setQrCode(result.qrCodeUri);
-      setBackupCodes(result.backupCodes);
+      setQrCode(result.qrCodeUri ?? result.qrCodeUrl ?? null);
+      setBackupCodes(result.backupCodes ?? null);
       toast({
         title: "MFA Setup Initiated",
         description: "Scan the QR code with your authenticator app.",

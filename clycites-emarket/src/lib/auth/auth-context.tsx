@@ -9,16 +9,19 @@ import {
   type ReactNode,
 } from "react";
 import { authApi } from "@/lib/api/endpoints/auth.api";
-import { getToken, removeToken } from "@/lib/api/http";
-import type { User, AuthTokens } from "@/lib/api/types/shared.types";
+import { getToken, registerUnauthorizedHandler, removeToken } from "@/lib/api/http";
+import type { User, AuthTokens, UserRole } from "@/lib/api/types/shared.types";
 
 interface AuthContextValue {
   user: User | null;
   isLoading: boolean;
   isAuthenticated: boolean;
+  role: UserRole | null;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
+  hasRole: (role: UserRole) => boolean;
+  hasAnyRole: (roles: UserRole[]) => boolean;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -35,6 +38,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(null);
       removeToken();
     }
+  }, []);
+
+  useEffect(() => {
+    registerUnauthorizedHandler(() => {
+      removeToken();
+      setUser(null);
+    });
+
+    return () => registerUnauthorizedHandler(null);
   }, []);
 
   // On mount — if token exists, load user
@@ -66,8 +78,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = useCallback(async (email: string, password: string) => {
     const res = await authApi.login({ email, password });
-    if ((res as AuthTokens & { user: User }).user) {
-      setUser((res as AuthTokens & { user: User }).user);
+    if ((res as AuthTokens & { user?: User }).user) {
+      setUser((res as AuthTokens & { user?: User }).user ?? null);
     } else {
       await refreshUser();
     }
@@ -78,9 +90,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
   }, []);
 
+  const hasRole = useCallback((role: UserRole) => user?.role === role, [user]);
+
+  const hasAnyRole = useCallback(
+    (roles: UserRole[]) => (user?.role ? roles.includes(user.role) : false),
+    [user]
+  );
+
   return (
     <AuthContext.Provider
-      value={{ user, isLoading, isAuthenticated: !!user, login, logout, refreshUser }}
+      value={{
+        user,
+        isLoading,
+        isAuthenticated: !!user,
+        role: user?.role ?? null,
+        login,
+        logout,
+        refreshUser,
+        hasRole,
+        hasAnyRole,
+      }}
     >
       {children}
     </AuthContext.Provider>

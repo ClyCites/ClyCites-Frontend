@@ -30,7 +30,7 @@ export default function LoginPage() {
     try {
       await login(data.email, data.password);
       toast({ title: "Welcome back!", variant: "success" });
-      router.push("/market");
+      router.push("/dashboard");
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Invalid credentials";
       toast({ title: "Login failed", description: message, variant: "destructive" });

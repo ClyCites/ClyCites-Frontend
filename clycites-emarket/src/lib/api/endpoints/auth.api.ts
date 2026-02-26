@@ -1,7 +1,17 @@
-import { api, http, setToken, removeToken } from "../http";
-import type { User, AuthTokens } from "../types/shared.types";
+import { api, removeToken, setToken } from "../http";
+import type {
+  ApiToken,
+  ApiTokenUsage,
+  AuthTokens,
+  PaginatedResponse,
+  User,
+} from "../types/shared.types";
 
-interface LoginRequest { email: string; password: string; }
+interface LoginRequest {
+  email: string;
+  password: string;
+}
+
 interface RegisterRequest {
   firstName: string;
   lastName: string;
@@ -11,66 +21,152 @@ interface RegisterRequest {
   phone?: string;
 }
 
+interface ResetPasswordByCodeRequest {
+  email: string;
+  code: string;
+  newPassword: string;
+}
+
+interface ApiTokenCreateRequest {
+  tokenType?: "personal" | "organization" | "super_admin";
+  name: string;
+  description?: string;
+  orgId?: string;
+  scopes: string[];
+  rateLimit?: {
+    requestsPerMinute?: number;
+    burst?: number;
+  };
+  expiresAt?: string;
+  allowedIps?: string[];
+  reason?: string;
+}
+
+interface ApiTokenUpdateRequest {
+  name?: string;
+  description?: string;
+  scopes?: string[];
+  rateLimit?: {
+    requestsPerMinute?: number;
+    burst?: number;
+  };
+  allowedIps?: string[];
+  expiresAt?: string | null;
+  reason?: string;
+}
+
+type LoginResponse = AuthTokens & { user?: User };
+type CreateOrRotateTokenResponse = { token: ApiToken; secret: string };
+
 export const authApi = {
-  login: async (data: LoginRequest): Promise<AuthTokens & { user: User }> => {
-    const res = await api.post<AuthTokens & { user: User }>("/v1/auth/login", data);
-    if (res.accessToken) setToken(res.accessToken);
-    return res;
+  login: async (data: LoginRequest): Promise<LoginResponse> => {
+    const response = await api.post<LoginResponse>("/auth/login", data, { skipAuth: true });
+    if (response.accessToken) setToken(response.accessToken);
+    return response;
   },
 
   register: (data: RegisterRequest) =>
-    api.post<{ message: string }>("/v1/auth/register", data),
+    api.post<{ message: string }>("/auth/register", data, { skipAuth: true }),
 
   logout: async () => {
-    try { await api.post("/v1/auth/logout"); } finally { removeToken(); }
+    try {
+      await api.post("/auth/logout");
+    } finally {
+      removeToken();
+    }
   },
 
-  me: () => api.get<User>("/v1/auth/me"),
+  me: () => api.get<User>("/auth/me"),
 
   refreshToken: async () => {
-    const res = await api.post<AuthTokens>("/v1/auth/refresh-token");
-    if (res.accessToken) setToken(res.accessToken);
-    return res;
+    const response = await api.post<AuthTokens>("/auth/refresh-token", undefined, {
+      skipAuth: true,
+      skipRefresh: true,
+    });
+    if (response.accessToken) setToken(response.accessToken);
+    return response;
   },
 
   forgotPassword: (email: string) =>
-    api.post("/v1/auth/forgot-password", { email }),
+    api.post("/auth/forgot-password", { email }, { skipAuth: true }),
 
-  resetPassword: (token: string, newPassword: string) =>
-    api.post("/v1/auth/reset-password", { token, newPassword }),
+  resetPasswordByCode: (request: ResetPasswordByCodeRequest) =>
+    api.post("/auth/reset-password", request, { skipAuth: true }),
+
+  resetPassword: (tokenOrCode: string, newPassword: string, email?: string) =>
+    email
+      ? api.post("/auth/reset-password", { email, code: tokenOrCode, newPassword }, { skipAuth: true })
+      : api.post("/auth/reset-password", { token: tokenOrCode, newPassword }, { skipAuth: true }),
 
   changePassword: (currentPassword: string, newPassword: string) =>
-    api.post("/v1/auth/change-password", { currentPassword, newPassword }),
+    api.post("/auth/change-password", { currentPassword, newPassword }),
+
+  verifyOtp: (email: string, code: string, purpose: "verification" | "password_reset" | "login" = "verification") =>
+    api.post("/auth/verify-otp", { email, code, purpose }, { skipAuth: true }),
+
+  resendOtp: (email: string, purpose: "verification" | "password_reset" | "login" = "verification") =>
+    api.post("/auth/resend-otp", { email, purpose }, { skipAuth: true }),
 
   verifyEmail: (token: string) =>
-    api.post("/v1/auth/verify-email", { token }),
-
-  // ── MFA & Security ───────────────────────────────────────────────────────────
-
-  setupMfa: () => api.post<{ secret: string; qrCodeUrl: string }>("/v1/auth/setup-mfa"),
-
-  verifyMfa: (token: string) => api.post("/v1/auth/verify-mfa", { token }),
+    api.post("/auth/verify-email", { token }, { skipAuth: true }),
 
   setupTotp: () =>
-    api.post<{ secret: string; qrCodeUri: string; backupCodes: string[] }>("/v1/security/mfa/totp/setup"),
+    api.post<{ secret: string; qrCodeUri?: string; qrCodeUrl?: string; backupCodes?: string[] }>(
+      "/security/mfa/totp/setup"
+    ),
 
-  verifyTotp: (token: string) => api.post("/v1/security/mfa/totp/verify", { token }),
-
-  enableEmailOtp: () => api.post("/v1/security/mfa/email/enable"),
-
-  requestEmailOtp: () => api.post("/v1/security/mfa/email/request"),
+  verifyTotp: (token: string) =>
+    api.post("/security/mfa/totp/verify", { token }),
 
   disableMfa: (data?: { confirmToken?: string; password?: string }) =>
-    http("/v1/security/mfa", { method: "DELETE", body: data }),
+    api.delete("/security/mfa", data),
 
-  // ── Device Management ────────────────────────────────────────────────────────
+  // ── API token management ────────────────────────────────────────────────────
 
-  getDevices: () =>
-    api.get<{ deviceId: string; name: string; userAgent: string; ip: string; isTrusted: boolean; isBlocked: boolean; lastSeenAt: string; createdAt: string }[]>("/v1/security/devices"),
+  listTokens: (params?: {
+    tokenType?: "personal" | "organization" | "super_admin";
+    status?: "active" | "revoked" | "expired";
+    orgId?: string;
+  }) => api.get<ApiToken[]>("/auth/tokens", params),
 
-  verifyDevice: (deviceId: string) => api.post(`/v1/security/devices/${deviceId}/verify`),
+  getTokenById: (id: string) => api.get<ApiToken>(`/auth/tokens/${id}`),
 
-  blockDevice: (deviceId: string) => api.post(`/v1/security/devices/${deviceId}/block`),
+  createToken: (data: ApiTokenCreateRequest) =>
+    api.post<CreateOrRotateTokenResponse>("/auth/tokens", data),
 
-  revokeDevice: (deviceId: string) => api.delete(`/v1/security/devices/${deviceId}`),
+  updateToken: (id: string, data: ApiTokenUpdateRequest) =>
+    api.patch<ApiToken>(`/auth/tokens/${id}`, data),
+
+  rotateToken: (id: string, reason: string) =>
+    api.post<CreateOrRotateTokenResponse>(`/auth/tokens/${id}/rotate`, { reason }),
+
+  revokeToken: (id: string, reason: string) =>
+    api.post<ApiToken>(`/auth/tokens/${id}/revoke`, { reason }),
+
+  getTokenUsage: (id: string, sinceDays = 7) =>
+    api.get<ApiTokenUsage>(`/auth/tokens/${id}/usage`, { sinceDays }),
+
+  // ── Super Admin token grants ───────────────────────────────────────────────
+
+  listSuperAdminTokens: () => api.get<PaginatedResponse<unknown> | unknown[]>("/auth/super-admin/tokens"),
+
+  createSuperAdminToken: (data: { scopes: string[]; reason: string; expiresInMinutes?: number }) =>
+    api.post<{ token: string; grantId: string; expiresAt: string }>("/auth/super-admin/tokens", data),
+
+  revokeSuperAdminToken: (grantId: string, reason: string) =>
+    api.delete(`/auth/super-admin/tokens/${grantId}`, { reason }),
+
+  // ── Super Admin impersonation ───────────────────────────────────────────────
+
+  listImpersonationSessions: () => api.get<unknown[]>("/auth/super-admin/impersonation"),
+
+  startImpersonation: (data: {
+    targetUserId: string;
+    reason: string;
+    ttlMinutes?: number;
+    scopes?: string[];
+  }) => api.post<{ sessionId: string; token: string }>("/auth/super-admin/impersonation", data),
+
+  revokeImpersonationSession: (sessionId: string, reason: string) =>
+    api.delete(`/auth/super-admin/impersonation/${sessionId}`, { reason }),
 };

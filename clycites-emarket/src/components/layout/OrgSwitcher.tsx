@@ -17,7 +17,7 @@ import { cn } from "@/lib/utils";
 export interface Organization {
   id: string;
   name: string;
-  type: "personal" | "cooperative" | "enterprise" | "ngo";
+  type: "personal" | "cooperative" | "enterprise" | "ngo" | "company" | "association";
   tier: "free" | "premium" | "enterprise";
   role: string; // User's role in this org
 }

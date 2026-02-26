@@ -31,7 +31,7 @@ export const listingsApi = {
   /** Public — browse all active listings */
   list: async (filters: ListingFilters = {}) => {
     const { page, limit, ...rest } = filters;
-    const response = await api.get<RawListingResponse>("/v1/listings", {
+    const response = await api.get<RawListingResponse>("/listings", {
       page,
       limit,
       ...rest,
@@ -41,30 +41,30 @@ export const listingsApi = {
 
   /** Get single listing by ID */
   getById: async (id: string) => {
-    const response = await api.get<RawListing>(`/v1/listings/${id}`);
+    const response = await api.get<RawListing>(`/listings/${id}`);
     return normalizeListing(response);
   },
 
   /** Create new listing (seller) */
   create: async (data: ListingCreateRequest) => {
-    const response = await api.post<RawListing>("/v1/listings", data);
+    const response = await api.post<RawListing>("/listings", data);
     return normalizeListing(response);
   },
 
   /** Update listing (seller) */
   update: async (id: string, data: ListingUpdateRequest) => {
-    const response = await api.put<RawListing>(`/v1/listings/${id}`, data);
+    const response = await api.put<RawListing>(`/listings/${id}`, data);
     return normalizeListing(response);
   },
 
   /** Delete listing */
   delete: (id: string) =>
-    api.delete<{ message: string }>(`/v1/listings/${id}`),
+    api.delete<{ message: string }>(`/listings/${id}`),
 
   /** Seller's own listings */
   myListings: async (filters: ListingFilters = {}) => {
     const { page, limit, ...rest } = filters;
-    const response = await api.get<RawListingResponse>("/v1/listings/my", {
+    const response = await api.get<RawListingResponse>("/listings/my/listings", {
       page,
       limit,
       ...rest,
@@ -74,23 +74,23 @@ export const listingsApi = {
 
   /** Publish (set status = active) */
   publish: async (id: string) => {
-    const response = await api.patch<RawListing>(`/v1/listings/${id}`, { status: "active" });
+    const response = await api.patch<RawListing>(`/listings/${id}`, { status: "active" });
     return normalizeListing(response);
   },
 
   /** Pause listing */
   pause: async (id: string) => {
-    const response = await api.patch<RawListing>(`/v1/listings/${id}`, { status: "draft" });
+    const response = await api.patch<RawListing>(`/listings/${id}`, { status: "draft" });
     return normalizeListing(response);
   },
 
   /** Expire listing */
   expire: async (id: string) => {
-    const response = await api.patch<RawListing>(`/v1/listings/${id}`, { status: "expired" });
+    const response = await api.patch<RawListing>(`/listings/${id}`, { status: "expired" });
     return normalizeListing(response);
   },
 
   /** Get offers on a specific listing */
   getOffers: (id: string, filters: { page?: number; limit?: number } = {}) =>
-    api.get<PaginatedResponse<unknown>>(`/v1/listings/${id}/offers`, filters as Record<string, string | number | boolean | undefined | null>),
+    api.get<PaginatedResponse<unknown>>(`/listings/${id}/offers`, filters as Record<string, string | number | boolean | undefined | null>),
 };

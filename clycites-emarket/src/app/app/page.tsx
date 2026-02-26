@@ -14,9 +14,7 @@ export default function AppHomePage() {
       if (!isAuthenticated) {
         router.push("/login");
       } else {
-        // Redirect to last visited module or default to market
-        const lastModule = localStorage.getItem("clycites_last_module") || "market";
-        router.push(`/app/${lastModule}`);
+        router.push("/dashboard");
       }
     }
   }, [isAuthenticated, isLoading, router]);

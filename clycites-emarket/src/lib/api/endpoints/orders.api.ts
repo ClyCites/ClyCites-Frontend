@@ -4,13 +4,15 @@ import type { PaginatedResponse } from "../types/shared.types";
 
 export const ordersApi = {
   /** Place order directly */
-  create: (data: { listingId: string; quantity: number; deliveryAddress?: Record<string, unknown> }) =>
-    api.post<Order>("/v1/orders", data),
+  create: (
+    data: { listingId: string; quantity: number; deliveryAddress?: Record<string, unknown> },
+    options?: { idempotencyKey?: string }
+  ) => api.post<Order>("/orders", data, options),
 
   /** List orders (buyer + seller view) */
   list: (filters: OrderFilters = {}) => {
     const { page, limit, ...rest } = filters;
-    return api.get<PaginatedResponse<Order>>("/v1/orders", {
+    return api.get<PaginatedResponse<Order>>("/orders/my-orders", {
       page,
       limit,
       ...rest,
@@ -19,24 +21,24 @@ export const ordersApi = {
 
   /** Get single order */
   getById: (id: string) =>
-    api.get<Order>(`/v1/orders/${id}`),
+    api.get<Order>(`/orders/${id}`),
 
   /** Cancel order */
   cancel: (id: string, data: OrderCancelRequest) =>
-    api.post<Order>(`/v1/orders/${id}/cancel`, data),
+    api.post<Order>(`/orders/${id}/cancel`, data),
 
   /** Confirm delivery (buyer) */
   confirmDelivery: (id: string) =>
-    api.post<Order>(`/v1/orders/${id}/confirm-delivery`),
+    api.post<Order>(`/orders/${id}/confirm-delivery`),
 
   /** Update order status (seller) */
   updateStatus: (id: string, data: { status: string; note?: string }) =>
-    api.patch<Order>(`/v1/orders/${id}`, data),
+    api.patch<Order>(`/orders/${id}/status`, data),
 
   /** Admin: list all orders */
   adminListAll: (filters: OrderFilters = {}) => {
     const { page, limit, ...rest } = filters;
-    return api.get<PaginatedResponse<Order>>("/v1/orders/admin/all", {
+    return api.get<PaginatedResponse<Order>>("/orders", {
       page,
       limit,
       ...rest,

@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { offersApi } from "@/lib/api/endpoints/offers.api";
 import type { OfferFilters, OfferCreateRequest, OfferCounterRequest } from "@/lib/api/types/offer.types";
 import { queryKeys } from "./keys";
+import { isDataSaverEnabled } from "@/lib/context/data-saver-context";
 
 export function useOffers(filters: OfferFilters = {}) {
   return useQuery({
@@ -19,11 +20,12 @@ export function useOffer(id: string) {
 }
 
 export function useOfferMessages(offerId: string) {
+  const dataSaver = typeof window !== "undefined" && isDataSaverEnabled();
   return useQuery({
     queryKey: queryKeys.offerMessages(offerId),
     queryFn: () => offersApi.getMessages(offerId),
     enabled: !!offerId,
-    refetchInterval: 15_000, // poll every 15s for new messages
+    refetchInterval: dataSaver ? 60_000 : 15_000,
   });
 }
 

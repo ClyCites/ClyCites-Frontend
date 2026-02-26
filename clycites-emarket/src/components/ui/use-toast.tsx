@@ -37,7 +37,6 @@ const toastReducer = (state: ToastState, action: ToastAction): ToastState => {
   }
 };
 
-let dispatch: React.Dispatch<ToastAction> | null = null;
 const listeners: Array<React.Dispatch<ToastAction>> = [];
 let memoryState: ToastState = { toasts: [] };
 
