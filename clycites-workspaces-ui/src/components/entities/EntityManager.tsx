@@ -577,7 +577,13 @@ export function EntityManager({ workspaceId, entityKey }: EntityManagerProps) {
                   ))}
                 </SelectContent>
               </Select>
-              <Select value={sortField} onValueChange={setSortField}>
+              <Select
+                value={sortField}
+                onValueChange={(value) => {
+                  setPage(1);
+                  setSortField(value);
+                }}
+              >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -588,7 +594,13 @@ export function EntityManager({ workspaceId, entityKey }: EntityManagerProps) {
                   <SelectItem value="status">Status</SelectItem>
                 </SelectContent>
               </Select>
-              <Select value={sortDirection} onValueChange={(value) => setSortDirection(value as "asc" | "desc")}>
+              <Select
+                value={sortDirection}
+                onValueChange={(value) => {
+                  setPage(1);
+                  setSortDirection(value as "asc" | "desc");
+                }}
+              >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -680,7 +692,13 @@ export function EntityManager({ workspaceId, entityKey }: EntityManagerProps) {
                     Page {data?.pagination.page ?? 1} of {Math.max(1, Math.ceil((data?.pagination.total ?? 0) / pageSize))}
                   </div>
                   <div className="flex items-center gap-2">
-                    <Select value={String(pageSize)} onValueChange={(value) => setPageSize(Number(value))}>
+                    <Select
+                      value={String(pageSize)}
+                      onValueChange={(value) => {
+                        setPage(1);
+                        setPageSize(Number(value));
+                      }}
+                    >
                       <SelectTrigger className="w-[110px]">
                         <SelectValue />
                       </SelectTrigger>

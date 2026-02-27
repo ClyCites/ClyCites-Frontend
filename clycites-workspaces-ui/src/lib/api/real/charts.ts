@@ -6,8 +6,46 @@ import type {
 } from "@/lib/api/contracts";
 import { apiRequest, unwrapApiData } from "@/lib/api/real/http";
 
+function asRecord(value: unknown): Record<string, unknown> | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  return value as Record<string, unknown>;
+}
+
+function asStringArray(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value.filter((item): item is string => typeof item === "string" && item.trim().length > 0);
+}
+
+function extractPreviewRows(payload: unknown): Array<Record<string, unknown>> {
+  const unwrapped = unwrapApiData<unknown>(payload);
+  const root = asRecord(unwrapped) ?? {};
+  const queryResult = asRecord(root.rows) ? root : asRecord(root.result) ?? root;
+
+  const candidates = [
+    Array.isArray(queryResult.rows) ? queryResult.rows : null,
+    Array.isArray(root.items) ? root.items : null,
+    Array.isArray(root.data) ? root.data : null,
+    Array.isArray(root.results) ? root.results : null,
+  ].filter((rows): rows is unknown[] => Array.isArray(rows));
+
+  const first = candidates[0] ?? [];
+  return first.filter((item): item is Record<string, unknown> => Boolean(item) && typeof item === "object");
+}
+
+function extractChartRows(payload: unknown): unknown[] {
+  const unwrapped = unwrapApiData<unknown>(payload);
+  const root = asRecord(unwrapped) ?? {};
+  const candidates = [root.items, root.data, root.charts, root.rows, root.results];
+  for (const candidate of candidates) {
+    if (Array.isArray(candidate)) {
+      return candidate;
+    }
+  }
+  return [];
+}
+
 function normalizeSavedChart(payload: unknown): SavedChart {
-  const data = unwrapApiData<Record<string, unknown>>(payload);
+  const data = asRecord(unwrapApiData<unknown>(payload)) ?? {};
   const definitionRaw = data.definition;
 
   return {
@@ -22,7 +60,7 @@ function normalizeSavedChart(payload: unknown): SavedChart {
             metrics: [{ type: "count" }],
             chartType: "line",
           },
-    tags: Array.isArray(data.tags) ? data.tags.filter((item): item is string => typeof item === "string") : [],
+    tags: asStringArray(data.tags),
     shareScope: String(data.shareScope ?? "owner_only"),
     createdAt: typeof data.createdAt === "string" ? data.createdAt : undefined,
     updatedAt: typeof data.updatedAt === "string" ? data.updatedAt : undefined,
@@ -40,20 +78,9 @@ export const chartService: ChartServiceContract = {
       { auth: true }
     );
 
-    const data = unwrapApiData<Record<string, unknown>>(payload);
-
-    const rows =
-      Array.isArray(data.rows)
-        ? data.rows
-        : Array.isArray(data.items)
-          ? data.items
-          : Array.isArray(data.data)
-            ? data.data
-            : [];
-
     return {
-      rows: rows.filter((item): item is Record<string, unknown> => Boolean(item) && typeof item === "object"),
-      raw: data,
+      rows: extractPreviewRows(payload),
+      raw: unwrapApiData<unknown>(payload),
     } as ChartPreviewResult;
   },
 
@@ -83,15 +110,6 @@ export const chartService: ChartServiceContract = {
       { auth: true }
     );
 
-    const data = unwrapApiData<Record<string, unknown>>(response);
-    const rows = Array.isArray(data.items)
-      ? data.items
-      : Array.isArray(data.data)
-        ? data.data
-        : Array.isArray(data.charts)
-          ? data.charts
-          : [];
-
-    return rows.map((item) => normalizeSavedChart(item));
+    return extractChartRows(response).map((item) => normalizeSavedChart(item));
   },
 };

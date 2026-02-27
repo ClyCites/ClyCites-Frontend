@@ -59,6 +59,56 @@ function normalizeNotification(row: unknown, index: number): AppNotification {
   };
 }
 
+function toPositiveInteger(value: unknown): number | null {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return null;
+  const normalized = Math.trunc(parsed);
+  return normalized > 0 ? normalized : null;
+}
+
+function extractRemotePagination(payload: unknown, page: number, pageSize: number, itemCount: number): {
+  page: number;
+  pageSize: number;
+  total: number;
+} | null {
+  const root = asRecord(payload) ?? {};
+  const unwrapped = asRecord(unwrapApiData<unknown>(payload)) ?? {};
+  const candidates = [
+    asRecord(unwrapped.pagination),
+    asRecord(root.pagination),
+    asRecord(asRecord(unwrapped.meta)?.pagination),
+    asRecord(asRecord(root.meta)?.pagination),
+    asRecord(unwrapped.meta),
+    asRecord(root.meta),
+    unwrapped,
+    root,
+  ].filter((value): value is Record<string, unknown> => Boolean(value));
+
+  for (const candidate of candidates) {
+    const total =
+      toPositiveInteger(candidate.total) ??
+      toPositiveInteger(candidate.totalItems) ??
+      toPositiveInteger(candidate.totalCount) ??
+      toPositiveInteger(candidate.recordsTotal);
+    if (total === null) continue;
+
+    return {
+      page:
+        toPositiveInteger(candidate.page) ??
+        toPositiveInteger(candidate.currentPage) ??
+        page,
+      pageSize:
+        toPositiveInteger(candidate.pageSize) ??
+        toPositiveInteger(candidate.limit) ??
+        toPositiveInteger(candidate.perPage) ??
+        pageSize,
+      total: Math.max(total, itemCount),
+    };
+  }
+
+  return null;
+}
+
 function applyPaging(items: AppNotification[], params: NotificationFilterParams): ListResult<AppNotification> {
   const page = Math.max(1, params.page);
   const pageSize = Math.max(1, params.pageSize);
@@ -84,7 +134,15 @@ export const notificationsService = {
         if (params.unreadOnly) query.set("read", "false");
         const payload = await apiRequest<unknown>(`/api/v1/notifications?${query.toString()}`, { method: "GET" }, { auth: true });
         const rows = extractRows(payload).map((row, index) => normalizeNotification(row, index));
-        return applyPaging(rows, params);
+        const filtered = params.unreadOnly ? rows.filter((row) => !row.read) : rows;
+        const remotePagination = extractRemotePagination(payload, params.page, params.pageSize, filtered.length);
+        if (remotePagination) {
+          return {
+            items: filtered,
+            pagination: remotePagination,
+          };
+        }
+        return applyPaging(filtered, params);
       },
       () => mockNotificationsService.list(params)
     );

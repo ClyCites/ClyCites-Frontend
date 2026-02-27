@@ -382,6 +382,72 @@ function applyListParams(records: EntityRecord[], params: ListParams): ListResul
   };
 }
 
+function toPositiveInteger(value: unknown): number | null {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return null;
+  const normalized = Math.trunc(parsed);
+  return normalized > 0 ? normalized : null;
+}
+
+function extractRemotePagination(payload: unknown, fallbackPage: number, fallbackPageSize: number, itemCount: number): {
+  page: number;
+  pageSize: number;
+  total: number;
+} | null {
+  const rawPayload = asRecord(payload) ?? {};
+  const unwrapped = asRecord(unwrapApiData<unknown>(payload)) ?? {};
+  const unwrappedMeta = asRecord(unwrapped.meta);
+  const rawMeta = asRecord(rawPayload.meta);
+
+  const candidates = [
+    asRecord(unwrapped.pagination),
+    asRecord(rawPayload.pagination),
+    asRecord(unwrappedMeta?.pagination),
+    asRecord(rawMeta?.pagination),
+    unwrappedMeta,
+    rawMeta,
+    unwrapped,
+    rawPayload,
+  ].filter((value): value is Record<string, unknown> => Boolean(value));
+
+  for (const candidate of candidates) {
+    const page =
+      toPositiveInteger(candidate.page) ??
+      toPositiveInteger(candidate.currentPage) ??
+      toPositiveInteger(candidate.pageIndex) ??
+      toPositiveInteger(candidate.page_number) ??
+      fallbackPage;
+    const pageSize =
+      toPositiveInteger(candidate.pageSize) ??
+      toPositiveInteger(candidate.limit) ??
+      toPositiveInteger(candidate.perPage) ??
+      toPositiveInteger(candidate.page_size) ??
+      fallbackPageSize;
+    const total =
+      toPositiveInteger(candidate.total) ??
+      toPositiveInteger(candidate.totalItems) ??
+      toPositiveInteger(candidate.totalCount) ??
+      toPositiveInteger(candidate.recordsTotal) ??
+      (() => {
+        const totalPages =
+          toPositiveInteger(candidate.totalPages) ??
+          toPositiveInteger(candidate.pages) ??
+          toPositiveInteger(candidate.pageCount);
+        return totalPages ? totalPages * pageSize : null;
+      })();
+
+    if (total !== null) {
+      return {
+        page,
+        pageSize,
+        total: Math.max(total, itemCount),
+      };
+    }
+  }
+
+  return null;
+}
+
 function toQueryString(values: Record<string, unknown>): string {
   const params = new URLSearchParams();
   Object.entries(values).forEach(([key, value]) => {
@@ -1806,6 +1872,20 @@ async function listRemote(entityKey: EntityKey, config: EntityApiConfig, params:
     }
   }
   const normalized = rows.map((row, index) => mapRemoteRecord(entityKey, row, index));
+
+  const remotePagination = extractRemotePagination(
+    payload,
+    params.pagination.page,
+    params.pagination.pageSize,
+    normalized.length
+  );
+  if (remotePagination) {
+    return {
+      items: normalized,
+      pagination: remotePagination,
+    };
+  }
+
   return applyListParams(normalized, params);
 }
 

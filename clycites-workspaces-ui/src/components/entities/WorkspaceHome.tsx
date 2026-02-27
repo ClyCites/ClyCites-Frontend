@@ -13,6 +13,7 @@ import type { WorkspaceId } from "@/lib/store/types";
 import { useMockSession } from "@/lib/auth/mock-session";
 import { AccessDenied } from "@/components/common/AccessDenied";
 import { WorkspaceInsightsCharts } from "@/components/charts/WorkspaceInsightsCharts";
+import { ChartWorkbench } from "@/components/charts/ChartWorkbench";
 import { PageHeader } from "@/components/common/PageHeader";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -191,7 +192,7 @@ export function WorkspaceHome({ workspaceId }: WorkspaceHomeProps) {
           <CardHeader className="pb-3">
             <CardTitle>Workspace Intelligence Summary</CardTitle>
             <CardDescription>
-              Overview of active entities in {workspaceLabel}. Counts are powered by local mock persistence.
+              Overview of active entities in {workspaceLabel}. Counts are powered by {isRealApiMode ? "live API reads with fallback." : "local mock persistence."}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -273,6 +274,12 @@ export function WorkspaceHome({ workspaceId }: WorkspaceHomeProps) {
       <motion.section variants={fadeIn(Boolean(reducedMotion))}>
         <WorkspaceInsightsCharts metrics={chartMetrics} trend={chartTrend} />
       </motion.section>
+
+      {workspaceId === "analytics" && (
+        <motion.section variants={fadeIn(Boolean(reducedMotion))}>
+          <ChartWorkbench workspaceLabel={workspaceLabel} />
+        </motion.section>
+      )}
 
       {livePreviewRows.length > 0 && (
         <motion.section variants={fadeIn(Boolean(reducedMotion))}>
