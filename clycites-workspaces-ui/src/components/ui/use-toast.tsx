@@ -87,16 +87,16 @@ interface ToastItemProps extends Toast {
 }
 
 const variantStyles: Record<ToastVariant, string> = {
-  default:     "bg-background border border-border text-foreground",
-  destructive: "bg-destructive text-destructive-foreground border border-destructive",
-  success:     "bg-primary/10 text-primary border border-primary/20",
+  default: "border border-border/70 bg-card/95 text-foreground",
+  destructive: "border border-destructive/70 bg-destructive/12 text-destructive",
+  success: "border border-success/35 bg-success/12 text-success",
 };
 
 export function ToastItem({ id, title, description, variant = "default", onDismiss }: ToastItemProps) {
   return (
     <div
       className={cn(
-        "pointer-events-auto flex w-full items-start gap-3 rounded-xl p-4 shadow-lg transition-all",
+        "pointer-events-auto flex w-full items-start gap-3 rounded-2xl p-4 shadow-[var(--shadow-lg)] backdrop-blur-sm transition-all",
         variantStyles[variant]
       )}
     >

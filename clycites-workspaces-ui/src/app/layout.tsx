@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Manrope, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
+import { createDesignSystemCss } from "@/styles/design-system";
 
 const bodyFont = Manrope({
   subsets: ["latin"],
@@ -21,6 +22,8 @@ export const metadata: Metadata = {
   description: "Enterprise-grade multi-workspace UI for the ClyCites agriculture value chain.",
 };
 
+const designSystemCss = createDesignSystemCss();
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -28,6 +31,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <meta name="color-scheme" content="light dark" />
+        <style id="clycites-design-system">{designSystemCss}</style>
+      </head>
       <body className={`${bodyFont.variable} ${displayFont.variable} font-body antialiased text-foreground`}>
         <Providers>{children}</Providers>
       </body>

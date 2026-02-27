@@ -1,34 +1,10 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
-:root {
-  --background: 84 36% 97%;
-  --foreground: 162 30% 15%;
-  --card: 0 0% 100%;
-  --card-foreground: 162 30% 15%;
-  --popover: 0 0% 100%;
-  --popover-foreground: 162 30% 15%;
-  --primary: 156 68% 33%;
-  --primary-foreground: 80 40% 97%;
-  --secondary: 193 77% 34%;
-  --secondary-foreground: 0 0% 98%;
-  --muted: 84 24% 92%;
-  --muted-foreground: 161 12% 37%;
-  --accent: 52 84% 90%;
-  --accent-foreground: 28 42% 24%;
-  --destructive: 0 84.2% 60.2%;
-  --destructive-foreground: 0 0% 98%;
-  --border: 156 18% 83%;
-  --input: 156 18% 83%;
-  --ring: 156 68% 36%;
-  --radius: 1rem;
-  --warning: 35 94% 52%;
-  --warning-foreground: 35 45% 16%;
-}
-
 @theme inline {
   --font-sans: var(--font-body);
   --font-heading: var(--font-display);
+
   --color-background: hsl(var(--background));
   --color-foreground: hsl(var(--foreground));
   --color-card: hsl(var(--card));
@@ -50,14 +26,32 @@
   --color-ring: hsl(var(--ring));
   --color-warning: hsl(var(--warning));
   --color-warning-foreground: hsl(var(--warning-foreground));
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
+
+  --color-cardbg: hsl(var(--card-bg));
+  --color-elevatedbg: hsl(var(--elevated-bg));
+  --color-hoverbg: hsl(var(--hover-bg));
+  --color-mutedtext: hsl(var(--muted-text));
+
+  --color-neutral-50: hsl(var(--neutral-50));
+  --color-neutral-100: hsl(var(--neutral-100));
+  --color-neutral-200: hsl(var(--neutral-200));
+  --color-neutral-300: hsl(var(--neutral-300));
+  --color-neutral-400: hsl(var(--neutral-400));
+  --color-neutral-500: hsl(var(--neutral-500));
+  --color-neutral-600: hsl(var(--neutral-600));
+  --color-neutral-700: hsl(var(--neutral-700));
+  --color-neutral-800: hsl(var(--neutral-800));
+  --color-neutral-900: hsl(var(--neutral-900));
+  --color-neutral-950: hsl(var(--neutral-950));
+
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --radius-xl: var(--radius-xl);
 }
 
 * {
-  border-color: hsl(var(--border) / 0.8);
+  border-color: hsl(var(--border) / 0.78);
 }
 
 html,
@@ -68,13 +62,21 @@ body {
 body {
   background-color: hsl(var(--background));
   background-image:
-    radial-gradient(circle at 6% -12%, hsl(var(--primary) / 0.2), transparent 34%),
-    radial-gradient(circle at 88% 4%, hsl(var(--secondary) / 0.18), transparent 36%),
-    radial-gradient(circle at 24% 120%, hsl(var(--accent) / 0.75), transparent 36%);
+    radial-gradient(circle at 0% -6%, hsl(var(--primary) / 0.18), transparent 36%),
+    radial-gradient(circle at 100% 0%, hsl(var(--accent) / 0.13), transparent 32%),
+    radial-gradient(circle at 22% 110%, hsl(var(--neutral-200) / 0.65), transparent 34%);
   background-attachment: fixed;
   color: hsl(var(--foreground));
   font-family: var(--font-body), "Segoe UI", sans-serif;
+  letter-spacing: -0.01em;
   -webkit-font-smoothing: antialiased;
+}
+
+.dark body {
+  background-image:
+    radial-gradient(circle at 0% -6%, hsl(var(--primary) / 0.16), transparent 34%),
+    radial-gradient(circle at 100% 0%, hsl(var(--accent) / 0.1), transparent 36%),
+    radial-gradient(circle at 20% 110%, hsl(var(--neutral-900) / 0.76), transparent 38%);
 }
 
 .font-body {
@@ -86,13 +88,79 @@ body {
 }
 
 .panel-surface {
-  border: 1px solid hsl(var(--border) / 0.75);
-  background: linear-gradient(155deg, hsl(var(--card) / 0.96) 0%, hsl(var(--card) / 0.88) 100%);
-  box-shadow: 0 24px 44px -36px hsl(var(--foreground) / 0.55);
+  border: 1px solid hsl(var(--border) / 0.72);
+  background: linear-gradient(160deg, hsl(var(--card) / 0.94), hsl(var(--elevated-bg) / 0.9));
+  box-shadow: var(--shadow-lg);
   backdrop-filter: blur(10px);
 }
 
+.frosted {
+  border: 1px solid hsl(var(--border) / 0.62);
+  background: linear-gradient(155deg, hsl(var(--card) / 0.84), hsl(var(--card) / 0.7));
+  backdrop-filter: blur(14px);
+}
+
+.scroll-fade-x {
+  position: relative;
+}
+
+.scroll-fade-x::before,
+.scroll-fade-x::after {
+  content: "";
+  pointer-events: none;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 20px;
+  z-index: 1;
+}
+
+.scroll-fade-x::before {
+  left: 0;
+  background: linear-gradient(to right, hsl(var(--card-bg)), transparent);
+}
+
+.scroll-fade-x::after {
+  right: 0;
+  background: linear-gradient(to left, hsl(var(--card-bg)), transparent);
+}
+
+.text-balance {
+  text-wrap: balance;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.skeleton-shimmer {
+  background-image: linear-gradient(
+    110deg,
+    hsl(var(--muted) / 0.7) 0%,
+    hsl(var(--muted) / 0.92) 30%,
+    hsl(var(--muted) / 0.7) 60%
+  );
+  background-size: 240% 100%;
+  animation: shimmer 1.55s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 ::selection {
-  background: hsl(var(--primary) / 0.18);
+  background: hsl(var(--primary) / 0.22);
   color: hsl(var(--foreground));
 }

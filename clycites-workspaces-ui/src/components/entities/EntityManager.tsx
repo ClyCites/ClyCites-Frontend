@@ -2,12 +2,13 @@
 
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { Edit, Eye, Filter, Plus, RefreshCw, Trash2, Workflow } from "lucide-react";
 import { entityServices } from "@/lib/api/mock";
 import { ENTITY_DEFINITIONS } from "@/lib/store/catalog";
 import type { EntityKey, EntityRecord, FieldDefinition, ListParams, ListResult, WorkspaceId } from "@/lib/store/types";
 import { useMockSession } from "@/lib/auth/mock-session";
+import { PageHeader } from "@/components/common/PageHeader";
 import { toast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -44,6 +45,7 @@ import { ConfirmDeleteDialog } from "@/components/common/ConfirmDeleteDialog";
 import { EmptyState } from "@/components/common/EmptyState";
 import { LoadingSkeletons } from "@/components/common/LoadingSkeletons";
 import { AccessDenied } from "@/components/common/AccessDenied";
+import { fadeIn, scaleIn, staggerContainer } from "@/lib/motion";
 
 interface EntityManagerProps {
   workspaceId: WorkspaceId;
@@ -122,6 +124,7 @@ function toFormValues(record: EntityRecord, fields: FieldDefinition[]): FormValu
 export function EntityManager({ workspaceId, entityKey }: EntityManagerProps) {
   const { session, canAccessEntity } = useMockSession();
   const queryClient = useQueryClient();
+  const reducedMotion = useReducedMotion();
   const definition = ENTITY_DEFINITIONS[entityKey];
   const service = entityServices[entityKey] as {
     listX: (params: ListParams) => Promise<EntityListCache>;
@@ -510,84 +513,95 @@ export function EntityManager({ workspaceId, entityKey }: EntityManagerProps) {
   const items = data?.items ?? [];
 
   return (
-    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
-      <Card>
-        <CardHeader className="pb-4">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <CardTitle>{definition.pluralLabel}</CardTitle>
-              <CardDescription>{definition.statuses.join(" | ")}</CardDescription>
-            </div>
-            <div className="flex items-center gap-2">
-              {definition.toolbarActions?.map((action) => (
-                <Button key={action.id} variant="outline" onClick={() => actionMutation.mutate(action.id)}>
-                  <Workflow className="mr-2 h-4 w-4" />
-                  {action.label}
-                </Button>
-              ))}
-              {canWrite && (
-                <Button onClick={openCreate}>
-                  <Plus className="mr-2 h-4 w-4" />
-                  New {definition.label}
-                </Button>
-              )}
-            </div>
-          </div>
+    <motion.div
+      variants={staggerContainer(Boolean(reducedMotion), 0.05)}
+      initial="hidden"
+      animate="show"
+      className="space-y-4"
+    >
+      <PageHeader
+        title={definition.pluralLabel}
+        subtitle={definition.statuses.join(" | ")}
+        breadcrumbs={[
+          { label: "App", href: "/app" },
+          { label: workspaceId, href: `/app/${workspaceId}` },
+          { label: definition.pluralLabel },
+        ]}
+        actions={
+          <>
+            {definition.toolbarActions?.map((action) => (
+              <Button key={action.id} variant="outline" onClick={() => actionMutation.mutate(action.id)}>
+                <Workflow className="mr-2 h-4 w-4" />
+                {action.label}
+              </Button>
+            ))}
+            {canWrite && (
+              <Button onClick={openCreate}>
+                <Plus className="mr-2 h-4 w-4" />
+                New {definition.label}
+              </Button>
+            )}
+          </>
+        }
+      />
 
-          <div className="grid gap-2 md:grid-cols-[1fr_180px_180px_120px_120px]">
-            <Input
-              placeholder={`Search ${definition.pluralLabel.toLowerCase()}...`}
-              value={searchText}
-              onChange={(event) => {
-                setPage(1);
-                setSearchText(event.target.value);
-              }}
-            />
-            <Select
-              value={statusFilter}
-              onValueChange={(nextValue) => {
-                setPage(1);
-                setStatusFilter(nextValue);
-              }}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All statuses</SelectItem>
-                {definition.statuses.map((status) => (
-                  <SelectItem key={status} value={status}>
-                    {status}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={sortField} onValueChange={setSortField}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="updatedAt">Updated</SelectItem>
-                <SelectItem value="createdAt">Created</SelectItem>
-                <SelectItem value="title">Title</SelectItem>
-                <SelectItem value="status">Status</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={sortDirection} onValueChange={(value) => setSortDirection(value as "asc" | "desc")}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="desc">Desc</SelectItem>
-                <SelectItem value="asc">Asc</SelectItem>
-              </SelectContent>
-            </Select>
-            <Button variant="outline" onClick={() => query.refetch()}>
-              <RefreshCw className="mr-2 h-4 w-4" />
-              Refresh
-            </Button>
-          </div>
-        </CardHeader>
+      <motion.div variants={fadeIn(Boolean(reducedMotion))}>
+        <Card>
+          <CardHeader className="pb-4">
+            <div className="grid gap-2 md:grid-cols-[1fr_170px_170px_120px_120px]">
+              <Input
+                placeholder={`Search ${definition.pluralLabel.toLowerCase()}...`}
+                value={searchText}
+                onChange={(event) => {
+                  setPage(1);
+                  setSearchText(event.target.value);
+                }}
+              />
+              <Select
+                value={statusFilter}
+                onValueChange={(nextValue) => {
+                  setPage(1);
+                  setStatusFilter(nextValue);
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All statuses</SelectItem>
+                  {definition.statuses.map((status) => (
+                    <SelectItem key={status} value={status}>
+                      {status}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={sortField} onValueChange={setSortField}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="updatedAt">Updated</SelectItem>
+                  <SelectItem value="createdAt">Created</SelectItem>
+                  <SelectItem value="title">Title</SelectItem>
+                  <SelectItem value="status">Status</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={sortDirection} onValueChange={(value) => setSortDirection(value as "asc" | "desc")}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="desc">Desc</SelectItem>
+                  <SelectItem value="asc">Asc</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button variant="outline" onClick={() => query.refetch()}>
+                <RefreshCw className="mr-2 h-4 w-4" />
+                Refresh
+              </Button>
+            </div>
+          </CardHeader>
         <CardContent>
           {items.length === 0 ? (
             <EmptyState

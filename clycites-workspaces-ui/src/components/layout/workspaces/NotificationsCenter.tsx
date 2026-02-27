@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { motion } from "framer-motion";
 import { Bell } from "lucide-react";
 import { notificationsService } from "@/lib/api/mock";
 import { useMockSession } from "@/lib/auth/mock-session";
@@ -15,6 +16,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { EmptyState } from "@/components/common/EmptyState";
 
 export function NotificationsCenter() {
   const { session } = useMockSession();
@@ -57,16 +59,27 @@ export function NotificationsCenter() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="icon" className="relative">
+        <Button variant="outline" size="icon" className="relative rounded-full">
           <Bell className="h-4 w-4" />
           {unread > 0 && (
-            <Badge className="absolute -right-1 -top-1 h-5 min-w-5 justify-center px-1 text-[10px]" variant="destructive">
-              {unread}
-            </Badge>
+            <>
+              <motion.span
+                className="absolute -right-0.5 -top-0.5 inline-flex h-4 w-4 rounded-full bg-destructive/28"
+                animate={{ scale: [1, 1.35, 1], opacity: [0.9, 0.4, 0.9] }}
+                transition={{ duration: 1.6, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut" }}
+              />
+              <Badge
+                className="absolute -right-1 -top-1 h-5 min-w-5 justify-center rounded-full px-1 text-[10px]"
+                variant="destructive"
+              >
+                {unread}
+              </Badge>
+            </>
           )}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-[380px]">
+
+      <DropdownMenuContent align="end" className="w-[390px] rounded-2xl p-1.5">
         <DropdownMenuLabel className="flex items-center justify-between">
           <span>Notifications</span>
           <Button variant="ghost" size="sm" onClick={() => markAllMutation.mutate()}>
@@ -74,13 +87,20 @@ export function NotificationsCenter() {
           </Button>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
+
         {notifications.length === 0 ? (
-          <div className="px-3 py-6 text-center text-sm text-muted-foreground">No notifications</div>
+          <div className="px-1 py-2">
+            <EmptyState
+              compact
+              title="No notifications"
+              description="Actions, alerts, and review updates will appear here."
+            />
+          </div>
         ) : (
           notifications.map((notification) => (
             <DropdownMenuItem
               key={notification.id}
-              className="flex cursor-pointer flex-col items-start gap-1 py-3"
+              className="flex cursor-pointer flex-col items-start gap-1 rounded-xl py-3"
               onClick={() => {
                 if (!notification.read) {
                   markMutation.mutate(notification.id);
@@ -102,6 +122,7 @@ export function NotificationsCenter() {
             </DropdownMenuItem>
           ))
         )}
+
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
           <Link href="/app/notifications">View all notifications</Link>

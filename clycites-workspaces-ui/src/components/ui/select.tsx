@@ -14,8 +14,9 @@ const SelectTrigger = React.forwardRef<
   <SelectPrimitive.Trigger
     ref={ref}
     className={cn(
-      "flex h-9 w-full items-center justify-between rounded-lg border border-input bg-background px-3 py-2 text-sm shadow-sm",
-      "placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring",
+      "flex h-10 w-full items-center justify-between rounded-xl border border-input/75 bg-card/86 px-3 py-2 text-sm",
+      "shadow-[0_8px_22px_-22px_hsl(var(--foreground)/0.95)] placeholder:text-muted-foreground",
+      "transition-all duration-[var(--duration-fast)] focus:outline-none focus:ring-2 focus:ring-ring/35",
       "disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1",
       className
     )}
@@ -65,7 +66,7 @@ const SelectContent = React.forwardRef<
     <SelectPrimitive.Content
       ref={ref}
       className={cn(
-        "relative z-50 max-h-96 min-w-32 overflow-hidden rounded-xl border bg-popover text-popover-foreground shadow-md",
+        "relative z-50 max-h-96 min-w-32 overflow-hidden rounded-xl border border-border/65 bg-popover text-popover-foreground shadow-[var(--shadow-md)]",
         "data-[state=open]:animate-in data-[state=closed]:animate-out",
         "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
         "data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
