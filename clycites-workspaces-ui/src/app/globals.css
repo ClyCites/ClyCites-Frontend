@@ -43,11 +43,6 @@
   --color-neutral-800: hsl(var(--neutral-800));
   --color-neutral-900: hsl(var(--neutral-900));
   --color-neutral-950: hsl(var(--neutral-950));
-
-  --radius-sm: var(--radius-sm);
-  --radius-md: var(--radius-md);
-  --radius-lg: var(--radius-lg);
-  --radius-xl: var(--radius-xl);
 }
 
 * {

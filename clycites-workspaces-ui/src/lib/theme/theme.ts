@@ -46,12 +46,15 @@ export function initializeTheme() {
 }
 
 export function useThemePreference() {
-  const [preference, setPreference] = useState<ThemePreference>("system");
+  const [preference, setPreference] = useState<ThemePreference>(() => {
+    if (typeof window === "undefined") {
+      return "system";
+    }
+    return getStoredThemePreference();
+  });
 
   useEffect(() => {
-    const current = getStoredThemePreference();
-    setPreference(current);
-    applyThemePreference(current);
+    applyThemePreference(getStoredThemePreference());
 
     const media = window.matchMedia("(prefers-color-scheme: dark)");
     const listener = () => {

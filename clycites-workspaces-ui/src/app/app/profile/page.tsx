@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { runtimeService } from "@/lib/api/mock";
 import { useMockSession } from "@/lib/auth/mock-session";
+import { PageHeader } from "@/components/common/PageHeader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -44,12 +45,18 @@ export default function AppProfilePage() {
 
   return (
     <div className="space-y-4">
+      <PageHeader
+        title="Profile"
+        subtitle="User context, active roles, and environment tuning for mock backend behavior."
+        breadcrumbs={[{ label: "App", href: "/app" }, { label: "Profile" }]}
+      />
+
       <Card>
         <CardHeader>
-          <CardTitle>Profile</CardTitle>
+          <CardTitle>Session payload</CardTitle>
         </CardHeader>
         <CardContent>
-          <pre className="overflow-auto rounded-md border bg-muted/50 p-4 text-sm">
+          <pre className="overflow-auto rounded-xl border border-border/60 bg-muted/40 p-4 text-sm">
             {JSON.stringify(session, null, 2)}
           </pre>
         </CardContent>
@@ -80,7 +87,7 @@ export default function AppProfilePage() {
               <span className="text-sm">Enable random failures</span>
             </div>
             <Button onClick={() => updateMutation.mutate()}>Save Runtime Config</Button>
-            <pre className="overflow-auto rounded-md border bg-muted/50 p-3 text-xs">
+            <pre className="overflow-auto rounded-xl border border-border/60 bg-muted/40 p-3 text-xs">
               {JSON.stringify(runtimeQuery.data, null, 2)}
             </pre>
           </CardContent>

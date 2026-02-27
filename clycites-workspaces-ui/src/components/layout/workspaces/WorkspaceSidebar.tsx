@@ -4,7 +4,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { Home, Search } from "lucide-react";
 import { usePathname } from "next/navigation";
-import type { ComponentType } from "react";
+import { createElement, type ComponentType } from "react";
 import { cn } from "@/lib/utils";
 import type { WorkspaceId } from "@/lib/store/types";
 import { getWorkspaceItems, getWorkspaceLabel } from "@/lib/nav/workspace-nav";
@@ -77,7 +77,7 @@ function SidebarBody({
   onNavigate?: () => void;
 }) {
   const items = getWorkspaceItems(workspaceId);
-  const WorkspaceIcon = getWorkspaceIcon(workspaceId);
+  const workspaceIcon = getWorkspaceIcon(workspaceId);
 
   return (
     <TooltipProvider delayDuration={120}>
@@ -85,7 +85,7 @@ function SidebarBody({
         <div className={cn("rounded-2xl border border-border/65 bg-card/76 py-3", collapsed ? "px-2" : "px-3")}>
           <div className={cn("flex items-center gap-2", collapsed && "justify-center")}>
             <span className="rounded-lg bg-primary/14 p-2 text-primary">
-              <WorkspaceIcon className="h-4 w-4" />
+              {createElement(workspaceIcon, { className: "h-4 w-4" })}
             </span>
             {!collapsed && (
               <div className="min-w-0">

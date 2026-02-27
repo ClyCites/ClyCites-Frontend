@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { createElement, useMemo } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Check, ChevronDown } from "lucide-react";
 import {
@@ -29,7 +29,7 @@ export function WorkspaceSwitcher({ workspaceId }: WorkspaceSwitcherProps) {
     return getWorkspaceDefinition(activeWorkspace ?? workspaceId);
   }, [activeWorkspace, workspaceId]);
 
-  const CurrentIcon = getWorkspaceIcon(currentWorkspace?.id ?? workspaceId);
+  const currentIcon = getWorkspaceIcon(currentWorkspace?.id ?? workspaceId);
 
   const switchToWorkspace = async (nextWorkspaceId: WorkspaceId) => {
     await switchWorkspace(nextWorkspaceId);
@@ -46,7 +46,7 @@ export function WorkspaceSwitcher({ workspaceId }: WorkspaceSwitcherProps) {
           className="h-10 min-w-[220px] justify-between rounded-full border-border/70 bg-background/78 px-3 shadow-sm sm:min-w-[250px]"
         >
           <span className="inline-flex min-w-0 items-center gap-2">
-            <CurrentIcon className="h-4 w-4 text-primary" />
+            {createElement(currentIcon, { className: "h-4 w-4 text-primary" })}
             <span className="truncate">{currentWorkspace?.label ?? "Switch Workspace"}</span>
           </span>
           <ChevronDown className="ml-2 h-4 w-4 text-muted-foreground" />
@@ -57,7 +57,7 @@ export function WorkspaceSwitcher({ workspaceId }: WorkspaceSwitcherProps) {
         <DropdownMenuLabel className="px-2 pb-1">Switch Workspace</DropdownMenuLabel>
 
         {WORKSPACES.filter((workspace) => availableWorkspaces.includes(workspace.id)).map((workspace) => {
-          const Icon = getWorkspaceIcon(workspace.id);
+          const icon = getWorkspaceIcon(workspace.id);
           const selected = workspace.id === currentWorkspace?.id;
 
           return (
@@ -68,7 +68,7 @@ export function WorkspaceSwitcher({ workspaceId }: WorkspaceSwitcherProps) {
             >
               <span className="inline-flex min-w-0 flex-1 items-start gap-2.5">
                 <span className="mt-0.5 rounded-md bg-primary/12 p-1.5 text-primary">
-                  <Icon className="h-4 w-4" />
+                  {createElement(icon, { className: "h-4 w-4" })}
                 </span>
                 <span className="min-w-0">
                   <span className="block truncate text-sm font-medium">{workspace.label}</span>

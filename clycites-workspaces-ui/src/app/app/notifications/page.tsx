@@ -3,11 +3,14 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Bell } from "lucide-react";
 import { notificationsService } from "@/lib/api/mock";
 import { useMockSession } from "@/lib/auth/mock-session";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { PageHeader } from "@/components/common/PageHeader";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { EmptyState } from "@/components/common/EmptyState";
 
 export default function NotificationsPage() {
   const { session } = useMockSession();
@@ -30,52 +33,67 @@ export default function NotificationsPage() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["notifications"] }),
   });
 
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Notifications Center</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        {(query.data?.items ?? []).map((notification) => (
-          <div key={notification.id} className="rounded-lg border p-3">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <div className="flex items-center gap-2">
-                  <p className="font-medium">{notification.title}</p>
-                  {!notification.read && <Badge>New</Badge>}
-                </div>
-                <p className="text-sm text-muted-foreground">{notification.message}</p>
-                <p className="mt-1 text-xs text-muted-foreground">{new Date(notification.createdAt).toLocaleString()}</p>
-                {notification.link && (
-                  <Link href={notification.link} className="text-xs text-primary hover:underline">
-                    Open linked entity
-                  </Link>
-                )}
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => toggleMutation.mutate({ id: notification.id, read: notification.read })}
-              >
-                Mark {notification.read ? "unread" : "read"}
-              </Button>
-            </div>
-          </div>
-        ))}
+  const notifications = query.data?.items ?? [];
 
-        <div className="flex items-center justify-end gap-2">
-          <Button variant="outline" disabled={page <= 1} onClick={() => setPage((current) => current - 1)}>
-            Prev
-          </Button>
-          <Button
-            variant="outline"
-            disabled={(query.data?.pagination.total ?? 0) <= page * 20}
-            onClick={() => setPage((current) => current + 1)}
-          >
-            Next
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
+  return (
+    <div className="space-y-4">
+      <PageHeader
+        title="Notifications Center"
+        subtitle="Track advisory updates, workflow actions, and escalations across workspaces."
+        breadcrumbs={[{ label: "App", href: "/app" }, { label: "Notifications" }]}
+      />
+
+      <Card>
+        <CardContent className="space-y-3 pt-6">
+          {notifications.length === 0 ? (
+            <EmptyState title="No notifications" description="Everything is clear for now." />
+          ) : (
+            notifications.map((notification) => (
+              <div key={notification.id} className="rounded-xl border border-border/60 bg-background/60 p-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <p className="font-medium">{notification.title}</p>
+                      {!notification.read && (
+                        <Badge>
+                          <Bell className="h-3 w-3" /> New
+                        </Badge>
+                      )}
+                    </div>
+                    <p className="text-sm text-muted-foreground">{notification.message}</p>
+                    <p className="mt-1 text-xs text-muted-foreground">{new Date(notification.createdAt).toLocaleString()}</p>
+                    {notification.link && (
+                      <Link href={notification.link} className="text-xs text-primary hover:underline">
+                        Open linked entity
+                      </Link>
+                    )}
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => toggleMutation.mutate({ id: notification.id, read: notification.read })}
+                  >
+                    Mark {notification.read ? "unread" : "read"}
+                  </Button>
+                </div>
+              </div>
+            ))
+          )}
+
+          <div className="flex items-center justify-end gap-2 pt-1">
+            <Button variant="outline" disabled={page <= 1} onClick={() => setPage((current) => current - 1)}>
+              Prev
+            </Button>
+            <Button
+              variant="outline"
+              disabled={(query.data?.pagination.total ?? 0) <= page * 20}
+              onClick={() => setPage((current) => current + 1)}
+            >
+              Next
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 }

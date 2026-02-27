@@ -4,8 +4,8 @@ import { Button } from "@/components/ui/button";
 
 export function AccessDenied() {
   return (
-    <div className="mx-auto flex max-w-xl flex-col items-center rounded-2xl border bg-card p-10 text-center">
-      <div className="mb-4 rounded-full bg-destructive/10 p-3 text-destructive">
+    <div className="mx-auto flex max-w-xl flex-col items-center rounded-[var(--radius-xl)] border border-border/65 bg-card/88 p-10 text-center shadow-sm">
+      <div className="mb-4 rounded-2xl bg-destructive/12 p-3 text-destructive">
         <ShieldAlert className="h-6 w-6" />
       </div>
       <h1 className="text-2xl font-semibold">Access denied</h1>

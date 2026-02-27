@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { usePathname } from "next/navigation";
 import { WorkspaceSidebar } from "@/components/layout/workspaces/WorkspaceSidebar";
@@ -38,16 +38,11 @@ export function WorkspaceShell({ children }: { children: React.ReactNode }) {
   const { activeWorkspace } = useMockSession();
   const reducedMotion = useReducedMotion();
 
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return window.localStorage.getItem(SIDEBAR_STORAGE_KEY) === "true";
+  });
   const [mobileOpen, setMobileOpen] = useState(false);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const stored = window.localStorage.getItem(SIDEBAR_STORAGE_KEY);
-    if (stored === "true") {
-      setCollapsed(true);
-    }
-  }, []);
 
   const workspace = useMemo(() => {
     return resolveWorkspaceFromPath(pathname) ?? activeWorkspace ?? "farmer";

@@ -54,6 +54,7 @@ interface EntityManagerProps {
 
 type FormValues = Record<string, string | number | boolean>;
 type EntityListCache = ListResult<EntityRecord>;
+const MotionTableRow = motion(TableRow);
 
 function getPathValue(source: Record<string, unknown>, path: string): unknown {
   return path.split(".").reduce<unknown>((current, key) => {
@@ -602,109 +603,116 @@ export function EntityManager({ workspaceId, entityKey }: EntityManagerProps) {
               </Button>
             </div>
           </CardHeader>
-        <CardContent>
-          {items.length === 0 ? (
-            <EmptyState
-              title={`No ${definition.pluralLabel.toLowerCase()} yet`}
-              description="Create your first record or relax filters to see data."
-              actionLabel={canWrite ? `Create ${definition.label}` : undefined}
-              onAction={canWrite ? openCreate : undefined}
-            />
-          ) : (
-            <>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Title</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Tags</TableHead>
-                    <TableHead>Updated</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {items.map((record) => (
-                    <TableRow key={record.id}>
-                      <TableCell>
-                        <div className="font-medium">{record.title}</div>
-                        <div className="text-xs text-muted-foreground">{record.subtitle || record.id}</div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline">{record.status}</Badge>
-                      </TableCell>
-                      <TableCell className="max-w-[240px] truncate text-xs text-muted-foreground">
-                        {record.tags.join(", ")}
-                      </TableCell>
-                      <TableCell className="text-xs text-muted-foreground">
-                        {new Date(record.updatedAt).toLocaleString()}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="inline-flex items-center gap-1">
-                          <Button size="icon" variant="ghost" onClick={() => setSelected(record)}>
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          {canWrite && (
-                            <Button size="icon" variant="ghost" onClick={() => openEdit(record)}>
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                          )}
-                          {canDelete && (
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              className="text-destructive"
-                              onClick={() => {
-                                setSelected(record);
-                                setDeleteOpen(true);
-                              }}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          )}
-                        </div>
-                      </TableCell>
+          <CardContent>
+            {items.length === 0 ? (
+              <EmptyState
+                title={`No ${definition.pluralLabel.toLowerCase()} yet`}
+                description="Create your first record or relax filters to see data."
+                actionLabel={canWrite ? `Create ${definition.label}` : undefined}
+                onAction={canWrite ? openCreate : undefined}
+              />
+            ) : (
+              <>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Title</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Tags</TableHead>
+                      <TableHead>Updated</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {items.map((record) => (
+                      <MotionTableRow
+                        key={record.id}
+                        layout
+                        variants={scaleIn(Boolean(reducedMotion))}
+                        initial="hidden"
+                        animate="show"
+                      >
+                        <TableCell>
+                          <div className="font-medium">{record.title}</div>
+                          <div className="text-xs text-muted-foreground">{record.subtitle || record.id}</div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline">{record.status}</Badge>
+                        </TableCell>
+                        <TableCell className="max-w-[240px] truncate text-xs text-muted-foreground">
+                          {record.tags.join(", ")}
+                        </TableCell>
+                        <TableCell className="text-xs text-muted-foreground">
+                          {new Date(record.updatedAt).toLocaleString()}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="inline-flex items-center gap-1">
+                            <Button size="icon" variant="ghost" onClick={() => setSelected(record)}>
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            {canWrite && (
+                              <Button size="icon" variant="ghost" onClick={() => openEdit(record)}>
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                            )}
+                            {canDelete && (
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                className="text-destructive"
+                                onClick={() => {
+                                  setSelected(record);
+                                  setDeleteOpen(true);
+                                }}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            )}
+                          </div>
+                        </TableCell>
+                      </MotionTableRow>
+                    ))}
+                  </TableBody>
+                </Table>
 
-              <div className="mt-4 flex items-center justify-between">
-                <div className="text-sm text-muted-foreground">
-                  Page {data?.pagination.page ?? 1} of {Math.max(1, Math.ceil((data?.pagination.total ?? 0) / pageSize))}
+                <div className="mt-4 flex items-center justify-between">
+                  <div className="text-sm text-muted-foreground">
+                    Page {data?.pagination.page ?? 1} of {Math.max(1, Math.ceil((data?.pagination.total ?? 0) / pageSize))}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Select value={String(pageSize)} onValueChange={(value) => setPageSize(Number(value))}>
+                      <SelectTrigger className="w-[110px]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {[10, 20, 50].map((size) => (
+                          <SelectItem key={size} value={String(size)}>
+                            {size} / page
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Button
+                      variant="outline"
+                      disabled={page <= 1}
+                      onClick={() => setPage((current) => Math.max(1, current - 1))}
+                    >
+                      Prev
+                    </Button>
+                    <Button
+                      variant="outline"
+                      disabled={(data?.pagination.total ?? 0) <= page * pageSize}
+                      onClick={() => setPage((current) => current + 1)}
+                    >
+                      Next
+                    </Button>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Select value={String(pageSize)} onValueChange={(value) => setPageSize(Number(value))}>
-                    <SelectTrigger className="w-[110px]">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {[10, 20, 50].map((size) => (
-                        <SelectItem key={size} value={String(size)}>
-                          {size} / page
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Button
-                    variant="outline"
-                    disabled={page <= 1}
-                    onClick={() => setPage((current) => Math.max(1, current - 1))}
-                  >
-                    Prev
-                  </Button>
-                  <Button
-                    variant="outline"
-                    disabled={(data?.pagination.total ?? 0) <= page * pageSize}
-                    onClick={() => setPage((current) => current + 1)}
-                  >
-                    Next
-                  </Button>
-                </div>
-              </div>
-            </>
-          )}
-        </CardContent>
-      </Card>
+              </>
+            )}
+          </CardContent>
+        </Card>
+      </motion.div>
 
       <Dialog open={formOpen} onOpenChange={setFormOpen}>
         <DialogContent className="max-w-2xl">

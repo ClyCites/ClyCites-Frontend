@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo } from "react";
+import { createElement, useMemo } from "react";
 import { useQueries } from "@tanstack/react-query";
 import { motion, useReducedMotion } from "framer-motion";
 import { ArrowRight, TrendingDown, TrendingUp } from "lucide-react";
@@ -132,7 +132,7 @@ export function WorkspaceHome({ workspaceId }: WorkspaceHomeProps) {
 
       <motion.section variants={staggerContainer(Boolean(reducedMotion), 0.04)} className="grid grid-cols-12 gap-4">
         {summary.map((item) => {
-          const Icon = getEntityIcon(item.entityKey);
+          const icon = getEntityIcon(item.entityKey);
           const TrendIcon = item.trendValue >= 0 ? TrendingUp : TrendingDown;
 
           return (
@@ -145,7 +145,7 @@ export function WorkspaceHome({ workspaceId }: WorkspaceHomeProps) {
                       <CardDescription>{item.loading ? "Loading metrics..." : `${item.total} records`}</CardDescription>
                     </div>
                     <span className="rounded-lg bg-primary/12 p-2 text-primary">
-                      <Icon className="h-4 w-4" />
+                      {createElement(icon, { className: "h-4 w-4" })}
                     </span>
                   </div>
                 </CardHeader>

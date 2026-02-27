@@ -174,7 +174,8 @@ function paletteToVars(palette: ThemePalette): Record<string, string> {
     "--muted-text": palette.semantic.mutedText,
   };
 
-  (Object.keys(palette.neutral) as Array<keyof ThemePalette["neutral"]>).forEach((key) => {
+  const neutralScale: Scale[] = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950];
+  neutralScale.forEach((key) => {
     entries[`--neutral-${key}`] = palette.neutral[key];
   });
 

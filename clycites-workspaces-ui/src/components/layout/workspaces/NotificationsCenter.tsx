@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { Bell } from "lucide-react";
 import { notificationsService } from "@/lib/api/mock";
 import { useMockSession } from "@/lib/auth/mock-session";
@@ -21,6 +21,7 @@ import { EmptyState } from "@/components/common/EmptyState";
 export function NotificationsCenter() {
   const { session } = useMockSession();
   const queryClient = useQueryClient();
+  const reducedMotion = useReducedMotion();
 
   const query = useQuery({
     queryKey: ["notifications", session?.activeWorkspace],
@@ -65,8 +66,8 @@ export function NotificationsCenter() {
             <>
               <motion.span
                 className="absolute -right-0.5 -top-0.5 inline-flex h-4 w-4 rounded-full bg-destructive/28"
-                animate={{ scale: [1, 1.35, 1], opacity: [0.9, 0.4, 0.9] }}
-                transition={{ duration: 1.6, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut" }}
+                animate={reducedMotion ? undefined : { scale: [1, 1.35, 1], opacity: [0.9, 0.4, 0.9] }}
+                transition={reducedMotion ? undefined : { duration: 1.6, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut" }}
               />
               <Badge
                 className="absolute -right-1 -top-1 h-5 min-w-5 justify-center rounded-full px-1 text-[10px]"
