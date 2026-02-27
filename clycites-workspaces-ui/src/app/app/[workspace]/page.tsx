@@ -4,13 +4,14 @@ import { getWorkspaceDefinition } from "@/lib/store/catalog";
 import type { WorkspaceId } from "@/lib/store/types";
 
 interface WorkspacePageProps {
-  params: {
+  params: Promise<{
     workspace: string;
-  };
+  }>;
 }
 
-export default function WorkspacePage({ params }: WorkspacePageProps) {
-  const workspaceId = params.workspace as WorkspaceId;
+export default async function WorkspacePage({ params }: WorkspacePageProps) {
+  const { workspace: workspaceParam } = await params;
+  const workspaceId = workspaceParam as WorkspaceId;
   const workspace = getWorkspaceDefinition(workspaceId);
 
   if (!workspace) {

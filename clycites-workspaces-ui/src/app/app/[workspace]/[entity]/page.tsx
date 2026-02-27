@@ -4,15 +4,16 @@ import { belongsToWorkspace, getEntityDefinition, getWorkspaceDefinition } from 
 import type { EntityKey, WorkspaceId } from "@/lib/store/types";
 
 interface EntityPageProps {
-  params: {
+  params: Promise<{
     workspace: string;
     entity: string;
-  };
+  }>;
 }
 
-export default function WorkspaceEntityPage({ params }: EntityPageProps) {
-  const workspaceId = params.workspace as WorkspaceId;
-  const entityKey = params.entity as EntityKey;
+export default async function WorkspaceEntityPage({ params }: EntityPageProps) {
+  const { workspace: workspaceParam, entity: entityParam } = await params;
+  const workspaceId = workspaceParam as WorkspaceId;
+  const entityKey = entityParam as EntityKey;
 
   const workspace = getWorkspaceDefinition(workspaceId);
   const entity = getEntityDefinition(entityKey);
