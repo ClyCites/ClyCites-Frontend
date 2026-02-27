@@ -28,6 +28,13 @@ interface StatusRequestConfig {
   body?: unknown;
 }
 
+interface ActionRequestConfig {
+  path: string;
+  method: RequestMethod;
+  body?: unknown;
+  message?: string;
+}
+
 interface EntityApiConfig {
   listPath?: string;
   listMode?: "collection" | "single";
@@ -45,6 +52,7 @@ interface EntityApiConfig {
   mapCreateBody?: (payload: CreatePayload) => unknown;
   mapUpdateBody?: (id: string, payload: UpdatePayload) => unknown;
   statusRequest?: (id: string, status: string, note?: string) => StatusRequestConfig | null;
+  actionRequest?: (actionId: string, actorId: string, targetId?: string) => ActionRequestConfig | null;
 }
 
 const WORKSPACE_BY_ENTITY = Object.entries(WORKSPACE_ENTITY_MAP).reduce(
@@ -207,7 +215,17 @@ function extractSingle(payload: unknown): Record<string, unknown> {
 function mapRemoteRecord(entityKey: EntityKey, row: unknown, index = 0): EntityRecord {
   const record = asRecord(row) ?? {};
   const fallbackId = `${entityKey}-remote-${index + 1}`;
-  const id = String(record.id ?? record._id ?? record.uuid ?? record.userId ?? record.memberId ?? fallbackId);
+  const id = String(
+    record.id ??
+      record._id ??
+      record.uuid ??
+      record.userId ??
+      record.memberId ??
+      record.offerId ??
+      record.conversationId ??
+      record.ratingId ??
+      fallbackId
+  );
   const title = normalizeTitle(entityKey, record, id);
   const subtitle = normalizeSubtitle(record);
   const rawStatus =
@@ -218,7 +236,9 @@ function mapRemoteRecord(entityKey: EntityKey, row: unknown, index = 0): EntityR
     (typeof record.caseStatus === "string" ? record.caseStatus : undefined) ||
     (typeof record.stationStatus === "string" ? record.stationStatus : undefined) ||
     (typeof record.alertStatus === "string" ? record.alertStatus : undefined) ||
-    (typeof record.reviewStatus === "string" ? record.reviewStatus : undefined);
+    (typeof record.reviewStatus === "string" ? record.reviewStatus : undefined) ||
+    (typeof record.offerStatus === "string" ? record.offerStatus : undefined) ||
+    (typeof record.deliveryStatus === "string" ? record.deliveryStatus : undefined);
 
   let status = rawStatus ?? ENTITY_DEFINITIONS[entityKey].defaultStatus;
   if (entityKey === "users") {
@@ -260,6 +280,24 @@ function mapRemoteRecord(entityKey: EntityKey, row: unknown, index = 0): EntityR
   }
   if (entityKey === "stations" && typeof record.stationStatus === "string") {
     status = record.stationStatus;
+  }
+  if (entityKey === "negotiations" && !rawStatus) {
+    if (record.archived === true) {
+      status = "closed";
+    } else if (record.agreed === true) {
+      status = "agreed";
+    } else {
+      status = "open";
+    }
+  }
+  if (entityKey === "rfqs" && !rawStatus) {
+    if (record.withdrawnAt || record.closedAt) {
+      status = "closed";
+    } else if (record.acceptedAt) {
+      status = "shortlisted";
+    } else {
+      status = "open";
+    }
   }
 
   const tags = toStringArray(record.tags);
@@ -506,6 +544,47 @@ let weatherProfileCache:
     }
   | null = null;
 
+let farmerProfileCache:
+  | {
+      id: string;
+      expiresAt: number;
+    }
+  | null = null;
+
+let userIdCache:
+  | {
+      id: string;
+      expiresAt: number;
+    }
+  | null = null;
+
+async function getCurrentUserId(): Promise<string> {
+  if (userIdCache && Date.now() < userIdCache.expiresAt) {
+    return userIdCache.id;
+  }
+
+  const mePayload = await apiRequest<unknown>("/api/v1/auth/me", { method: "GET" }, { auth: true });
+  const me = unwrapApiData<unknown>(mePayload);
+  const meRecord = asRecord(me) ?? {};
+  const nestedUser = asRecord(meRecord.user);
+
+  const userId =
+    (typeof nestedUser?.id === "string" && nestedUser.id) ||
+    (typeof meRecord.id === "string" && meRecord.id) ||
+    (typeof meRecord.userId === "string" && meRecord.userId) ||
+    "";
+
+  if (!userId) {
+    throw new Error("Unable to resolve user context for this session.");
+  }
+
+  userIdCache = {
+    id: userId,
+    expiresAt: Date.now() + 60_000,
+  };
+  return userId;
+}
+
 async function getPrimaryOrganizationId(): Promise<string> {
   if (primaryOrgCache && Date.now() < primaryOrgCache.expiresAt) {
     return primaryOrgCache.id;
@@ -587,6 +666,46 @@ async function getPrimaryWeatherProfileId(): Promise<string> {
   throw new Error("Unable to resolve weather profile context for this session.");
 }
 
+async function getPrimaryFarmerId(): Promise<string> {
+  if (farmerProfileCache && Date.now() < farmerProfileCache.expiresAt) {
+    return farmerProfileCache.id;
+  }
+
+  try {
+    const mePayload = await apiRequest<unknown>("/api/v1/farmers/profiles/me", { method: "GET" }, { auth: true });
+    const profile = extractSingle(mePayload);
+    const farmerId = profile.id ?? profile._id ?? profile.farmerId;
+    if (typeof farmerId === "string" && farmerId.length > 0) {
+      farmerProfileCache = {
+        id: farmerId,
+        expiresAt: Date.now() + 60_000,
+      };
+      return farmerId;
+    }
+  } catch {
+    // ignore and fallback to first profile
+  }
+
+  const listPayload = await apiRequest<unknown>("/api/v1/farmers/profiles?page=1&limit=1", { method: "GET" }, { auth: true });
+  const rows = extractCollection(listPayload);
+  const first = asRecord(rows[0]);
+  const farmerId = first?.id ?? first?._id ?? first?.farmerId;
+  if (typeof farmerId === "string" && farmerId.length > 0) {
+    farmerProfileCache = {
+      id: farmerId,
+      expiresAt: Date.now() + 60_000,
+    };
+    return farmerId;
+  }
+
+  const fallbackUserId = await getCurrentUserId();
+  farmerProfileCache = {
+    id: fallbackUserId,
+    expiresAt: Date.now() + 60_000,
+  };
+  return fallbackUserId;
+}
+
 async function resolvePath(path: string): Promise<string> {
   let resolved = path;
 
@@ -598,6 +717,16 @@ async function resolvePath(path: string): Promise<string> {
   if (resolved.includes("{weatherProfileId}")) {
     const profileId = await getPrimaryWeatherProfileId();
     resolved = resolved.replaceAll("{weatherProfileId}", encodeURIComponent(profileId));
+  }
+
+  if (resolved.includes("{farmerId}")) {
+    const farmerId = await getPrimaryFarmerId();
+    resolved = resolved.replaceAll("{farmerId}", encodeURIComponent(farmerId));
+  }
+
+  if (resolved.includes("{userId}")) {
+    const userId = await getCurrentUserId();
+    resolved = resolved.replaceAll("{userId}", encodeURIComponent(userId));
   }
 
   return resolved;
@@ -637,6 +766,48 @@ const ENTITY_API_CONFIG: Partial<Record<EntityKey, EntityApiConfig>> = {
       cropTypes: toStringArray(payload.data?.cropTypes),
     }),
   },
+  farms: {
+    listPath: "/api/v1/farmers/{farmerId}/farms",
+    createPath: "/api/v1/farmers/{farmerId}/farms",
+    updatePath: (id) => `/api/v1/farmers/farms/${encodeURIComponent(id)}`,
+    listQuery: (params) => ({
+      page: params.pagination.page,
+      limit: params.pagination.pageSize,
+      search: params.filters?.text,
+    }),
+    mapCreateBody: (payload) => ({
+      name: payload.title,
+      location: {
+        region: String(payload.data.region ?? payload.data.location ?? "Central"),
+        district: String(payload.data.district ?? "Unknown"),
+        village: String(payload.data.village ?? ""),
+      },
+      sizeInHectares: Number(payload.data.sizeInHectares ?? payload.data.areaAcres ?? 1),
+      farmType: String(payload.data.farmType ?? "mixed"),
+    }),
+    mapUpdateBody: (_id, payload) => ({
+      name: payload.title,
+      sizeInHectares: Number(payload.data?.sizeInHectares ?? payload.data?.areaAcres ?? 1),
+      farmType: typeof payload.data?.farmType === "string" ? payload.data.farmType : undefined,
+    }),
+  },
+  crops: {
+    listPath: "/api/v1/farmers/{farmerId}/production",
+    createPath: "/api/v1/farmers/{farmerId}/production/crops",
+    listQuery: (params) => ({
+      type: "crop",
+      page: params.pagination.page,
+      limit: params.pagination.pageSize,
+    }),
+    mapCreateBody: (payload) => ({
+      cropType: String(payload.data.cropType ?? payload.title),
+      season: String(payload.data.season ?? payload.data.stage ?? "current"),
+      quantityHarvested: Number(payload.data.quantityHarvested ?? payload.data.expectedYield ?? 1),
+      unit: String(payload.data.unit ?? "kg"),
+      farmId: typeof payload.data.farmId === "string" ? payload.data.farmId : undefined,
+      notes: payload.subtitle,
+    }),
+  },
   listings: {
     listPath: "/api/v1/listings",
     getPath: (id) => `/api/v1/listings/${encodeURIComponent(id)}`,
@@ -668,6 +839,109 @@ const ENTITY_API_CONFIG: Partial<Record<EntityKey, EntityApiConfig>> = {
         district: String(payload.data?.district ?? "Unknown"),
       },
       status: payload.data?.status,
+    }),
+  },
+  rfqs: {
+    listPath: "/api/v1/offers",
+    getPath: (id) => `/api/v1/offers/${encodeURIComponent(id)}`,
+    createPath: "/api/v1/offers",
+    listQuery: (params) => ({
+      status: params.filters?.status?.[0],
+      listingId: params.filters?.text,
+      direction: "received",
+    }),
+    mapCreateBody: (payload) => ({
+      listingId: String(payload.data.listingId ?? toMongoLikeId(payload.title, payload.title)),
+      offerPrice: Number(payload.data.targetPrice ?? payload.data.price ?? 0),
+      quantity: Number(payload.data.quantity ?? 1),
+      message: payload.subtitle,
+      expiresInHours: Number(payload.data.expiresInHours ?? 48),
+      deliveryOption: typeof payload.data.deliveryOption === "string" ? payload.data.deliveryOption : undefined,
+      deliveryAddress: typeof payload.data.deliveryAddress === "string" ? payload.data.deliveryAddress : undefined,
+    }),
+    statusRequest: (id, status, note) => {
+      if (status === "shortlisted") {
+        return {
+          path: `/api/v1/offers/${encodeURIComponent(id)}/accept`,
+          method: "POST",
+          body: {
+            message: note,
+          },
+        };
+      }
+      if (status === "closed") {
+        return {
+          path: `/api/v1/offers/${encodeURIComponent(id)}/withdraw`,
+          method: "POST",
+          body: {
+            reason: note ?? "Closed from workspace workflow",
+          },
+        };
+      }
+      return null;
+    },
+  },
+  negotiations: {
+    listPath: "/api/v1/messaging/conversations",
+    getPath: (id) => `/api/v1/messaging/conversations/${encodeURIComponent(id)}`,
+    createPath: "/api/v1/messaging/conversations",
+    listQuery: (params) => ({
+      archived: params.filters?.status?.includes("closed") ? true : undefined,
+      type: params.filters?.tags?.[0],
+    }),
+    mapCreateBody: (payload) => {
+      const participants = [...new Set([
+        payload.actorId,
+        ...toStringArray(payload.data.participants),
+        ...(typeof payload.data.counterpartyId === "string" ? [payload.data.counterpartyId] : []),
+        ...(typeof payload.data.buyerId === "string" ? [payload.data.buyerId] : []),
+        ...(typeof payload.data.sellerId === "string" ? [payload.data.sellerId] : []),
+      ])].filter((value) => typeof value === "string" && value.trim().length > 0);
+
+      return {
+        participants,
+        type: String(payload.data.type ?? "offer"),
+        title: payload.title,
+        orderId: typeof payload.data.orderId === "string" ? payload.data.orderId : undefined,
+      };
+    },
+    statusRequest: (id, status) => {
+      if (status === "closed") {
+        return {
+          path: `/api/v1/messaging/conversations/${encodeURIComponent(id)}/archive`,
+          method: "PATCH",
+        };
+      }
+      return null;
+    },
+    actionRequest: (actionId, _actorId, targetId) => {
+      if (actionId !== "send-message" || !targetId) return null;
+      return {
+        path: `/api/v1/messaging/conversations/${encodeURIComponent(targetId)}/messages`,
+        method: "POST",
+        body: {
+          content: "Message sent from ClyCites negotiation action.",
+          contentType: "text",
+        },
+        message: "Negotiation message sent.",
+      };
+    },
+  },
+  reviews: {
+    listPath: "/api/v1/reputation/users/{userId}/ratings",
+    createPath: "/api/v1/reputation/ratings",
+    listQuery: (params) => ({
+      page: params.pagination.page,
+      limit: params.pagination.pageSize,
+      search: params.filters?.text,
+    }),
+    mapCreateBody: (payload) => ({
+      orderId: String(payload.data.orderId ?? toMongoLikeId(payload.title, payload.title)),
+      ratedUserId: String(payload.data.ratedUserId ?? payload.data.sellerId ?? payload.data.buyerId ?? payload.actorId),
+      score: Math.max(1, Math.min(5, Number(payload.data.rating ?? 5))),
+      category: String(payload.data.category ?? "transaction"),
+      comment: String(payload.data.reviewText ?? payload.subtitle ?? ""),
+      aspects: asRecord(payload.data.aspects) ?? undefined,
     }),
   },
   orders: {
@@ -709,6 +983,38 @@ const ENTITY_API_CONFIG: Partial<Record<EntityKey, EntityApiConfig>> = {
       body: {
         status: mapShipmentStatus(status),
         note,
+      },
+    }),
+  },
+  warehouses: {
+    listPath: "/api/v1/logistics/collection-points",
+    getPath: (id) => `/api/v1/logistics/collection-points/${encodeURIComponent(id)}`,
+    createPath: "/api/v1/logistics/collection-points",
+    updatePath: (id) => `/api/v1/logistics/collection-points/${encodeURIComponent(id)}`,
+    updateMethod: "PATCH",
+    deletePath: (id) => `/api/v1/logistics/collection-points/${encodeURIComponent(id)}`,
+    listQuery: (params) => ({
+      page: params.pagination.page,
+      limit: params.pagination.pageSize,
+      search: params.filters?.text,
+    }),
+    mapCreateBody: (payload) => ({
+      name: payload.title,
+      type: String(payload.data.type ?? "warehouse"),
+      organizationId: payload.data.organizationId,
+      address: {
+        region: String(payload.data.region ?? payload.data.location ?? "Central"),
+        district: String(payload.data.district ?? "Unknown"),
+        village: String(payload.data.village ?? ""),
+      },
+    }),
+    mapUpdateBody: (_id, payload) => ({
+      name: payload.title,
+      type: typeof payload.data?.type === "string" ? payload.data.type : undefined,
+      address: {
+        region: String(payload.data?.region ?? payload.data?.location ?? "Central"),
+        district: String(payload.data?.district ?? "Unknown"),
+        village: String(payload.data?.village ?? ""),
       },
     }),
   },
@@ -1160,6 +1466,17 @@ const ENTITY_API_CONFIG: Partial<Record<EntityKey, EntityApiConfig>> = {
       return null;
     },
   },
+  priceEstimations: {
+    createPath: "/api/v1/pricing/predict",
+    mapCreateBody: (payload) => ({
+      productId: String(payload.data.commodityId ?? payload.data.productId ?? payload.title),
+      marketId: String(payload.data.marketId ?? toMongoLikeId(payload.data.market ?? payload.title, payload.title)),
+      daysAhead: Number(payload.data.horizonDays ?? 7),
+      features: asRecord(payload.data.features) ?? {
+        assumptions: payload.data.assumptions,
+      },
+    }),
+  },
   pricePredictions: {
     createPath: "/api/v1/prices/predict",
     mapCreateBody: (payload) => ({
@@ -1390,6 +1707,62 @@ const ENTITY_API_CONFIG: Partial<Record<EntityKey, EntityApiConfig>> = {
   datasets: {
     listPath: "/api/v1/analytics/datasets",
   },
+  templates: {
+    listPath: "/api/v1/analytics/dashboards/templates",
+    listQuery: (params) => ({
+      page: undefined,
+      limit: undefined,
+      search: undefined,
+      status: undefined,
+      category: params.filters?.text ?? params.filters?.tags?.[0],
+    }),
+  },
+  roles: {
+    listPath: "/api/v1/auth/me",
+    listMode: "collection",
+    listQuery: () => ({
+      page: undefined,
+      limit: undefined,
+      search: undefined,
+      status: undefined,
+    }),
+    mapListRows: (payload) => {
+      const me = unwrapApiData<unknown>(payload);
+      const record = asRecord(me) ?? {};
+      const user = asRecord(record.user) ?? record;
+      const roles = toStringArray(user.roles);
+      return roles.map((role) => ({
+        id: role,
+        name: role,
+        code: role,
+        description: `Role assigned to current user: ${role}`,
+        status: "active",
+      }));
+    },
+  },
+  permissions: {
+    listPath: "/api/v1/auth/me",
+    listMode: "collection",
+    listQuery: () => ({
+      page: undefined,
+      limit: undefined,
+      search: undefined,
+      status: undefined,
+    }),
+    mapListRows: (payload) => {
+      const me = unwrapApiData<unknown>(payload);
+      const record = asRecord(me) ?? {};
+      const user = asRecord(record.user) ?? record;
+      const permissions = toStringArray(user.permissions);
+      return permissions.map((permission) => ({
+        id: permission,
+        code: permission,
+        name: permission,
+        description: `Permission available to current user: ${permission}`,
+        status: "active",
+      }));
+    },
+  },
 };
 
 function buildListQuery(config: EntityApiConfig, params: ListParams): Record<string, unknown> {
@@ -1573,6 +1946,31 @@ async function changeStatusRemote(
   };
 }
 
+async function runActionRemote(
+  config: EntityApiConfig,
+  actionId: string,
+  actorId: string,
+  targetId?: string
+): Promise<{ message: string }> {
+  const request = config.actionRequest?.(actionId, actorId, targetId);
+  if (!request) {
+    throw new Error("Action endpoint not configured");
+  }
+
+  await apiRequest<unknown>(
+    await resolvePath(request.path),
+    {
+      method: request.method,
+      body: request.body ? JSON.stringify(request.body) : undefined,
+    },
+    { auth: true }
+  );
+
+  return {
+    message: request.message ?? "Action completed successfully.",
+  };
+}
+
 function createRealEntityService<K extends EntityKey>(entityKey: K): EntityService<K> {
   const mock = mockEntityServices[entityKey] as EntityService<K>;
   const config = ENTITY_API_CONFIG[entityKey];
@@ -1622,7 +2020,13 @@ function createRealEntityService<K extends EntityKey>(entityKey: K): EntityServi
             () => mock.changeStatus(id, actorId, status, note)
           )
         : mock.changeStatus(id, actorId, status, note),
-    runAction: (actionId, actorId, targetId) => mock.runAction(actionId, actorId, targetId),
+    runAction: (actionId, actorId, targetId) =>
+      config.actionRequest
+        ? withFallback(
+            () => runActionRemote(config, actionId, actorId, targetId),
+            () => mock.runAction(actionId, actorId, targetId)
+          )
+        : mock.runAction(actionId, actorId, targetId),
   };
 }
 
