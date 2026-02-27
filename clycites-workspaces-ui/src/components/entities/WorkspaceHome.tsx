@@ -10,6 +10,7 @@ import { entityServices } from "@/lib/api/mock";
 import type { WorkspaceId } from "@/lib/store/types";
 import { useMockSession } from "@/lib/auth/mock-session";
 import { AccessDenied } from "@/components/common/AccessDenied";
+import { WorkspaceInsightsCharts } from "@/components/charts/WorkspaceInsightsCharts";
 import { PageHeader } from "@/components/common/PageHeader";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -82,6 +83,15 @@ export function WorkspaceHome({ workspaceId }: WorkspaceHomeProps) {
 
   const totalRecords = summary.reduce((acc, item) => acc + item.total, 0);
   const mostActive = [...summary].sort((a, b) => b.total - a.total)[0];
+  const chartMetrics = summary.map((item) => ({
+    name: item.definition?.label ?? item.entityKey,
+    total: item.total,
+  }));
+  const chartTrend = ["Jan", "Feb", "Mar", "Apr", "May", "Jun"].map((period, index) => ({
+    period,
+    records: Math.max(4, Math.round(totalRecords * (0.45 + index * 0.1))),
+    alerts: Math.max(1, Math.round((mostActive?.total ?? 1) * (0.2 + index * 0.06))),
+  }));
 
   return (
     <motion.div
@@ -179,6 +189,10 @@ export function WorkspaceHome({ workspaceId }: WorkspaceHomeProps) {
             </motion.div>
           );
         })}
+      </motion.section>
+
+      <motion.section variants={fadeIn(Boolean(reducedMotion))}>
+        <WorkspaceInsightsCharts metrics={chartMetrics} trend={chartTrend} />
       </motion.section>
     </motion.div>
   );

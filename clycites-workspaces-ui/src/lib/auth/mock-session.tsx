@@ -12,7 +12,7 @@ interface SessionContextValue {
   isAuthenticated: boolean;
   availableWorkspaces: WorkspaceId[];
   activeWorkspace: WorkspaceId | null;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<AuthSession>;
   logout: () => Promise<void>;
   refresh: () => Promise<void>;
   switchWorkspace: (workspace: WorkspaceId) => Promise<void>;
@@ -46,6 +46,7 @@ export function MockSessionProvider({ children }: { children: ReactNode }) {
     try {
       const next = await authService.login(email, password);
       setSession(next);
+      return next;
     } finally {
       setIsLoading(false);
     }

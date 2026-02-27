@@ -6,6 +6,8 @@ import {
   getEntityDefinition,
 } from "@/lib/store/catalog";
 import { createSeedState } from "@/lib/store/seed";
+import type { RegisterAccountPayload, RegistrationResult } from "@/lib/auth/types";
+import { initializeSecurityForUser } from "@/lib/store/security";
 import type {
   AuditFilterParams,
   AuditRecord,
@@ -286,6 +288,15 @@ function getOrganization(state: DatabaseState, orgId: string): Organization {
   const organization = state.organizations.find((candidate) => candidate.id === orgId);
   if (!organization) throw new MockApiError("Organization not found", "ORG_NOT_FOUND");
   return organization;
+}
+
+function permissionsFromRoles(state: DatabaseState, roles: RoleId[]): Permission[] {
+  const permissionSet = new Set<Permission>();
+  roles.forEach((roleId) => {
+    const role = state.roles.find((candidate) => candidate.id === roleId);
+    role?.permissions.forEach((permission) => permissionSet.add(permission));
+  });
+  return [...permissionSet];
 }
 
 function findWorkspaceForEntity(entityKey: EntityKey): WorkspaceId {
@@ -834,6 +845,163 @@ export async function globalSearch(query: string) {
     return results.slice(0, 100);
   });
 }
+
+export async function registerAccount(payload: RegisterAccountPayload): Promise<RegistrationResult> {
+  return withSimulation(() =>
+    saveWithMutation((state) => {
+      const email = payload.email.trim().toLowerCase();
+      const existing = state.users.find((candidate) => candidate.email.toLowerCase() === email);
+      if (existing) {
+        throw new MockApiError("Email already registered", "EMAIL_IN_USE");
+      }
+
+      const timestamp = nowIso();
+      const defaultSoleModules: WorkspaceId[] = ["farmer", "weather", "prices", "finance"];
+      const organizationFallbackModules: WorkspaceId[] = [
+        "farmer",
+        "marketplace",
+        "logistics",
+        "finance",
+        "weather",
+        "prices",
+      ];
+      const enabledModules: WorkspaceId[] =
+        payload.accountType === "organization"
+          ? payload.enabledModules.length > 0
+            ? payload.enabledModules
+            : organizationFallbackModules
+          : defaultSoleModules;
+
+      const organization: Organization = {
+        id: randomId("org"),
+        name:
+          payload.accountType === "organization"
+            ? payload.organizationName.trim()
+            : `${payload.fullName.trim()} Farm Operations`,
+        enabledModules,
+      };
+      state.organizations.unshift(organization);
+
+      const roles: RoleId[] = payload.accountType === "organization" ? ["org_admin"] : ["farmer_agent"];
+      const permissions = permissionsFromRoles(state, roles);
+
+      const user: UserAccount = {
+        id: randomId("usr"),
+        name: payload.fullName.trim(),
+        email,
+        password: payload.password,
+        orgId: organization.id,
+        roles,
+        permissions,
+        createdAt: timestamp,
+        updatedAt: timestamp,
+      };
+      state.users.unshift(user);
+
+      state.entities.orgs.unshift({
+        id: organization.id,
+        entity: "orgs",
+        workspace: "admin",
+        title: organization.name,
+        subtitle:
+          payload.accountType === "organization"
+            ? `${payload.organizationType} organization`
+            : "Sole operator account",
+        status: "active",
+        data: {
+          name: organization.name,
+          enabledModules: organization.enabledModules,
+        },
+        tags: ["registration", payload.accountType],
+        createdAt: timestamp,
+        updatedAt: timestamp,
+        createdBy: user.id,
+        updatedBy: user.id,
+      });
+
+      state.entities.users.unshift({
+        id: user.id,
+        entity: "users",
+        workspace: "admin",
+        title: user.name,
+        subtitle: user.email,
+        status: "active",
+        data: {
+          name: user.name,
+          email: user.email,
+          orgId: user.orgId,
+          roles: user.roles,
+          phone: payload.phone,
+          country: payload.country,
+          region: payload.region,
+        },
+        tags: ["registration", payload.accountType],
+        createdAt: timestamp,
+        updatedAt: timestamp,
+        createdBy: user.id,
+        updatedBy: user.id,
+      });
+
+      WORKSPACES.forEach((workspace) => {
+        const enabled = organization.enabledModules.includes(workspace.id);
+        state.entities.moduleToggles.unshift({
+          id: `${organization.id}-${workspace.id}`,
+          entity: "moduleToggles",
+          workspace: "admin",
+          title: `${organization.name} :: ${workspace.label}`,
+          subtitle: enabled ? "Enabled" : "Disabled",
+          status: enabled ? "enabled" : "disabled",
+          data: {
+            orgId: organization.id,
+            workspace: workspace.id,
+            enabled,
+          },
+          tags: ["registration", "module-toggle"],
+          createdAt: timestamp,
+          updatedAt: timestamp,
+          createdBy: user.id,
+          updatedBy: user.id,
+        });
+      });
+
+      initializeSecurityForUser(user.id, {
+        mfaEnabled: payload.accountType === "organization",
+        mfaMethod: "authenticator",
+        loginAlerts: true,
+        passkeyEnabled: false,
+        trustedDevicesOnly: false,
+      });
+
+      appendAudit(state, {
+        actorId: user.id,
+        action: "create",
+        entityType: "registration",
+        entityId: user.id,
+        workspace: enabledModules[0] ?? "farmer",
+        summary: `Registered ${payload.accountType} account for ${email}`,
+      });
+
+      appendNotification(state, {
+        actorId: user.id,
+        title: "Welcome to ClyCites",
+        message:
+          payload.accountType === "organization"
+            ? "Organization account provisioned. Complete onboarding and configure security controls."
+            : "Sole operator account provisioned. Complete onboarding to activate workspaces.",
+        workspace: enabledModules[0] ?? "farmer",
+        link: "/auth/onboarding",
+        severity: "success",
+      });
+
+      return {
+        userId: user.id,
+        accountType: payload.accountType,
+        email,
+      };
+    })
+  );
+}
+
 export async function login(email: string, password: string): Promise<LoginResponse> {
   return withSimulation(() =>
     saveWithMutation((state) => {

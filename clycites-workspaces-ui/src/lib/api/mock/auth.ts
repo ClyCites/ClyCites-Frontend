@@ -1,8 +1,10 @@
 import { CREDENTIAL_HINTS } from "@/lib/store/catalog";
-import { login as loginStore, logout as logoutStore, resolveSession, updateSessionWorkspace } from "@/lib/store";
+import { login as loginStore, logout as logoutStore, registerAccount, resolveSession, updateSessionWorkspace } from "@/lib/store";
+import type { RegisterAccountPayload } from "@/lib/auth/types";
 import type { AuthSession, WorkspaceId } from "@/lib/store/types";
 
 const SESSION_TOKEN_KEY = "clycites.session.token";
+const MFA_DEMO_CODE = "123456";
 
 function isBrowser(): boolean {
   return typeof window !== "undefined";
@@ -64,6 +66,27 @@ export const authService = {
 
   getCredentials() {
     return CREDENTIAL_HINTS;
+  },
+
+  async register(payload: RegisterAccountPayload) {
+    return registerAccount(payload);
+  },
+
+  getMfaPolicy(email: string) {
+    const normalized = email.trim().toLowerCase();
+    const requiresMfa = normalized.includes("admin") || normalized.includes("ops");
+
+    return {
+      requiresMfa,
+      challengeHint: requiresMfa ? "Use authenticator code (demo code: 123456)." : "MFA optional for this account.",
+    };
+  },
+
+  async verifyMfaCode(code: string): Promise<void> {
+    const normalized = code.replace(/\s+/g, "");
+    if (normalized !== MFA_DEMO_CODE) {
+      throw new Error("Invalid MFA code.");
+    }
   },
 
   hasToken(): boolean {
