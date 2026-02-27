@@ -1,5 +1,6 @@
 import { entityServices } from "@/lib/api/mock/entities";
 import type {
+  ChartExportResult,
   ChartDefinition,
   ChartPreviewResult,
   ChartServiceContract,
@@ -79,5 +80,37 @@ export const chartService: ChartServiceContract = {
     });
 
     return response.items.map((item) => normalizeChart(item));
+  },
+
+  async exportChart(chartId, options): Promise<ChartExportResult> {
+    const format = options?.format ?? "csv";
+    const filename = options?.filename?.trim() || `chart-${chartId}.${format}`;
+
+    const content =
+      format === "csv"
+        ? "dimension,value\nJan,120\nFeb,132\nMar,141\nApr,150\n"
+        : JSON.stringify(
+            {
+              chartId,
+              rows: [
+                { dimension: "Jan", value: 120 },
+                { dimension: "Feb", value: 132 },
+                { dimension: "Mar", value: 141 },
+                { dimension: "Apr", value: 150 },
+              ],
+            },
+            null,
+            2
+          );
+
+    const blob = new Blob([content], {
+      type: format === "csv" ? "text/csv;charset=utf-8" : "application/json;charset=utf-8",
+    });
+
+    return {
+      downloadUrl: URL.createObjectURL(blob),
+      filename,
+      format,
+    };
   },
 };

@@ -13,7 +13,6 @@ import type { WorkspaceId } from "@/lib/store/types";
 import { useMockSession } from "@/lib/auth/mock-session";
 import { AccessDenied } from "@/components/common/AccessDenied";
 import { WorkspaceInsightsCharts } from "@/components/charts/WorkspaceInsightsCharts";
-import { ChartWorkbench } from "@/components/charts/ChartWorkbench";
 import { PageHeader } from "@/components/common/PageHeader";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -172,6 +171,11 @@ export function WorkspaceHome({ workspaceId }: WorkspaceHomeProps) {
         actions={
           <div className="flex flex-wrap items-center gap-2">
             <Badge variant="success">{totalRecords} Records</Badge>
+            {workspaceId === "analytics" && (
+              <Button asChild variant="outline" size="sm">
+                <Link href="/app/analytics/charts">Open Chart Workbench</Link>
+              </Button>
+            )}
             <Button
               variant="outline"
               size="sm"
@@ -274,12 +278,6 @@ export function WorkspaceHome({ workspaceId }: WorkspaceHomeProps) {
       <motion.section variants={fadeIn(Boolean(reducedMotion))}>
         <WorkspaceInsightsCharts metrics={chartMetrics} trend={chartTrend} />
       </motion.section>
-
-      {workspaceId === "analytics" && (
-        <motion.section variants={fadeIn(Boolean(reducedMotion))}>
-          <ChartWorkbench workspaceLabel={workspaceLabel} />
-        </motion.section>
-      )}
 
       {livePreviewRows.length > 0 && (
         <motion.section variants={fadeIn(Boolean(reducedMotion))}>

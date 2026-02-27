@@ -1,4 +1,5 @@
 import type {
+  ChartExportResult,
   ChartPreviewResult,
   ChartServiceContract,
   SaveChartRequest,
@@ -111,5 +112,34 @@ export const chartService: ChartServiceContract = {
     );
 
     return extractChartRows(response).map((item) => normalizeSavedChart(item));
+  },
+
+  async exportChart(chartId, options) {
+    const format = options?.format ?? "csv";
+    const filename = options?.filename?.trim() || `chart-${chartId}.${format}`;
+    const payload = await apiRequest<unknown>(
+      `/api/v1/analytics/charts/${encodeURIComponent(chartId)}/export`,
+      {
+        method: "POST",
+        body: JSON.stringify({
+          format,
+          filename,
+        }),
+      },
+      { auth: true }
+    );
+
+    const blob =
+      typeof payload === "string"
+        ? new Blob([payload], { type: format === "csv" ? "text/csv;charset=utf-8" : "application/json;charset=utf-8" })
+        : new Blob([JSON.stringify(unwrapApiData<unknown>(payload), null, 2)], {
+            type: "application/json;charset=utf-8",
+          });
+
+    return {
+      downloadUrl: URL.createObjectURL(blob),
+      filename,
+      format,
+    } as ChartExportResult;
   },
 };

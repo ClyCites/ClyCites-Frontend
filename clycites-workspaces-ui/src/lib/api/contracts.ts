@@ -100,8 +100,15 @@ export interface SavedChart {
   updatedAt?: string;
 }
 
+export interface ChartExportResult {
+  downloadUrl: string;
+  filename: string;
+  format: "csv" | "json";
+}
+
 export interface ChartServiceContract {
   previewChart(definition: ChartDefinition): Promise<ChartPreviewResult>;
   saveChart(payload: SaveChartRequest): Promise<SavedChart>;
   listCharts(params?: { page?: number; limit?: number; dataset?: string; tags?: string }): Promise<SavedChart[]>;
+  exportChart(chartId: string, options?: { format?: "csv" | "json"; filename?: string }): Promise<ChartExportResult>;
 }

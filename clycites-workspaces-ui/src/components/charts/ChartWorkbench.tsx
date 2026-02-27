@@ -43,6 +43,8 @@ import { toast } from "@/components/ui/use-toast";
 
 interface ChartWorkbenchProps {
   workspaceLabel: string;
+  canSave?: boolean;
+  canExport?: boolean;
 }
 
 function numberValue(value: unknown): number {
@@ -92,7 +94,7 @@ function resolveChartKeys(
   };
 }
 
-export function ChartWorkbench({ workspaceLabel }: ChartWorkbenchProps) {
+export function ChartWorkbench({ workspaceLabel, canSave = true, canExport = true }: ChartWorkbenchProps) {
   const queryClient = useQueryClient();
   const palette = chartSeriesPalette;
 
@@ -171,6 +173,32 @@ export function ChartWorkbench({ workspaceLabel }: ChartWorkbenchProps) {
       toast({
         title: "Save failed",
         description: error instanceof Error ? error.message : "Unable to save chart.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const exportMutation = useMutation({
+    mutationFn: async ({ chartId, format }: { chartId: string; format: "csv" | "json" }) => {
+      const exported = await chartService.exportChart(chartId, { format });
+      const anchor = document.createElement("a");
+      anchor.href = exported.downloadUrl;
+      anchor.download = exported.filename;
+      anchor.click();
+      window.setTimeout(() => URL.revokeObjectURL(exported.downloadUrl), 2_000);
+      return exported;
+    },
+    onSuccess: (result) => {
+      toast({
+        title: "Export ready",
+        description: `Downloaded ${result.filename}`,
+        variant: "success",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Export failed",
+        description: error instanceof Error ? error.message : "Unable to export chart.",
         variant: "destructive",
       });
     },
@@ -284,6 +312,7 @@ export function ChartWorkbench({ workspaceLabel }: ChartWorkbenchProps) {
               className="flex-1"
               onClick={() => saveMutation.mutate()}
               loading={saveMutation.isPending}
+              disabled={!canSave}
             >
               Save
             </Button>
@@ -366,6 +395,26 @@ export function ChartWorkbench({ workspaceLabel }: ChartWorkbenchProps) {
                   <div className="line-clamp-1 text-xs text-muted-foreground">
                     {chart.definition.datasetId} • {chart.shareScope}
                   </div>
+                  {canExport && (
+                    <div className="mt-2 flex items-center gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={exportMutation.isPending}
+                        onClick={() => exportMutation.mutate({ chartId: chart.id, format: "csv" })}
+                      >
+                        Export CSV
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={exportMutation.isPending}
+                        onClick={() => exportMutation.mutate({ chartId: chart.id, format: "json" })}
+                      >
+                        Export JSON
+                      </Button>
+                    </div>
+                  )}
                 </div>
               ))}
               {!savedChartsQuery.isLoading && (savedChartsQuery.data ?? []).length === 0 && (
