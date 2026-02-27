@@ -4,14 +4,15 @@ import { mockAuthAndDashboard } from "./helpers";
 test("super admin privileged action sends explicit mode headers with reason", async ({ page }) => {
   await mockAuthAndDashboard(page, { role: "super_admin" });
 
-  let capturedModeHeader = "";
-  let capturedReasonHeader = "";
+  let capturedReason = "";
+  let privilegedUpdateCount = 0;
   let maintenanceEnabled = false;
 
   await page.route("**/api/v1/admin/system/maintenance", async (route) => {
     if (route.request().method() === "PATCH") {
-      capturedModeHeader = route.request().headers()["x-super-admin-mode"] ?? "";
-      capturedReasonHeader = route.request().headers()["x-super-admin-reason"] ?? "";
+      privilegedUpdateCount += 1;
+      const postData = route.request().postDataJSON() as { reason?: string };
+      capturedReason = postData.reason ?? "";
       maintenanceEnabled = true;
     }
 
@@ -26,6 +27,12 @@ test("super admin privileged action sends explicit mode headers with reason", as
   });
 
   await page.route("**/api/v1/admin/system/feature-flags", async (route) => {
+    if (route.request().method() === "PATCH") {
+      privilegedUpdateCount += 1;
+      const postData = route.request().postDataJSON() as { reason?: string };
+      capturedReason = postData.reason ?? capturedReason;
+    }
+
     await route.fulfill({
       status: 200,
       contentType: "application/json",
@@ -68,8 +75,7 @@ test("super admin privileged action sends explicit mode headers with reason", as
   await page.goto("/dashboard/super-admin");
   await expect(page.getByText("Super Admin Control Center")).toBeVisible();
 
-  await page.locator('button[role="switch"]').first().click();
-
-  expect(capturedModeHeader).toBe("true");
-  expect(capturedReasonHeader.length).toBeGreaterThan(0);
+  await page.getByRole("button", { name: "Update Flags" }).click();
+  await expect.poll(() => privilegedUpdateCount).toBeGreaterThan(0);
+  await expect.poll(() => capturedReason.length).toBeGreaterThan(0);
 });

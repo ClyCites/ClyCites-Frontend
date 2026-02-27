@@ -123,8 +123,8 @@ function MFASection() {
     setLoading(true);
     try {
       const result = await authApi.setupTotp();
-      setQrCode(result.qrCodeUri ?? result.qrCodeUrl ?? null);
-      setBackupCodes(result.backupCodes ?? null);
+      setQrCode(result.qrCode ?? null);
+      setBackupCodes(null);
       toast({
         title: "MFA Setup Initiated",
         description: "Scan the QR code with your authenticator app.",
@@ -144,12 +144,13 @@ function MFASection() {
     if (!verifyToken) return;
     setLoading(true);
     try {
-      await authApi.verifyTotp(verifyToken);
+      const result = await authApi.verifyTotp(verifyToken);
       toast({
         title: "MFA Enabled",
         description: "Two-factor authentication has been enabled for your account.",
         variant: "success",
       });
+      setBackupCodes(result.backupCodes ?? null);
       setSetupComplete(true);
       setQrCode(null);
     } catch (error) {

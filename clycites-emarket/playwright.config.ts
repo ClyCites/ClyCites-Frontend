@@ -13,7 +13,7 @@ export default defineConfig({
     viewport: { width: 1280, height: 800 },
   },
   webServer: {
-    command: "pnpm dev",
+    command: "powershell -NoProfile -Command \"$env:NEXT_PUBLIC_API_BASE='http://127.0.0.1:3000'; pnpm dev\"",
     url: "http://127.0.0.1:3000",
     timeout: 180_000,
     reuseExistingServer: true,

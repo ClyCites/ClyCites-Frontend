@@ -113,12 +113,25 @@ export const logisticsApi = {
 
 export const weatherApi = {
   list: (params?: Record<string, string | number | boolean | undefined | null>) =>
-    api.get("/weather", params),
+    api.get("/weather/alerts/stats", params),
 };
 
 export const analyticsApi = {
-  dashboard: (params?: Record<string, string | number | boolean | undefined | null>) =>
-    api.get("/analytics", params),
+  dashboard: (params?: Record<string, string | number | boolean | undefined | null>) => {
+    const role = typeof params?.role === "string" ? params.role : null;
+
+    if (role === "farmer") {
+      return api.get("/analytics/farmer/dashboard");
+    }
+    if (role === "org_admin") {
+      return api.get("/analytics/org/dashboard");
+    }
+    if (role === "admin" || role === "platform_admin" || role === "super_admin") {
+      return api.get("/analytics/admin/dashboard");
+    }
+
+    return api.get("/analytics/overview", params);
+  },
   global: (params?: Record<string, string | number | boolean | undefined | null>) =>
     api.get("/analytics/global", params),
 };

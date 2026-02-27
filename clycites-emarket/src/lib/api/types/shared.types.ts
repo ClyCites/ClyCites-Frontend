@@ -73,7 +73,12 @@ export interface User {
   isVerified?: boolean;
   isEmailVerified?: boolean;
   isPhoneVerified?: boolean;
+  isActive?: boolean;
+  profileImage?: string;
   profilePhoto?: string;
+  bio?: string;
+  timezone?: string;
+  language?: string;
   phone?: string;
   profile?: Record<string, unknown>;
   organizationIds?: string[];
@@ -86,6 +91,65 @@ export interface AuthTokens {
   refreshToken?: string;
   expiresIn: number | string;
   tokenType?: "Bearer";
+}
+
+export interface AuthSecurityState {
+  isMfaEnabled: boolean;
+  passwordResetRequired: boolean;
+  requiresIdentityVerification: boolean;
+  suspiciousActivityDetected: boolean;
+  failedLoginAttempts: number;
+  lockedUntil?: string | Date;
+  isLocked: boolean;
+}
+
+export interface AuthAccountPayload {
+  user: User;
+  security: AuthSecurityState;
+  onboarding?: {
+    profileCompletionScore?: number;
+    requiresEmailVerification?: boolean;
+  };
+}
+
+export interface DeviceRecord {
+  id: string;
+  user?: string;
+  deviceId: string;
+  name?: string;
+  deviceInfo: {
+    type: "desktop" | "mobile" | "tablet" | "unknown";
+    os: string;
+    browser: string;
+    userAgent: string;
+  };
+  isTrusted: boolean;
+  trustLevel: "verified" | "recognized" | "new" | "suspicious";
+  lastLocation?: {
+    ip?: string;
+    country?: string;
+    city?: string;
+  };
+  firstSeenAt?: string;
+  lastSeenAt?: string;
+  lastActiveAt?: string;
+  loginCount?: number;
+  failedLoginAttempts?: number;
+  status: "active" | "blocked" | "revoked";
+  blockedAt?: string;
+  blockedReason?: string;
+  mfaEnabled?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface TotpSetupResponse {
+  secret: string;
+  qrCode: string;
+}
+
+export interface TotpVerifyResponse {
+  backupCodes: string[];
 }
 
 export type ApiTokenType = "personal" | "organization" | "super_admin";

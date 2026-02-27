@@ -19,11 +19,13 @@ export interface RequestOptions extends Omit<RequestInit, "headers" | "body"> {
 }
 
 const ACCESS_TOKEN_KEY = "clycites.session.access_token";
+const REFRESH_TOKEN_KEY = "clycites.session.refresh_token";
 const ORG_ID_KEY = "clycites.session.organization_id";
 const DEFAULT_TIMEOUT_MS = 20_000;
 const DEFAULT_MAX_RETRIES = 2;
 
 let accessTokenMemory: string | null = null;
+let refreshTokenMemory: string | null = null;
 let orgIdMemory: string | null = null;
 let onUnauthorized: (() => void) | null = null;
 let refreshPromise: Promise<string | null> | null = null;
@@ -104,9 +106,26 @@ export function setToken(token: string): void {
   writeSessionStorage(ACCESS_TOKEN_KEY, token);
 }
 
+export function getRefreshToken(): string | null {
+  if (refreshTokenMemory) return refreshTokenMemory;
+  refreshTokenMemory = readSessionStorage(REFRESH_TOKEN_KEY);
+  return refreshTokenMemory;
+}
+
+export function setRefreshToken(token: string): void {
+  refreshTokenMemory = token;
+  writeSessionStorage(REFRESH_TOKEN_KEY, token);
+}
+
+export function removeRefreshToken(): void {
+  refreshTokenMemory = null;
+  removeSessionStorage(REFRESH_TOKEN_KEY);
+}
+
 export function removeToken(): void {
   accessTokenMemory = null;
   removeSessionStorage(ACCESS_TOKEN_KEY);
+  removeRefreshToken();
 }
 
 export function getCurrentOrgId(): string | null {
@@ -300,12 +319,16 @@ function encodeBody(body: RequestOptions["body"], headers: HeaderMap): BodyInit 
 }
 
 async function refreshAccessToken(): Promise<string | null> {
+  const currentRefreshToken = getRefreshToken();
+  if (!currentRefreshToken) return null;
+
   if (refreshPromise) return refreshPromise;
 
   refreshPromise = (async () => {
     try {
       const tokens = await http<AuthTokens>("/auth/refresh-token", {
         method: "POST",
+        body: { refreshToken: currentRefreshToken },
         skipAuth: true,
         skipRefresh: true,
         retryCount: 0,
@@ -313,6 +336,7 @@ async function refreshAccessToken(): Promise<string | null> {
 
       if (tokens.accessToken) {
         setToken(tokens.accessToken);
+        if (tokens.refreshToken) setRefreshToken(tokens.refreshToken);
         return tokens.accessToken;
       }
     } catch {
@@ -354,9 +378,12 @@ export async function http<T = unknown>(
 
   if (!response.ok) {
     if (response.status === 401 && !options.skipRefresh && !isAuthEndpoint(path)) {
-      const refreshedToken = await refreshAccessToken();
-      if (refreshedToken) {
-        return http<T>(path, { ...options, skipRefresh: true }, attempt);
+      const hasRefreshToken = !!getRefreshToken();
+      if (hasRefreshToken) {
+        const refreshedToken = await refreshAccessToken();
+        if (refreshedToken) {
+          return http<T>(path, { ...options, skipRefresh: true }, attempt);
+        }
       }
     }
 

@@ -4,13 +4,13 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  LayoutDashboard,
   ShoppingCart,
-  Sprout,
   Cloud,
+  DollarSign,
+  Bot,
   BarChart3,
-  FlaskConical,
-  Settings,
-  HelpCircle,
+  Stethoscope,
   ChevronDown,
   Check,
 } from "lucide-react";
@@ -29,7 +29,7 @@ export interface AppModule {
   id: string;
   name: string;
   description: string;
-  icon: typeof ShoppingCart;
+  icon: typeof LayoutDashboard;
   href: string;
   color: string;
   requiredPermission?: string;
@@ -37,64 +37,60 @@ export interface AppModule {
 
 const ALL_MODULES: AppModule[] = [
   {
-    id: "market",
-    name: "E-Market",
-    description: "Browse and trade agricultural products",
+    id: "accounts-dashboard",
+    name: "Accounts Dashboard",
+    description: "Role-based control plane and operations overview",
+    icon: LayoutDashboard,
+    href: "/dashboard/account",
+    color: "text-slate-600",
+  },
+  {
+    id: "emarket-dashboard",
+    name: "E-Market Dashboard",
+    description: "Marketplace listings, offers, orders, and settlements",
     icon: ShoppingCart,
     href: "/market",
     color: "text-emerald-600",
   },
   {
-    id: "farmers",
-    name: "Farmers Hub",
-    description: "Manage farms, crops, and records",
-    icon: Sprout,
-    href: "/farms",
-    color: "text-emerald-600",
-    requiredPermission: "farmers.farm.read",
-  },
-  {
-    id: "weather",
-    name: "Weather & Alerts",
-    description: "Forecasts and climate intelligence",
+    id: "weather-dashboard",
+    name: "Weather",
+    description: "Forecasts, alerts, and climate intelligence",
     icon: Cloud,
     href: "/weather",
     color: "text-blue-600",
   },
   {
-    id: "analytics",
+    id: "price-dashboard",
+    name: "Price",
+    description: "Commodity price board and market rates",
+    icon: DollarSign,
+    href: "/prices",
+    color: "text-lime-600",
+  },
+  {
+    id: "agric-assistant",
+    name: "Agric Assistant",
+    description: "Advisory workflows and assistant tools",
+    icon: Bot,
+    href: "/agric-assistant",
+    color: "text-amber-600",
+  },
+  {
+    id: "analytics-dashboard",
     name: "Analytics",
-    description: "Dashboards and insights",
+    description: "Dashboards, trends, and intelligence reports",
     icon: BarChart3,
     href: "/analytics",
     color: "text-cyan-600",
-    requiredPermission: "analytics.dashboard.read",
   },
   {
-    id: "research",
-    name: "Research Portal",
-    description: "Datasets and expert knowledge",
-    icon: FlaskConical,
-    href: "/research",
-    color: "text-amber-600",
-    requiredPermission: "research.dataset.read",
-  },
-  {
-    id: "admin",
-    name: "Admin",
-    description: "System management and settings",
-    icon: Settings,
-    href: "/admin",
-    color: "text-stone-600",
-    requiredPermission: "admin.user.read",
-  },
-  {
-    id: "support",
-    name: "Help & Support",
-    description: "FAQs, tickets, and assistance",
-    icon: HelpCircle,
-    href: "/help",
-    color: "text-orange-600",
+    id: "expert-portal",
+    name: "Expert Portal",
+    description: "Expert consultations, cases, and knowledge resources",
+    icon: Stethoscope,
+    href: "/dashboard/expert",
+    color: "text-violet-600",
   },
 ];
 
@@ -114,9 +110,9 @@ export function AppSwitcher({ userPermissions = [], recentModules = [] }: AppSwi
   });
 
   // Get current active module
-  const currentModule = availableModules.find((module) =>
-    pathname?.startsWith(module.href)
-  );
+  const currentModule = availableModules
+    .filter((module) => pathname?.startsWith(module.href))
+    .sort((a, b) => b.href.length - a.href.length)[0];
 
   // Get recent modules (filtered)
   const recentModulesData = recentModules

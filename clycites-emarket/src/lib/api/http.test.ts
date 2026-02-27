@@ -1,5 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { api, getToken, HttpError, removeToken, setCurrentOrgId, setToken } from "./http";
+import {
+  api,
+  getRefreshToken,
+  getToken,
+  HttpError,
+  removeToken,
+  setCurrentOrgId,
+  setRefreshToken,
+  setToken,
+} from "./http";
 
 function jsonResponse(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
@@ -42,6 +51,26 @@ describe("http client", () => {
     expect(headers["Idempotency-Key"]).toBeTruthy();
   });
 
+  it("attaches super-admin mode and reason headers for privileged actions", async () => {
+    setToken("super-admin-token");
+
+    const fetchMock = vi.fn().mockResolvedValue(
+      jsonResponse({ success: true, data: { enabled: true } })
+    );
+    global.fetch = fetchMock as typeof fetch;
+
+    await api.patch(
+      "/admin/system/maintenance",
+      { enabled: true, reason: "Incident mitigation" },
+      { superAdminMode: true, superAdminReason: "Incident mitigation" }
+    );
+
+    const [, requestOptions] = fetchMock.mock.calls[0] as [string, RequestInit];
+    const headers = requestOptions.headers as Record<string, string>;
+    expect(headers["X-Super-Admin-Mode"]).toBe("true");
+    expect(headers["X-Super-Admin-Reason"]).toBe("Incident mitigation");
+  });
+
   it("retries transient server errors with backoff", async () => {
     const fetchMock = vi
       .fn()
@@ -62,6 +91,7 @@ describe("http client", () => {
 
   it("refreshes token on 401 and retries original request", async () => {
     setToken("expired-token");
+    setRefreshToken("refresh-token-1");
 
     const fetchMock = vi
       .fn()
@@ -71,7 +101,11 @@ describe("http client", () => {
       .mockResolvedValueOnce(
         jsonResponse({
           success: true,
-          data: { accessToken: "fresh-token", expiresIn: "15m" },
+          data: {
+            accessToken: "fresh-token",
+            refreshToken: "refresh-token-2",
+            expiresIn: "15m",
+          },
         })
       )
       .mockResolvedValueOnce(jsonResponse({ success: true, data: { ok: true } }));
@@ -82,7 +116,27 @@ describe("http client", () => {
     expect(response.ok).toBe(true);
     expect(fetchMock).toHaveBeenCalledTimes(3);
     expect((fetchMock.mock.calls[1] as [string])[0]).toContain("/auth/refresh-token");
+    expect((fetchMock.mock.calls[1] as [string, RequestInit])[1].body).toBe(
+      JSON.stringify({ refreshToken: "refresh-token-1" })
+    );
     expect(getToken()).toBe("fresh-token");
+    expect(getRefreshToken()).toBe("refresh-token-2");
+  });
+
+  it("does not call refresh endpoint when no refresh token is available", async () => {
+    setToken("access-token-only");
+
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        jsonResponse({ success: false, error: { code: "UNAUTHORIZED", message: "Authentication required" } }, 401)
+      );
+
+    global.fetch = fetchMock as typeof fetch;
+
+    await expect(api.get("/analytics")).rejects.toBeInstanceOf(HttpError);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect((fetchMock.mock.calls[0] as [string])[0]).toContain("/analytics");
   });
 
   it("exposes requestId in normalized errors", async () => {

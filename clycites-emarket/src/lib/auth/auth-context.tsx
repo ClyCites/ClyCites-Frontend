@@ -10,7 +10,7 @@ import {
 } from "react";
 import { authApi } from "@/lib/api/endpoints/auth.api";
 import { getToken, registerUnauthorizedHandler, removeToken } from "@/lib/api/http";
-import type { User, AuthTokens, UserRole } from "@/lib/api/types/shared.types";
+import type { User, UserRole } from "@/lib/api/types/shared.types";
 
 interface AuthContextValue {
   user: User | null;
@@ -32,11 +32,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const refreshUser = useCallback(async () => {
     try {
-      const me = await authApi.me();
-      setUser(me);
+      const account = await authApi.me();
+      setUser(account.user);
     } catch {
       setUser(null);
       removeToken();
+      throw new Error("Session validation failed.");
     }
   }, []);
 
@@ -57,8 +58,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const token = getToken();
       if (token) {
         try {
-          const me = await authApi.me();
-          if (isMounted) setUser(me);
+          const account = await authApi.me();
+          if (isMounted) setUser(account.user);
         } catch {
           if (isMounted) {
             setUser(null);
@@ -77,11 +78,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = useCallback(async (email: string, password: string) => {
-    const res = await authApi.login({ email, password });
-    if ((res as AuthTokens & { user?: User }).user) {
-      setUser((res as AuthTokens & { user?: User }).user ?? null);
-    } else {
+    setIsLoading(true);
+    try {
+      const res = await authApi.login({ email, password });
+      const loginUser = (res as { user?: User }).user ?? null;
+      const hasToken = !!getToken();
+
+      if (loginUser && hasToken) {
+        setUser(loginUser);
+        return;
+      }
+
       await refreshUser();
+    } catch {
+      setUser(null);
+      removeToken();
+      throw new Error("Login succeeded but profile could not be loaded. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
   }, [refreshUser]);
 

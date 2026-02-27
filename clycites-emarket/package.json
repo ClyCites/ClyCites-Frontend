@@ -8,9 +8,10 @@
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
-    "test:unit": "vitest run",
+    "test:unit": "vitest run --pool=threads",
     "test:watch": "vitest",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "screenshots": "playwright test tests/e2e/dashboard-screenshots.spec.ts --reporter=line"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

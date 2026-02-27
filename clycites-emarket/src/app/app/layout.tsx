@@ -1,14 +1,12 @@
-import { GlobalTopbar } from "@/components/layout/GlobalTopbar";
+"use client";
 
-export default function AppLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+import { AppGuard } from "@/components/layout/workspaces/AppGuard";
+import { WorkspaceShell } from "@/components/layout/workspaces/WorkspaceShell";
+
+export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen bg-background">
-      <GlobalTopbar />
-      <main>{children}</main>
-    </div>
+    <AppGuard>
+      <WorkspaceShell>{children}</WorkspaceShell>
+    </AppGuard>
   );
 }

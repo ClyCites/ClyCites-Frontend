@@ -17,12 +17,15 @@ import {
   Stethoscope,
   CloudSun,
   UserCog,
+  UserRound,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { LoadingState } from "@/components/shared/LoadingState";
+import { AppSwitcher } from "@/components/layout/AppSwitcher";
 import { useAuth } from "@/lib/auth/auth-context";
+import { getToken } from "@/lib/api/http";
 import { useOrg } from "@/lib/context/org-context";
 import { useDataSaver } from "@/lib/context/data-saver-context";
 import { cn } from "@/lib/utils";
@@ -30,6 +33,7 @@ import { getDashboardNavForRole, type NavIconKey } from "@/lib/rbac/navigation";
 
 const navIconMap: Record<NavIconKey, React.ComponentType<{ className?: string }>> = {
   home: Home,
+  account: UserRound,
   market: ShoppingCart,
   orders: Package,
   tokens: Database,
@@ -48,18 +52,22 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   const { role, isAuthenticated, isLoading, logout } = useAuth();
   const { currentOrg } = useOrg();
   const { enabled, setEnabled } = useDataSaver();
+  const hasStoredToken = !!getToken();
+  const userPermissions = currentOrg?.permissions ?? [];
 
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
+    if (!isLoading && !isAuthenticated && !hasStoredToken) {
       router.replace("/login");
     }
-  }, [isAuthenticated, isLoading, router]);
+  }, [hasStoredToken, isAuthenticated, isLoading, router]);
 
   const navItems = useMemo(() => getDashboardNavForRole(role), [role]);
 
-  if (isLoading || !isAuthenticated) {
+  if (isLoading || (!isAuthenticated && hasStoredToken)) {
     return <LoadingState text="Preparing dashboard..." className="min-h-screen" size="lg" />;
   }
+
+  if (!isAuthenticated) return null;
 
   return (
     <div className="min-h-screen bg-background lg:grid lg:grid-cols-[260px_1fr]">
@@ -118,6 +126,10 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
               </h1>
             </div>
             <div className="flex items-center gap-3">
+              <AppSwitcher
+                userPermissions={userPermissions}
+                recentModules={["accounts-dashboard", "emarket-dashboard", "weather-dashboard"]}
+              />
               <label className="hidden items-center gap-2 rounded-xl border border-border/70 bg-card px-3 py-2 sm:flex">
                 <Globe className="h-4 w-4 text-muted-foreground" />
                 <span className="text-xs text-muted-foreground">Data Saver</span>

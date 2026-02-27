@@ -82,7 +82,8 @@ test("token create, rotate, and revoke workflow", async ({ page }) => {
   await expect(page.getByText("API Token Management")).toBeVisible();
 
   await page.getByRole("button", { name: "Create Token" }).click();
-  await page.getByLabel("Name").fill("Integration Token");
+  const dialog = page.getByRole("dialog");
+  await dialog.locator("input").first().fill("Integration Token");
   await page.getByRole("button", { name: "Create" }).click();
   await expect(page.getByText("Token Secret (One-time view)")).toBeVisible();
 

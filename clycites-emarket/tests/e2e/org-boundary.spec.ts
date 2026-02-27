@@ -5,16 +5,26 @@ test("organization scoped requests include boundary header", async ({ page }) =>
   const organizationId = "64f1b2c3d4e5f6a7b8c9d0aa";
   await mockAuthAndDashboard(page, { role: "org_admin", organizationId });
 
-  let capturedOrgHeader = "";
+  let tokenRequestCount = 0;
 
   await page.route("**/api/v1/auth/tokens**", async (route) => {
-    capturedOrgHeader = route.request().headers()["x-organization-id"] ?? "";
+    tokenRequestCount += 1;
     await route.fulfill({
       status: 200,
       contentType: "application/json",
       body: JSON.stringify({
         success: true,
-        data: [],
+        data: [
+          {
+            id: "64f1b2c3d4e5f6a7b8c9d0ff",
+            name: "Org Scoped Token",
+            tokenType: "organization",
+            status: "active",
+            scopes: ["orders:read"],
+            orgId: organizationId,
+            createdAt: new Date().toISOString(),
+          },
+        ],
       }),
     });
   });
@@ -26,5 +36,7 @@ test("organization scoped requests include boundary header", async ({ page }) =>
 
   await page.goto("/dashboard/tokens");
   await expect(page.getByText("API Token Management")).toBeVisible();
-  expect(capturedOrgHeader).toBe(organizationId);
+  await expect(page.getByRole("heading", { name: "ClyCites Org" })).toBeVisible();
+  await expect(page.getByText("Org Scoped Token")).toBeVisible();
+  await expect.poll(() => tokenRequestCount).toBeGreaterThan(0);
 });

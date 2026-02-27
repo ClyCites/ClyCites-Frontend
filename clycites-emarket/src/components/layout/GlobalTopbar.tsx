@@ -41,7 +41,10 @@ export function GlobalTopbar() {
         </Link>
 
         {isAuthenticated && (
-          <AppSwitcher userPermissions={userPermissions} recentModules={["market", "farmers"]} />
+          <AppSwitcher
+            userPermissions={userPermissions}
+            recentModules={["accounts-dashboard", "emarket-dashboard", "weather-dashboard"]}
+          />
         )}
 
         {isAuthenticated && organizations.length > 0 && currentOrgId && (

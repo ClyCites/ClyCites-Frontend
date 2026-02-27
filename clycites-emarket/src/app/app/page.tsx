@@ -2,26 +2,23 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/lib/auth/auth-context";
-import { Loader2 } from "lucide-react";
+import { useMockSession } from "@/lib/auth/mock-session";
 
 export default function AppHomePage() {
   const router = useRouter();
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isLoading, isAuthenticated, activeWorkspace, availableWorkspaces } = useMockSession();
 
   useEffect(() => {
-    if (!isLoading) {
-      if (!isAuthenticated) {
-        router.push("/login");
-      } else {
-        router.push("/dashboard");
-      }
-    }
-  }, [isAuthenticated, isLoading, router]);
+    if (isLoading) return;
 
-  return (
-    <div className="flex items-center justify-center min-h-screen">
-      <Loader2 className="h-8 w-8 animate-spin text-primary" />
-    </div>
-  );
+    if (!isAuthenticated) {
+      router.replace("/auth/login");
+      return;
+    }
+
+    const workspace = activeWorkspace ?? availableWorkspaces[0] ?? "farmer";
+    router.replace(`/app/${workspace}`);
+  }, [activeWorkspace, availableWorkspaces, isAuthenticated, isLoading, router]);
+
+  return null;
 }

@@ -9,6 +9,7 @@ import {
 
 export type NavIconKey =
   | "home"
+  | "account"
   | "market"
   | "orders"
   | "tokens"
@@ -30,6 +31,7 @@ export interface DashboardNavItem {
 
 export const DASHBOARD_NAV_ITEMS: DashboardNavItem[] = [
   { id: "dashboard", label: "Dashboard", href: "/dashboard", icon: "home" },
+  { id: "account", label: "Account", href: "/dashboard/account", icon: "account" },
   { id: "market", label: "Market", href: "/market", icon: "market", roles: COMMERCIAL_ROLES },
   { id: "orders-payments", label: "Orders & Payments", href: "/dashboard/orders-payments", icon: "orders", roles: COMMERCIAL_ROLES },
   { id: "tokens", label: "Token Vault", href: "/dashboard/tokens", icon: "tokens", roles: ORGANIZATION_ADMIN_ROLES },
