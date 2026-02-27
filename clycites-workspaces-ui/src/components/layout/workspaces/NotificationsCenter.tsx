@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion, useReducedMotion } from "framer-motion";
 import { Bell } from "lucide-react";
-import { notificationsService } from "@/lib/api/mock";
+import { notificationsService } from "@/lib/api";
 import { useMockSession } from "@/lib/auth/mock-session";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";

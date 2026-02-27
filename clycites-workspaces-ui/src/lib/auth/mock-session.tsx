@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
-import { authService } from "@/lib/api/mock";
+import { authService } from "@/lib/api";
 import { WORKSPACES } from "@/lib/store/catalog";
 import { hasEntityPermission, hasPermission, hasWorkspaceAccess } from "@/lib/store";
 import type { AuthSession, EntityKey, Permission, WorkspaceId } from "@/lib/store/types";

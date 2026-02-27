@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Bell } from "lucide-react";
-import { notificationsService } from "@/lib/api/mock";
+import { notificationsService } from "@/lib/api";
 import { useMockSession } from "@/lib/auth/mock-session";
 import { PageHeader } from "@/components/common/PageHeader";
 import { Card, CardContent } from "@/components/ui/card";

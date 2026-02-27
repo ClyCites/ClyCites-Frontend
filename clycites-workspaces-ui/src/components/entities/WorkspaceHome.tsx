@@ -1,12 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { createElement, useMemo } from "react";
-import { useQueries } from "@tanstack/react-query";
+import { createElement, useMemo, useState } from "react";
+import { useMutation, useQueries } from "@tanstack/react-query";
 import { motion, useReducedMotion } from "framer-motion";
 import { ArrowRight, TrendingDown, TrendingUp } from "lucide-react";
 import { WORKSPACE_ENTITY_MAP, getEntityDefinition, getWorkspaceDefinition } from "@/lib/store/catalog";
-import { entityServices } from "@/lib/api/mock";
+import { chartService, isRealApiMode } from "@/lib/api";
+import type { ChartDefinition } from "@/lib/api/contracts";
+import { entityServices } from "@/lib/api";
 import type { WorkspaceId } from "@/lib/store/types";
 import { useMockSession } from "@/lib/auth/mock-session";
 import { AccessDenied } from "@/components/common/AccessDenied";
@@ -15,6 +17,7 @@ import { PageHeader } from "@/components/common/PageHeader";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { toast } from "@/components/ui/use-toast";
 import { fadeIn, scaleIn, staggerContainer } from "@/lib/motion";
 import { getEntityIcon } from "@/components/layout/workspaces/workspace-icons";
 
@@ -39,7 +42,9 @@ function sparklinePath(values: number[]): string {
 
 export function WorkspaceHome({ workspaceId }: WorkspaceHomeProps) {
   const workspace = getWorkspaceDefinition(workspaceId);
-  const entities = WORKSPACE_ENTITY_MAP[workspaceId];
+  const entities = useMemo(() => WORKSPACE_ENTITY_MAP[workspaceId] ?? [], [workspaceId]);
+  const workspaceLabel = workspace?.label ?? "Workspace";
+  const workspaceDescription = workspace?.description ?? "Workspace overview";
   const { canAccessWorkspace } = useMockSession();
   const reducedMotion = useReducedMotion();
 
@@ -72,14 +77,7 @@ export function WorkspaceHome({ workspaceId }: WorkspaceHomeProps) {
       }),
     [cardsQuery, entities]
   );
-
-  if (!workspace) {
-    return <AccessDenied />;
-  }
-
-  if (!canAccessWorkspace(workspaceId)) {
-    return <AccessDenied />;
-  }
+  const [livePreviewRows, setLivePreviewRows] = useState<Array<Record<string, unknown>>>([]);
 
   const totalRecords = summary.reduce((acc, item) => acc + item.total, 0);
   const mostActive = [...summary].sort((a, b) => b.total - a.total)[0];
@@ -92,6 +90,72 @@ export function WorkspaceHome({ workspaceId }: WorkspaceHomeProps) {
     records: Math.max(4, Math.round(totalRecords * (0.45 + index * 0.1))),
     alerts: Math.max(1, Math.round((mostActive?.total ?? 1) * (0.2 + index * 0.06))),
   }));
+  const defaultDefinition = useMemo<ChartDefinition>(
+    () => ({
+      datasetId: "platform_health",
+      chartType: "line",
+      metrics: [{ type: "count", alias: "records" }],
+      dimensions: [{ type: "date_month", alias: "month" }],
+      vizOptions: {
+        title: `${workspaceLabel} Health`,
+        showLegend: true,
+        colorScheme: "green",
+      },
+    }),
+    [workspaceLabel]
+  );
+
+  const previewMutation = useMutation({
+    mutationFn: () => chartService.previewChart(defaultDefinition),
+    onSuccess: (result) => {
+      setLivePreviewRows(result.rows);
+      toast({
+        title: "Chart preview ready",
+        description: `${result.rows.length} rows loaded from ${isRealApiMode ? "real API" : "mock service"}.`,
+        variant: "success",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Preview failed",
+        description: error instanceof Error ? error.message : "Unable to preview chart.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const saveMutation = useMutation({
+    mutationFn: () =>
+      chartService.saveChart({
+        name: `${workspaceLabel} Snapshot`,
+        description: "Auto-saved from workspace home",
+        definition: defaultDefinition,
+        tags: [workspaceId, "workspace-home"],
+        shareScope: "org_members",
+      }),
+    onSuccess: (result) => {
+      toast({
+        title: "Chart saved",
+        description: `Saved chart "${result.name}" (${result.id}).`,
+        variant: "success",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Save failed",
+        description: error instanceof Error ? error.message : "Unable to save chart.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  if (!workspace) {
+    return <AccessDenied />;
+  }
+
+  if (!canAccessWorkspace(workspaceId)) {
+    return <AccessDenied />;
+  }
 
   return (
     <motion.div
@@ -101,10 +165,25 @@ export function WorkspaceHome({ workspaceId }: WorkspaceHomeProps) {
       className="space-y-5"
     >
       <PageHeader
-        title={workspace.label}
-        subtitle={workspace.description}
-        breadcrumbs={[{ label: "App", href: "/app" }, { label: workspace.label }]}
-        actions={<Badge variant="success">{totalRecords} Records</Badge>}
+        title={workspaceLabel}
+        subtitle={workspaceDescription}
+        breadcrumbs={[{ label: "App", href: "/app" }, { label: workspaceLabel }]}
+        actions={
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge variant="success">{totalRecords} Records</Badge>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => previewMutation.mutate()}
+              loading={previewMutation.isPending}
+            >
+              Preview Chart
+            </Button>
+            <Button size="sm" onClick={() => saveMutation.mutate()} loading={saveMutation.isPending}>
+              Save Chart
+            </Button>
+          </div>
+        }
       />
 
       <motion.section variants={fadeIn(Boolean(reducedMotion))} className="grid grid-cols-12 gap-4">
@@ -112,7 +191,7 @@ export function WorkspaceHome({ workspaceId }: WorkspaceHomeProps) {
           <CardHeader className="pb-3">
             <CardTitle>Workspace Intelligence Summary</CardTitle>
             <CardDescription>
-              Overview of active entities in {workspace.label}. Counts are powered by local mock persistence.
+              Overview of active entities in {workspaceLabel}. Counts are powered by local mock persistence.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -194,6 +273,24 @@ export function WorkspaceHome({ workspaceId }: WorkspaceHomeProps) {
       <motion.section variants={fadeIn(Boolean(reducedMotion))}>
         <WorkspaceInsightsCharts metrics={chartMetrics} trend={chartTrend} />
       </motion.section>
+
+      {livePreviewRows.length > 0 && (
+        <motion.section variants={fadeIn(Boolean(reducedMotion))}>
+          <Card>
+            <CardHeader>
+              <CardTitle>Live Chart Preview Data</CardTitle>
+              <CardDescription>
+                Showing first 5 rows returned from {isRealApiMode ? "staging API" : "mock service"} preview endpoint.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <pre className="max-h-[280px] overflow-auto rounded-xl border border-border/60 bg-background/60 p-3 text-xs">
+                {JSON.stringify(livePreviewRows.slice(0, 5), null, 2)}
+              </pre>
+            </CardContent>
+          </Card>
+        </motion.section>
+      )}
     </motion.div>
   );
 }

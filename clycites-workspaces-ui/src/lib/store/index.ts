@@ -1041,6 +1041,47 @@ export async function login(email: string, password: string): Promise<LoginRespo
   );
 }
 
+export function findUserByEmail(email: string): Omit<UserAccount, "password"> | null {
+  const normalized = email.trim().toLowerCase();
+  if (!normalized) return null;
+
+  const state = loadState();
+  const user = state.users.find((candidate) => candidate.email.toLowerCase() === normalized);
+  return user ? sanitizeUser(user) : null;
+}
+
+export async function resetUserPasswordByEmail(email: string, newPassword: string): Promise<void> {
+  return withSimulation(() =>
+    saveWithMutation((state) => {
+      const normalized = email.trim().toLowerCase();
+      const user = state.users.find((candidate) => candidate.email.toLowerCase() === normalized);
+      if (!user) {
+        throw new MockApiError("Account not found", "USER_NOT_FOUND");
+      }
+
+      user.password = newPassword;
+      user.updatedAt = nowIso();
+      state.sessions = state.sessions.filter((session) => session.userId !== user.id);
+
+      appendAudit(state, {
+        actorId: user.id,
+        action: "update",
+        entityType: "security",
+        entityId: user.id,
+        summary: `Password reset completed for ${user.email}`,
+      });
+
+      appendNotification(state, {
+        actorId: user.id,
+        title: "Password changed",
+        message: "Your password was updated successfully. Sign in with your new credentials.",
+        link: "/auth/login",
+        severity: "success",
+      });
+    })
+  );
+}
+
 export async function logout(token: string, actorId: string): Promise<void> {
   return withSimulation(() =>
     saveWithMutation((state) => {

@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion, useReducedMotion } from "framer-motion";
 import { Edit, Eye, Filter, Plus, RefreshCw, Trash2, Workflow } from "lucide-react";
-import { entityServices } from "@/lib/api/mock";
+import { entityServices } from "@/lib/api";
 import { ENTITY_DEFINITIONS } from "@/lib/store/catalog";
 import type { EntityKey, EntityRecord, FieldDefinition, ListParams, ListResult, WorkspaceId } from "@/lib/store/types";
 import { useMockSession } from "@/lib/auth/mock-session";

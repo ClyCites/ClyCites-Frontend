@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation } from "@tanstack/react-query";
-import { securityService } from "@/lib/api/mock";
+import { securityService } from "@/lib/api";
 import { useMockSession } from "@/lib/auth/mock-session";
 import type { MfaMethod, RegistrationAccountType } from "@/lib/auth/types";
 import { WORKSPACES } from "@/lib/store/catalog";

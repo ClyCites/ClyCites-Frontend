@@ -4,7 +4,7 @@ import { FormEvent, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Building2, UserRound } from "lucide-react";
-import { authService } from "@/lib/api/mock";
+import { authService } from "@/lib/api";
 import type { RegisterAccountPayload, RegistrationAccountType } from "@/lib/auth/types";
 import { WORKSPACES } from "@/lib/store/catalog";
 import type { WorkspaceId } from "@/lib/store/types";

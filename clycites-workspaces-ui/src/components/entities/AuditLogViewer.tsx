@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { auditService } from "@/lib/api/mock";
+import { auditService } from "@/lib/api";
 import { useMockSession } from "@/lib/auth/mock-session";
 import { AccessDenied } from "@/components/common/AccessDenied";
 import { PageHeader } from "@/components/common/PageHeader";

@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { securityService } from "@/lib/api/mock";
+import { securityService } from "@/lib/api";
 import { useMockSession } from "@/lib/auth/mock-session";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";

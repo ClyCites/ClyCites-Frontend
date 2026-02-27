@@ -2,7 +2,8 @@
 
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { securityService, runtimeService } from "@/lib/api/mock";
+import { securityService } from "@/lib/api";
+import { runtimeService } from "@/lib/api/mock";
 import { useMockSession } from "@/lib/auth/mock-session";
 import type { MfaMethod } from "@/lib/auth/types";
 import { PageHeader } from "@/components/common/PageHeader";
