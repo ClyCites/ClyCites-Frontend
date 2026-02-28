@@ -34,6 +34,11 @@ export function NotificationsCenter() {
       }),
     enabled: Boolean(session),
   });
+  const unreadCountQuery = useQuery({
+    queryKey: queryKeys.notifications.unreadCount(),
+    queryFn: () => notificationsService.getUnreadCount(),
+    enabled: Boolean(session),
+  });
 
   const markMutation = useMutation({
     mutationFn: (notificationId: string) => {
@@ -42,6 +47,7 @@ export function NotificationsCenter() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.notifications.root() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.notifications.unreadCount() });
     },
   });
 
@@ -52,11 +58,13 @@ export function NotificationsCenter() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.notifications.root() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.notifications.unreadCount() });
     },
   });
 
   const notifications = query.data?.items ?? [];
-  const unread = notifications.filter((item) => !item.read).length;
+  const unread =
+    typeof unreadCountQuery.data === "number" ? unreadCountQuery.data : notifications.filter((item) => !item.read).length;
 
   return (
     <DropdownMenu>

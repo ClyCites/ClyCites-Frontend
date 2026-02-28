@@ -3,6 +3,7 @@ import type {
   ChartExportResult,
   ChartPreviewResult,
   ChartServiceContract,
+  DashboardSharingUpdateRequest,
   DashboardChartItem,
   GenerateReportRequest,
   SaveChartRequest,
@@ -237,6 +238,29 @@ export const chartService: ChartServiceContract = {
     );
   },
 
+  async exportPreview(definition, options) {
+    return withFallback(
+      async () => {
+        const format = options?.format ?? "csv";
+        const filename = options?.filename?.trim() || `preview-${definition.datasetId}.${format}`;
+        const payload = await apiRequest<unknown>(
+          "/api/v1/analytics/charts/preview/export",
+          {
+            method: "POST",
+            body: JSON.stringify({
+              definition,
+              format,
+              filename,
+            }),
+          },
+          { auth: true }
+        );
+        return createBlobFromPayload(payload, format, filename);
+      },
+      () => mockChartService.exportPreview(definition, options)
+    );
+  },
+
   async updateChart(chartId, payload) {
     return withFallback(
       async () => {
@@ -348,6 +372,27 @@ export const chartService: ChartServiceContract = {
         return normalizeDashboard(response);
       },
       () => mockChartService.createDashboard(payload)
+    );
+  },
+
+  async updateDashboardSharing(dashboardId: string, payload: DashboardSharingUpdateRequest) {
+    return withFallback(
+      async () => {
+        await apiRequest<unknown>(
+          `/api/v1/analytics/dashboards/${encodeURIComponent(dashboardId)}/sharing`,
+          {
+            method: "PATCH",
+            body: JSON.stringify({
+              scope: payload.scope,
+              roles: payload.roles,
+              userIds: payload.userIds,
+            }),
+          },
+          { auth: true }
+        );
+        return fetchDashboard(dashboardId);
+      },
+      () => mockChartService.updateDashboardSharing(dashboardId, payload)
     );
   },
 

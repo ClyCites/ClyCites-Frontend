@@ -113,6 +113,9 @@ export function ChartWorkbench({ workspaceLabel, canSave = true, canExport = tru
   const [dashboardDescription, setDashboardDescription] = useState("");
   const [selectedDashboardId, setSelectedDashboardId] = useState("");
   const [reportFormat, setReportFormat] = useState<"csv" | "json" | "pdf">("csv");
+  const [dashboardShareScope, setDashboardShareScope] = useState<
+    "owner_only" | "org_members" | "specific_roles" | "specific_users" | "public"
+  >("org_members");
 
   const definition = useMemo<ChartDefinition>(
     () => ({
@@ -285,6 +288,47 @@ export function ChartWorkbench({ workspaceLabel, canSave = true, canExport = tru
     },
   });
 
+  const previewExportMutation = useMutation({
+    mutationFn: async (format: "csv" | "json") => {
+      const result = await chartService.exportPreview(definition, {
+        format,
+        filename: `preview-${datasetId}.${format}`,
+      });
+      download(result.downloadUrl, result.filename);
+      return result;
+    },
+    onSuccess: (result) => {
+      toast({ title: "Preview export ready", description: result.filename, variant: "success" });
+    },
+    onError: (error) => {
+      toast({
+        title: "Preview export failed",
+        description: displayError(error, "Unable to export preview."),
+        variant: "destructive",
+      });
+    },
+  });
+
+  const updateSharingMutation = useMutation({
+    mutationFn: () => {
+      if (!selectedDashboard) throw new Error("No dashboard selected");
+      return chartService.updateDashboardSharing(selectedDashboard.id, {
+        scope: dashboardShareScope,
+      });
+    },
+    onSuccess: () => {
+      void invalidateAnalyticsMutation(queryClient);
+      toast({ title: "Dashboard sharing updated", variant: "success" });
+    },
+    onError: (error) => {
+      toast({
+        title: "Sharing update failed",
+        description: displayError(error, "Unable to update sharing."),
+        variant: "destructive",
+      });
+    },
+  });
+
   const preview = useMemo(
     () => resolveRows(previewRows, dimensionAlias || dimensionType, metricAlias || metricField),
     [dimensionAlias, dimensionType, metricAlias, metricField, previewRows]
@@ -397,6 +441,24 @@ export function ChartWorkbench({ workspaceLabel, canSave = true, canExport = tru
                     </ResponsiveContainer>
                   )}
                 </div>
+                <div className="mt-2 flex items-center gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={preview.rows.length === 0 || !canExport}
+                    onClick={() => previewExportMutation.mutate("csv")}
+                  >
+                    Export Preview CSV
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={preview.rows.length === 0 || !canExport}
+                    onClick={() => previewExportMutation.mutate("json")}
+                  >
+                    Export Preview JSON
+                  </Button>
+                </div>
               </div>
 
               <div className="rounded-2xl border border-border/60 bg-background/50 p-3">
@@ -455,10 +517,27 @@ export function ChartWorkbench({ workspaceLabel, canSave = true, canExport = tru
                       <SelectContent>{(dashboardsQuery.data ?? []).map((dashboard) => <SelectItem key={dashboard.id} value={dashboard.id}>{dashboard.name}</SelectItem>)}</SelectContent>
                     </Select>
                     {selectedDashboard && (
-                      <Button variant="outline" className="text-destructive" onClick={() => deleteDashboardMutation.mutate(selectedDashboard.id)}>
-                        <Trash2 className="mr-2 h-4 w-4" />
-                        Delete
-                      </Button>
+                      <div className="space-y-2">
+                        <div className="grid gap-2 md:grid-cols-[1fr_auto]">
+                          <Select value={dashboardShareScope} onValueChange={(value) => setDashboardShareScope(value as typeof dashboardShareScope)}>
+                            <SelectTrigger><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="owner_only">Owner only</SelectItem>
+                              <SelectItem value="org_members">Org members</SelectItem>
+                              <SelectItem value="specific_roles">Specific roles</SelectItem>
+                              <SelectItem value="specific_users">Specific users</SelectItem>
+                              <SelectItem value="public">Public</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <Button variant="outline" onClick={() => updateSharingMutation.mutate()} loading={updateSharingMutation.isPending}>
+                            Update Sharing
+                          </Button>
+                        </div>
+                        <Button variant="outline" className="text-destructive" onClick={() => deleteDashboardMutation.mutate(selectedDashboard.id)}>
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          Delete
+                        </Button>
+                      </div>
                     )}
                   </div>
                 )}

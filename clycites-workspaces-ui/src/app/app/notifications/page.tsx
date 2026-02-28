@@ -11,11 +11,12 @@ import { PageHeader } from "@/components/common/PageHeader";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { toast } from "@/components/ui/use-toast";
 import { EmptyState } from "@/components/common/EmptyState";
 import { LoadingSkeletons } from "@/components/common/LoadingSkeletons";
 
 export default function NotificationsPage() {
-  const { session } = useMockSession();
+  const { session, can } = useMockSession();
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
 
@@ -32,7 +33,52 @@ export default function NotificationsPage() {
         ? notificationsService.markUnread(payload.id, session.user.id)
         : notificationsService.markRead(payload.id, session.user.id);
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.notifications.root() }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.notifications.root() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.notifications.unreadCount() });
+    },
+  });
+  const templatesQuery = useQuery({
+    queryKey: queryKeys.notifications.templates(),
+    queryFn: () => notificationsService.listTemplates(),
+    enabled: Boolean(session) && can("admin.config.write"),
+  });
+  const retryFailedMutation = useMutation({
+    mutationFn: () => notificationsService.retryFailed(),
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.notifications.root() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.notifications.unreadCount() });
+      toast({
+        title: "Retry queued",
+        description: `${result.retried} notifications retried.`,
+        variant: "success",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Retry failed",
+        description: error instanceof Error ? error.message : "Unable to retry failed notifications.",
+        variant: "destructive",
+      });
+    },
+  });
+  const expireMutation = useMutation({
+    mutationFn: () => notificationsService.expireOld(),
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.notifications.root() });
+      toast({
+        title: "Expired old notifications",
+        description: `${result.expired} notifications expired.`,
+        variant: "success",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Expire failed",
+        description: error instanceof Error ? error.message : "Unable to expire old notifications.",
+        variant: "destructive",
+      });
+    },
   });
 
   const notifications = query.data?.items ?? [];
@@ -43,6 +89,29 @@ export default function NotificationsPage() {
         title="Notifications Center"
         subtitle="Track advisory updates, workflow actions, and escalations across workspaces."
         breadcrumbs={[{ label: "App", href: "/app" }, { label: "Notifications" }]}
+        actions={
+          can("admin.config.write") ? (
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                onClick={() => retryFailedMutation.mutate()}
+                loading={retryFailedMutation.isPending}
+              >
+                Retry Failed
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => expireMutation.mutate()}
+                loading={expireMutation.isPending}
+              >
+                Expire Old
+              </Button>
+              <Badge variant="outline">
+                Templates: {templatesQuery.data?.length ?? 0}
+              </Badge>
+            </div>
+          ) : undefined
+        }
       />
 
       <Card>

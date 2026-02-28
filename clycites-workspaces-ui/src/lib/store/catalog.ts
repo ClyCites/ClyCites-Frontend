@@ -344,21 +344,34 @@ export const ENTITY_DEFINITIONS: Record<EntityKey, EntityDefinition> = {
     numberField("data.quantity", "Spoiled Quantity"),
     textField("data.cause", "Cause"),
   ]),
-  listings: createEntityDefinition("listings", "Listing", "Listings", ["draft", "published", "paused", "closed"], [
-    textField("data.commodity", "Commodity"),
-    textField("data.unit", "Unit"),
-    numberField("data.price", "Price"),
-    {
-      key: "data.pricingMode",
-      label: "Pricing Mode",
-      type: "select",
-      options: [
-        { label: "Fixed", value: "fixed" },
-        { label: "Negotiable", value: "negotiable" },
-        { label: "Auction", value: "auction" },
-      ],
-    },
-  ]),
+  listings: createEntityDefinition(
+    "listings",
+    "Listing",
+    "Listings",
+    ["draft", "published", "paused", "closed"],
+    [
+      textField("data.commodity", "Commodity"),
+      textField("data.unit", "Unit"),
+      numberField("data.price", "Price"),
+      {
+        key: "data.pricingMode",
+        label: "Pricing Mode",
+        type: "select",
+        options: [
+          { label: "Fixed", value: "fixed" },
+          { label: "Negotiable", value: "negotiable" },
+          { label: "Auction", value: "auction" },
+        ],
+      },
+    ],
+    [
+      {
+        id: "fetch-linked-media",
+        label: "Fetch Media",
+        description: "Load linked media metadata from media service.",
+      },
+    ]
+  ),
   rfqs: createEntityDefinition("rfqs", "RFQ", "RFQs", ["open", "responded", "shortlisted", "closed"], [
     textField("data.commodity", "Commodity"),
     numberField("data.quantity", "Quantity"),
@@ -383,7 +396,24 @@ export const ENTITY_DEFINITIONS: Record<EntityKey, EntityDefinition> = {
       textField("data.milestones", "Milestones"),
       { key: "data.signed", label: "Signed", type: "switch" },
     ],
-    [statusAction("sign-contract", "Sign", "Apply contract signature placeholder.", "active")]
+    [
+      statusAction("sign-contract", "Sign", "Apply contract signature placeholder.", "active"),
+      {
+        id: "open-dispute",
+        label: "Open Dispute",
+        description: "Raise a dispute for this contract flow.",
+      },
+      {
+        id: "resolve-dispute",
+        label: "Resolve Dispute",
+        description: "Submit dispute resolution decision.",
+      },
+      {
+        id: "close-dispute",
+        label: "Close Dispute",
+        description: "Close dispute case with final summary.",
+      },
+    ]
   ),
   negotiations: createEntityDefinition(
     "negotiations",
@@ -547,21 +577,61 @@ export const ENTITY_DEFINITIONS: Record<EntityKey, EntityDefinition> = {
     numberField("data.coverageAmount", "Coverage"),
     textField("data.claimStatus", "Claim Status"),
   ]),
-  stations: createEntityDefinition("stations", "Station", "Stations", ["online", "offline", "maintenance"], [
-    textField("data.location", "Location"),
-    numberField("data.lat", "Latitude"),
-    numberField("data.lng", "Longitude"),
-    {
-      key: "data.stationStatus",
-      label: "Station Status",
-      type: "select",
-      options: [
-        { label: "Online", value: "online" },
-        { label: "Offline", value: "offline" },
-      ],
-    },
-    dateField("data.lastReadingAt", "Last Reading"),
-  ]),
+  stations: createEntityDefinition(
+    "stations",
+    "Station",
+    "Stations",
+    ["online", "offline", "maintenance"],
+    [
+      textField("data.location", "Location"),
+      numberField("data.lat", "Latitude"),
+      numberField("data.lng", "Longitude"),
+      {
+        key: "data.stationStatus",
+        label: "Station Status",
+        type: "select",
+        options: [
+          { label: "Online", value: "online" },
+          { label: "Offline", value: "offline" },
+        ],
+      },
+      dateField("data.lastReadingAt", "Last Reading"),
+    ],
+    [
+      {
+        id: "refresh-profile-weather",
+        label: "Refresh Profile",
+        description: "Run admin weather refresh for this station profile.",
+      },
+    ],
+    [
+      {
+        id: "refresh-weather-admin",
+        label: "Refresh All Weather",
+        description: "Run weather refresh across all profiles.",
+      },
+      {
+        id: "check-weather-providers",
+        label: "Provider Health",
+        description: "Check weather provider health statuses.",
+      },
+      {
+        id: "retry-weather-deliveries",
+        label: "Retry Deliveries",
+        description: "Retry failed weather alert deliveries.",
+      },
+      {
+        id: "expire-weather-alerts",
+        label: "Expire Alerts",
+        description: "Expire stale weather alerts from admin queue.",
+      },
+      {
+        id: "prune-weather-snapshots",
+        label: "Prune Snapshots",
+        description: "Prune old weather forecast snapshots.",
+      },
+    ]
+  ),
   forecasts: createEntityDefinition(
     "forecasts",
     "Forecast",
@@ -604,10 +674,33 @@ export const ENTITY_DEFINITIONS: Record<EntityKey, EntityDefinition> = {
       },
     ]
   ),
-  commodities: createEntityDefinition("commodities", "Commodity", "Commodities", ["active", "inactive"], [
-    textField("data.unit", "Unit"),
-    textField("data.grade", "Grade"),
-  ]),
+  commodities: createEntityDefinition(
+    "commodities",
+    "Commodity",
+    "Commodities",
+    ["active", "inactive"],
+    [
+      textField("data.unit", "Unit"),
+      textField("data.grade", "Grade"),
+    ],
+    [
+      {
+        id: "fetch-market-insights",
+        label: "Fetch Insights",
+        description: "Load market intelligence insight snapshot.",
+      },
+      {
+        id: "fetch-market-trends",
+        label: "Fetch Trends",
+        description: "Load market trend series for this commodity.",
+      },
+      {
+        id: "compare-market-regions",
+        label: "Compare Regions",
+        description: "Compare market conditions across regions.",
+      },
+    ]
+  ),
   marketPrices: createEntityDefinition(
     "marketPrices",
     "Market Price",
@@ -857,7 +950,19 @@ export const ENTITY_DEFINITIONS: Record<EntityKey, EntityDefinition> = {
       dateField("data.expiresAt", "Expiry"),
       { key: "data.revoked", label: "Revoked", type: "switch" },
     ],
-    [statusAction("revoke-token", "Revoke", "Revoke token permanently.", "revoked")],
+    [
+      statusAction("revoke-token", "Revoke", "Revoke token permanently.", "revoked"),
+      {
+        id: "rotate-token-secret",
+        label: "Rotate Secret",
+        description: "Rotate API token secret and invalidate old secret.",
+      },
+      {
+        id: "view-token-usage",
+        label: "View Usage",
+        description: "Fetch token usage snapshot from API.",
+      },
+    ],
     [
       {
         id: "create-token",

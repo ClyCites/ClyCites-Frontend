@@ -33,6 +33,7 @@ interface ActionRequestConfig {
   method: RequestMethod;
   body?: unknown;
   message?: string;
+  messageFromResponse?: (payload: unknown) => string | undefined;
 }
 
 interface EntityApiConfig {
@@ -212,6 +213,30 @@ function extractSingle(payload: unknown): Record<string, unknown> {
   return record;
 }
 
+function extractNumericCount(payload: unknown): number | null {
+  const unwrapped = unwrapApiData<unknown>(payload);
+  const record = asRecord(unwrapped) ?? asRecord(payload);
+  if (!record) return null;
+
+  const candidates = [
+    record.count,
+    record.total,
+    record.totalCount,
+    record.unreadCount,
+    asRecord(record.meta)?.count,
+    asRecord(record.pagination)?.total,
+  ];
+  for (const candidate of candidates) {
+    const parsed = Number(candidate);
+    if (Number.isFinite(parsed)) {
+      return Math.max(0, Math.trunc(parsed));
+    }
+  }
+
+  const rows = extractCollection(payload);
+  return Array.isArray(rows) ? rows.length : null;
+}
+
 function mapRemoteRecord(entityKey: EntityKey, row: unknown, index = 0): EntityRecord {
   const record = asRecord(row) ?? {};
   const fallbackId = `${entityKey}-remote-${index + 1}`;
@@ -387,6 +412,22 @@ function toPositiveInteger(value: unknown): number | null {
   if (!Number.isFinite(parsed)) return null;
   const normalized = Math.trunc(parsed);
   return normalized > 0 ? normalized : null;
+}
+
+function normalizeRateLimit(value: unknown): { requestsPerMinute: number; burst: number } {
+  const record = asRecord(value);
+  const requestsPerMinuteCandidate = Number(record?.requestsPerMinute ?? value ?? 1000);
+  const burstCandidate = Number(record?.burst ?? requestsPerMinuteCandidate * 2);
+
+  const requestsPerMinute = Number.isFinite(requestsPerMinuteCandidate)
+    ? Math.max(1, Math.trunc(requestsPerMinuteCandidate))
+    : 1000;
+  const burst = Number.isFinite(burstCandidate) ? Math.max(requestsPerMinute, Math.trunc(burstCandidate)) : requestsPerMinute * 2;
+
+  return {
+    requestsPerMinute,
+    burst,
+  };
 }
 
 function extractRemotePagination(payload: unknown, fallbackPage: number, fallbackPageSize: number, itemCount: number): {
@@ -1057,6 +1098,19 @@ const ENTITY_API_CONFIG: Partial<Record<EntityKey, EntityApiConfig>> = {
       },
       status: payload.data?.status,
     }),
+    actionRequest: (actionId, _actorId, targetId) => {
+      if (actionId !== "fetch-linked-media" || !targetId) return null;
+      return {
+        path: `/api/v1/media/linked/Listing/${encodeURIComponent(targetId)}`,
+        method: "GET",
+        messageFromResponse: (payload) => {
+          const count = extractNumericCount(payload);
+          return typeof count === "number"
+            ? `Loaded ${count} linked media items.`
+            : "Loaded linked media metadata.";
+        },
+      };
+    },
   },
   rfqs: {
     listPath: "/api/v1/offers",
@@ -1183,6 +1237,59 @@ const ENTITY_API_CONFIG: Partial<Record<EntityKey, EntityApiConfig>> = {
         reason: note,
       },
     }),
+  },
+  contracts: {
+    listPath: "/api/v1/disputes",
+    getPath: (id) => `/api/v1/disputes/${encodeURIComponent(id)}`,
+    createPath: "/api/v1/disputes",
+    listQuery: (params) => ({
+      page: params.pagination.page,
+      limit: params.pagination.pageSize,
+      status: params.filters?.status?.[0],
+    }),
+    mapCreateBody: (payload) => ({
+      orderId: String(payload.data.orderId ?? toMongoLikeId(payload.title, payload.title)),
+      type: String(payload.data.type ?? payload.data.category ?? "other"),
+      description: String(payload.data.description ?? payload.subtitle ?? payload.title),
+      evidence: toStringArray(payload.data.evidence),
+    }),
+    actionRequest: (actionId, _actorId, targetId) => {
+      if (!targetId) return null;
+      if (actionId === "open-dispute") {
+        return {
+          path: "/api/v1/disputes",
+          method: "POST",
+          body: {
+            orderId: targetId,
+            type: "other",
+            description: "Dispute opened from ClyCites contract workflow.",
+          },
+          message: "Dispute case created successfully.",
+        };
+      }
+      if (actionId === "resolve-dispute") {
+        return {
+          path: `/api/v1/disputes/${encodeURIComponent(targetId)}/resolve`,
+          method: "POST",
+          body: {
+            resolution: "Resolved from contract workflow.",
+            outcome: "no_action",
+          },
+          message: "Dispute resolved.",
+        };
+      }
+      if (actionId === "close-dispute") {
+        return {
+          path: `/api/v1/disputes/${encodeURIComponent(targetId)}/close`,
+          method: "POST",
+          body: {
+            note: "Closed from contract workflow.",
+          },
+          message: "Dispute closed.",
+        };
+      }
+      return null;
+    },
   },
   shipments: {
     listPath: "/api/v1/logistics/shipments",
@@ -1368,6 +1475,56 @@ const ENTITY_API_CONFIG: Partial<Record<EntityKey, EntityApiConfig>> = {
       cropTypes: toStringArray(payload.data?.cropTypes),
       timezone: typeof payload.data?.timezone === "string" ? payload.data.timezone : undefined,
     }),
+    actionRequest: (actionId, _actorId, targetId) => {
+      if (actionId === "refresh-weather-admin") {
+        return {
+          path: "/api/v1/weather/admin/refresh",
+          method: "POST",
+          message: "Triggered weather refresh for all profiles.",
+        };
+      }
+      if (actionId === "check-weather-providers") {
+        return {
+          path: "/api/v1/weather/admin/providers",
+          method: "GET",
+          messageFromResponse: (payload) => {
+            const count = extractNumericCount(payload);
+            return typeof count === "number"
+              ? `Provider health loaded (${count} providers).`
+              : "Provider health loaded.";
+          },
+        };
+      }
+      if (actionId === "retry-weather-deliveries") {
+        return {
+          path: "/api/v1/weather/admin/retry-deliveries",
+          method: "POST",
+          message: "Triggered retry for failed weather deliveries.",
+        };
+      }
+      if (actionId === "expire-weather-alerts") {
+        return {
+          path: "/api/v1/weather/admin/expire-alerts",
+          method: "POST",
+          message: "Triggered weather alert expiration task.",
+        };
+      }
+      if (actionId === "prune-weather-snapshots") {
+        return {
+          path: "/api/v1/weather/admin/prune-snapshots",
+          method: "POST",
+          message: "Triggered weather snapshot pruning.",
+        };
+      }
+      if (actionId === "refresh-profile-weather" && targetId) {
+        return {
+          path: `/api/v1/weather/admin/profiles/${encodeURIComponent(targetId)}/refresh`,
+          method: "POST",
+          message: "Triggered weather refresh for selected profile.",
+        };
+      }
+      return null;
+    },
   },
   forecasts: {
     listPath: "/api/v1/weather/profiles/{weatherProfileId}/forecast",
@@ -1381,6 +1538,14 @@ const ENTITY_API_CONFIG: Partial<Record<EntityKey, EntityApiConfig>> = {
         search: undefined,
         status: undefined,
         horizon: Number.isFinite(parsedHorizon) && parsedHorizon > 0 ? parsedHorizon : 7,
+      };
+    },
+    actionRequest: (actionId) => {
+      if (actionId !== "refresh-forecast") return null;
+      return {
+        path: "/api/v1/weather/admin/refresh",
+        method: "POST",
+        message: "Forecast refresh triggered.",
       };
     },
   },
@@ -1601,6 +1766,41 @@ const ENTITY_API_CONFIG: Partial<Record<EntityKey, EntityApiConfig>> = {
       unit: String(payload.data?.unit ?? "kg"),
       description: payload.subtitle,
     }),
+    actionRequest: (actionId, _actorId, targetId) => {
+      if (!targetId) return null;
+      if (actionId === "fetch-market-insights") {
+        return {
+          path: `/api/v1/market-intelligence/insights?productId=${encodeURIComponent(targetId)}&period=30d`,
+          method: "GET",
+          messageFromResponse: (payload) => {
+            const count = extractNumericCount(payload);
+            return typeof count === "number"
+              ? `Market insights loaded (${count} records).`
+              : "Market insights loaded.";
+          },
+        };
+      }
+      if (actionId === "fetch-market-trends") {
+        return {
+          path: `/api/v1/market-intelligence/trends?productId=${encodeURIComponent(targetId)}&period=90d`,
+          method: "GET",
+          messageFromResponse: (payload) => {
+            const count = extractNumericCount(payload);
+            return typeof count === "number"
+              ? `Market trends loaded (${count} points).`
+              : "Market trends loaded.";
+          },
+        };
+      }
+      if (actionId === "compare-market-regions") {
+        return {
+          path: `/api/v1/market-intelligence/compare?productId=${encodeURIComponent(targetId)}&regions=${encodeURIComponent("Central,Western")}`,
+          method: "GET",
+          message: "Market region comparison loaded.",
+        };
+      }
+      return null;
+    },
   },
   priceSignals: {
     listPath: "/api/v1/market-intelligence/alerts",
@@ -1793,6 +1993,9 @@ const ENTITY_API_CONFIG: Partial<Record<EntityKey, EntityApiConfig>> = {
     updatePath: (id) => `/api/v1/auth/tokens/${encodeURIComponent(id)}`,
     deletePath: (id) => `/api/v1/auth/tokens/${encodeURIComponent(id)}/revoke`,
     deleteMethod: "POST",
+    deleteBody: (id) => ({
+      reason: `Revoked from workspace UI (${id})`,
+    }),
     listQuery: (params) => ({
       status: params.filters?.status?.[0],
       tokenType: "personal",
@@ -1802,7 +2005,7 @@ const ENTITY_API_CONFIG: Partial<Record<EntityKey, EntityApiConfig>> = {
       name: payload.title,
       description: payload.subtitle,
       scopes: toStringArray(payload.data.scopes).length > 0 ? toStringArray(payload.data.scopes) : ["orders:read"],
-      rateLimit: Number(payload.data.rateLimit ?? 1000),
+      rateLimit: normalizeRateLimit(payload.data.rateLimit),
       expiresAt: payload.data.expiresAt,
       reason: "Created from workspace UI",
     }),
@@ -1810,14 +2013,46 @@ const ENTITY_API_CONFIG: Partial<Record<EntityKey, EntityApiConfig>> = {
       name: payload.title,
       description: payload.subtitle,
       scopes: toStringArray(payload.data?.scopes),
-      rateLimit: Number(payload.data?.rateLimit ?? 1000),
+      rateLimit: normalizeRateLimit(payload.data?.rateLimit),
       expiresAt: payload.data?.expiresAt,
     }),
-    statusRequest: (id, status) => {
+    statusRequest: (id, status, note) => {
       if (status === "revoked") {
         return {
           path: `/api/v1/auth/tokens/${encodeURIComponent(id)}/revoke`,
           method: "POST",
+          body: {
+            reason: note ?? "Revoked from workspace workflow",
+          },
+        };
+      }
+      return null;
+    },
+    actionRequest: (actionId, _actorId, targetId) => {
+      if (!targetId) return null;
+      if (actionId === "rotate-token-secret") {
+        return {
+          path: `/api/v1/auth/tokens/${encodeURIComponent(targetId)}/rotate`,
+          method: "POST",
+          body: {
+            reason: "Rotated from workspace UI",
+          },
+          message: "Token secret rotated successfully.",
+        };
+      }
+      if (actionId === "view-token-usage") {
+        return {
+          path: `/api/v1/auth/tokens/${encodeURIComponent(targetId)}/usage?sinceDays=7`,
+          method: "GET",
+          messageFromResponse: (payload) => {
+            const data = asRecord(unwrapApiData<unknown>(payload)) ?? {};
+            const summary = asRecord(data.summary);
+            const total = Number(summary?.totalRequests ?? data.totalRequests ?? NaN);
+            if (Number.isFinite(total)) {
+              return `Token usage loaded (${Math.max(0, Math.trunc(total))} requests in 7 days).`;
+            }
+            return "Token usage loaded.";
+          },
         };
       }
       return null;
@@ -2277,7 +2512,7 @@ async function runActionRemote(
     throw new Error("Action endpoint not configured");
   }
 
-  await apiRequest<unknown>(
+  const response = await apiRequest<unknown>(
     await resolvePath(request.path),
     {
       method: request.method,
@@ -2287,7 +2522,7 @@ async function runActionRemote(
   );
 
   return {
-    message: request.message ?? "Action completed successfully.",
+    message: request.messageFromResponse?.(response) ?? request.message ?? "Action completed successfully.",
   };
 }
 

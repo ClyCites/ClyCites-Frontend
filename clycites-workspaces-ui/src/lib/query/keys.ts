@@ -16,6 +16,8 @@ export const queryKeys = {
     root: () => ["notifications"] as const,
     byWorkspace: (workspaceId?: WorkspaceId) => ["notifications", workspaceId ?? "all"] as const,
     byPage: (page: number, workspaceId?: WorkspaceId) => ["notifications", workspaceId ?? "all", page] as const,
+    unreadCount: () => ["notifications", "unread-count"] as const,
+    templates: () => ["notifications", "templates"] as const,
   },
   audit: {
     root: () => ["audit"] as const,
@@ -33,4 +35,3 @@ export const queryKeys = {
     dashboard: (dashboardId: string) => ["analytics", "dashboards", dashboardId] as const,
   },
 };
-

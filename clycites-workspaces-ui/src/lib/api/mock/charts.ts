@@ -4,6 +4,7 @@ import type {
   ChartDefinition,
   ChartPreviewResult,
   ChartServiceContract,
+  DashboardSharingUpdateRequest,
   DashboardChartItem,
   GenerateReportRequest,
   SaveChartRequest,
@@ -145,6 +146,30 @@ export const chartService: ChartServiceContract = {
     return normalizeChart(created);
   },
 
+  async exportPreview(definition, options): Promise<ChartExportResult> {
+    const format = options?.format ?? "csv";
+    const filename = options?.filename?.trim() || `preview-${definition.datasetId}.${format}`;
+    const dimensions = definition.dimensions?.[0]?.type ?? "period";
+    const metricAlias = definition.metrics?.[0]?.alias ?? definition.metrics?.[0]?.field ?? "value";
+    const rows = ["Jan", "Feb", "Mar", "Apr", "May", "Jun"].map((period, index) => ({
+      [dimensions]: period,
+      [metricAlias]: Math.max(4, 12 + index * 5 + (index % 2 === 0 ? 3 : -2)),
+      datasetId: definition.datasetId,
+    }));
+    const content =
+      format === "csv"
+        ? [
+            Object.keys(rows[0] ?? {}).join(","),
+            ...rows.map((row) =>
+              Object.values(row)
+                .map((value) => JSON.stringify(value ?? ""))
+                .join(",")
+            ),
+          ].join("\n")
+        : JSON.stringify({ definition, rows }, null, 2);
+    return createBlobFromContent(content, format, filename);
+  },
+
   async updateChart(chartId, payload): Promise<SavedChart> {
     const current = await entityServices.charts.getX(chartId);
     const updated = await entityServices.charts.updateX(chartId, {
@@ -236,6 +261,23 @@ export const chartService: ChartServiceContract = {
     });
 
     return normalizeDashboard(created);
+  },
+
+  async updateDashboardSharing(dashboardId: string, payload: DashboardSharingUpdateRequest): Promise<SavedDashboard> {
+    const current = await entityServices.dashboards.getX(dashboardId);
+    const updated = await entityServices.dashboards.updateX(dashboardId, {
+      actorId: DEFAULT_ACTOR_ID,
+      title: current.title,
+      subtitle: current.subtitle,
+      tags: current.tags,
+      data: {
+        ...current.data,
+        shareScope: payload.scope,
+        shareRoles: payload.roles ?? [],
+        shareUserIds: payload.userIds ?? [],
+      },
+    });
+    return normalizeDashboard(updated as Awaited<ReturnType<typeof entityServices.dashboards.createX>>);
   },
 
   async deleteDashboard(dashboardId): Promise<void> {

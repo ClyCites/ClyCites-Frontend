@@ -167,4 +167,59 @@ export const notificationsService = {
       () => mockNotificationsService.markAllRead(actorId)
     );
   },
+  async getUnreadCount() {
+    return withFallback(
+      async () => {
+        const payload = await apiRequest<unknown>("/api/v1/notifications/unread-count", { method: "GET" }, { auth: true });
+        const data = asRecord(unwrapApiData<unknown>(payload)) ?? {};
+        const direct = Number(data.count ?? data.unreadCount ?? data.total ?? 0);
+        return Number.isFinite(direct) ? Math.max(0, Math.trunc(direct)) : 0;
+      },
+      () => mockNotificationsService.getUnreadCount()
+    );
+  },
+  async listTemplates() {
+    return withFallback(
+      async () => {
+        const payload = await apiRequest<unknown>("/api/v1/notifications/templates", { method: "GET" }, { auth: true });
+        const rows = extractRows(payload);
+        return rows.map((row, index) => {
+          const record = asRecord(row) ?? {};
+          return {
+            id: String(record.id ?? `template-${index + 1}`),
+            key: String(record.key ?? record.name ?? `template_${index + 1}`),
+            channels: Array.isArray(record.channels)
+              ? record.channels.filter((item): item is string => typeof item === "string")
+              : [],
+          };
+        });
+      },
+      () => mockNotificationsService.listTemplates()
+    );
+  },
+  async retryFailed() {
+    return withFallback(
+      async () => {
+        const payload = await apiRequest<unknown>("/api/v1/notifications/admin/retry-failed", { method: "POST" }, { auth: true });
+        const data = asRecord(unwrapApiData<unknown>(payload)) ?? {};
+        return {
+          queued: Number(data.queued ?? 0),
+          retried: Number(data.retried ?? data.count ?? 0),
+        };
+      },
+      () => mockNotificationsService.retryFailed()
+    );
+  },
+  async expireOld() {
+    return withFallback(
+      async () => {
+        const payload = await apiRequest<unknown>("/api/v1/notifications/admin/expire-old", { method: "POST" }, { auth: true });
+        const data = asRecord(unwrapApiData<unknown>(payload)) ?? {};
+        return {
+          expired: Number(data.expired ?? data.count ?? 0),
+        };
+      },
+      () => mockNotificationsService.expireOld()
+    );
+  },
 };

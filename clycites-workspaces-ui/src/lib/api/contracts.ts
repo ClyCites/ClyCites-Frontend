@@ -124,6 +124,12 @@ export interface SaveDashboardRequest {
   shareScope?: "owner_only" | "org_members" | "specific_roles" | "specific_users" | "public";
 }
 
+export interface DashboardSharingUpdateRequest {
+  scope: "owner_only" | "org_members" | "specific_roles" | "specific_users" | "public";
+  roles?: string[];
+  userIds?: string[];
+}
+
 export interface SavedDashboard {
   id: string;
   name: string;
@@ -156,6 +162,10 @@ export interface ChartExportResult {
 
 export interface ChartServiceContract {
   previewChart(definition: ChartDefinition): Promise<ChartPreviewResult>;
+  exportPreview(
+    definition: ChartDefinition,
+    options?: { format?: "csv" | "json"; filename?: string }
+  ): Promise<ChartExportResult>;
   saveChart(payload: SaveChartRequest): Promise<SavedChart>;
   updateChart(chartId: string, payload: Partial<SaveChartRequest>): Promise<SavedChart>;
   deleteChart(chartId: string): Promise<void>;
@@ -164,6 +174,7 @@ export interface ChartServiceContract {
   listDashboards(params?: { page?: number; limit?: number }): Promise<SavedDashboard[]>;
   createDashboard(payload: SaveDashboardRequest): Promise<SavedDashboard>;
   deleteDashboard(dashboardId: string): Promise<void>;
+  updateDashboardSharing(dashboardId: string, payload: DashboardSharingUpdateRequest): Promise<SavedDashboard>;
   attachChartToDashboard(dashboardId: string, payload: AttachChartToDashboardRequest): Promise<SavedDashboard>;
   removeChartFromDashboard(dashboardId: string, chartId: string): Promise<SavedDashboard>;
   reorderDashboardCharts(dashboardId: string, orderedChartIds: string[]): Promise<SavedDashboard>;
