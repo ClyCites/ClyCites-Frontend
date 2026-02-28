@@ -4,9 +4,11 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { auditService } from "@/lib/api";
 import { useMockSession } from "@/lib/auth/mock-session";
+import { queryKeys } from "@/lib/query/keys";
 import { AccessDenied } from "@/components/common/AccessDenied";
 import { PageHeader } from "@/components/common/PageHeader";
 import { EmptyState } from "@/components/common/EmptyState";
+import { LoadingSkeletons } from "@/components/common/LoadingSkeletons";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -30,7 +32,7 @@ export function AuditLogViewer() {
   );
 
   const query = useQuery({
-    queryKey: ["audit", params],
+    queryKey: queryKeys.audit.list(params),
     queryFn: () => auditService.list(params),
     enabled: Boolean(session),
   });
@@ -73,7 +75,18 @@ export function AuditLogViewer() {
             </Button>
           </div>
 
-          {rows.length === 0 ? (
+          {query.isLoading ? (
+            <LoadingSkeletons />
+          ) : query.error ? (
+            <div className="space-y-2 rounded-xl border border-destructive/40 bg-destructive/5 p-3">
+              <p className="text-sm text-destructive">
+                {query.error instanceof Error ? query.error.message : "Unable to load audit logs."}
+              </p>
+              <Button variant="outline" onClick={() => query.refetch()}>
+                Retry
+              </Button>
+            </div>
+          ) : rows.length === 0 ? (
             <EmptyState title="No audit records" description="Adjust filters or trigger a new action to populate logs." />
           ) : (
             <Table>

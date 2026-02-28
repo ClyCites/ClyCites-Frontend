@@ -5,19 +5,21 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Search } from "lucide-react";
 import { searchService } from "@/lib/api";
+import { queryKeys } from "@/lib/query/keys";
 import { PageHeader } from "@/components/common/PageHeader";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/common/EmptyState";
+import { LoadingSkeletons } from "@/components/common/LoadingSkeletons";
 
 export default function GlobalSearchPage() {
   const [query, setQuery] = useState("");
   const [submitted, setSubmitted] = useState("");
 
   const searchQuery = useQuery({
-    queryKey: ["global-search", submitted],
+    queryKey: queryKeys.search.query(submitted),
     queryFn: () => searchService.search(submitted),
     enabled: submitted.trim().length > 1,
   });
@@ -52,7 +54,18 @@ export default function GlobalSearchPage() {
             </Button>
           </form>
 
-          {submitted.trim().length > 1 && results.length === 0 && !searchQuery.isLoading ? (
+          {searchQuery.isLoading ? (
+            <LoadingSkeletons />
+          ) : searchQuery.error ? (
+            <div className="space-y-2 rounded-xl border border-destructive/40 bg-destructive/5 p-3">
+              <p className="text-sm text-destructive">
+                {searchQuery.error instanceof Error ? searchQuery.error.message : "Search failed."}
+              </p>
+              <Button variant="outline" onClick={() => searchQuery.refetch()}>
+                Retry
+              </Button>
+            </div>
+          ) : submitted.trim().length > 1 && results.length === 0 ? (
             <EmptyState title="No matching records" description="Try broader keywords or switch to another workspace." />
           ) : (
             results.map((result) => (

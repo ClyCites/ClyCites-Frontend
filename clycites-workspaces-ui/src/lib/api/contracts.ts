@@ -100,15 +100,72 @@ export interface SavedChart {
   updatedAt?: string;
 }
 
+export interface DashboardChartPosition {
+  col: number;
+  row: number;
+}
+
+export interface DashboardChartSize {
+  w: number;
+  h: number;
+}
+
+export interface DashboardChartItem {
+  chartId: string;
+  chartName?: string;
+  position: DashboardChartPosition;
+  size: DashboardChartSize;
+}
+
+export interface SaveDashboardRequest {
+  name: string;
+  description?: string;
+  tags?: string[];
+  shareScope?: "owner_only" | "org_members" | "specific_roles" | "specific_users" | "public";
+}
+
+export interface SavedDashboard {
+  id: string;
+  name: string;
+  description?: string;
+  tags: string[];
+  shareScope: string;
+  charts: DashboardChartItem[];
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface AttachChartToDashboardRequest {
+  chartId: string;
+  position?: DashboardChartPosition;
+  size?: DashboardChartSize;
+}
+
+export interface GenerateReportRequest {
+  dashboardId?: string;
+  format?: "csv" | "json" | "pdf";
+  filename?: string;
+  filters?: Record<string, unknown>;
+}
+
 export interface ChartExportResult {
   downloadUrl: string;
   filename: string;
-  format: "csv" | "json";
+  format: "csv" | "json" | "pdf";
 }
 
 export interface ChartServiceContract {
   previewChart(definition: ChartDefinition): Promise<ChartPreviewResult>;
   saveChart(payload: SaveChartRequest): Promise<SavedChart>;
+  updateChart(chartId: string, payload: Partial<SaveChartRequest>): Promise<SavedChart>;
+  deleteChart(chartId: string): Promise<void>;
   listCharts(params?: { page?: number; limit?: number; dataset?: string; tags?: string }): Promise<SavedChart[]>;
   exportChart(chartId: string, options?: { format?: "csv" | "json"; filename?: string }): Promise<ChartExportResult>;
+  listDashboards(params?: { page?: number; limit?: number }): Promise<SavedDashboard[]>;
+  createDashboard(payload: SaveDashboardRequest): Promise<SavedDashboard>;
+  deleteDashboard(dashboardId: string): Promise<void>;
+  attachChartToDashboard(dashboardId: string, payload: AttachChartToDashboardRequest): Promise<SavedDashboard>;
+  removeChartFromDashboard(dashboardId: string, chartId: string): Promise<SavedDashboard>;
+  reorderDashboardCharts(dashboardId: string, orderedChartIds: string[]): Promise<SavedDashboard>;
+  generateReport(payload: GenerateReportRequest): Promise<ChartExportResult>;
 }

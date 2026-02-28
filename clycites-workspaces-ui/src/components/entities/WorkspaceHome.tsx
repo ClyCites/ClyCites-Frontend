@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { createElement, useMemo, useState } from "react";
-import { useMutation, useQueries } from "@tanstack/react-query";
+import { useMutation, useQueries, useQueryClient } from "@tanstack/react-query";
 import { motion, useReducedMotion } from "framer-motion";
 import { ArrowRight, TrendingDown, TrendingUp } from "lucide-react";
 import { WORKSPACE_ENTITY_MAP, getEntityDefinition, getWorkspaceDefinition } from "@/lib/store/catalog";
@@ -11,6 +11,8 @@ import type { ChartDefinition } from "@/lib/api/contracts";
 import { entityServices } from "@/lib/api";
 import type { WorkspaceId } from "@/lib/store/types";
 import { useMockSession } from "@/lib/auth/mock-session";
+import { queryKeys } from "@/lib/query/keys";
+import { invalidateAnalyticsMutation } from "@/lib/query/invalidation";
 import { AccessDenied } from "@/components/common/AccessDenied";
 import { WorkspaceInsightsCharts } from "@/components/charts/WorkspaceInsightsCharts";
 import { PageHeader } from "@/components/common/PageHeader";
@@ -47,10 +49,11 @@ export function WorkspaceHome({ workspaceId }: WorkspaceHomeProps) {
   const workspaceDescription = workspace?.description ?? "Workspace overview";
   const { canAccessWorkspace } = useMockSession();
   const reducedMotion = useReducedMotion();
+  const queryClient = useQueryClient();
 
   const cardsQuery = useQueries({
     queries: entities.map((entityKey) => ({
-      queryKey: ["workspace-summary", workspaceId, entityKey],
+      queryKey: queryKeys.workspaceSummary.byEntity(workspaceId, entityKey),
       queryFn: () =>
         entityServices[entityKey].listX({
           pagination: { page: 1, pageSize: 1 },
@@ -134,6 +137,7 @@ export function WorkspaceHome({ workspaceId }: WorkspaceHomeProps) {
         shareScope: "org_members",
       }),
     onSuccess: (result) => {
+      void invalidateAnalyticsMutation(queryClient);
       toast({
         title: "Chart saved",
         description: `Saved chart "${result.name}" (${result.id}).`,

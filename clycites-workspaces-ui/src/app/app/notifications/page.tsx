@@ -6,11 +6,13 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Bell } from "lucide-react";
 import { notificationsService } from "@/lib/api";
 import { useMockSession } from "@/lib/auth/mock-session";
+import { queryKeys } from "@/lib/query/keys";
 import { PageHeader } from "@/components/common/PageHeader";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/common/EmptyState";
+import { LoadingSkeletons } from "@/components/common/LoadingSkeletons";
 
 export default function NotificationsPage() {
   const { session } = useMockSession();
@@ -18,7 +20,7 @@ export default function NotificationsPage() {
   const [page, setPage] = useState(1);
 
   const query = useQuery({
-    queryKey: ["notifications", page],
+    queryKey: queryKeys.notifications.byPage(page),
     queryFn: () => notificationsService.list({ page, pageSize: 20 }),
     enabled: Boolean(session),
   });
@@ -30,7 +32,7 @@ export default function NotificationsPage() {
         ? notificationsService.markUnread(payload.id, session.user.id)
         : notificationsService.markRead(payload.id, session.user.id);
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["notifications"] }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.notifications.root() }),
   });
 
   const notifications = query.data?.items ?? [];
@@ -45,7 +47,18 @@ export default function NotificationsPage() {
 
       <Card>
         <CardContent className="space-y-3 pt-6">
-          {notifications.length === 0 ? (
+          {query.isLoading ? (
+            <LoadingSkeletons />
+          ) : query.error ? (
+            <div className="space-y-3 rounded-xl border border-destructive/40 bg-destructive/5 p-3">
+              <p className="text-sm text-destructive">
+                {query.error instanceof Error ? query.error.message : "Unable to load notifications."}
+              </p>
+              <Button variant="outline" onClick={() => query.refetch()}>
+                Retry
+              </Button>
+            </div>
+          ) : notifications.length === 0 ? (
             <EmptyState title="No notifications" description="Everything is clear for now." />
           ) : (
             notifications.map((notification) => (

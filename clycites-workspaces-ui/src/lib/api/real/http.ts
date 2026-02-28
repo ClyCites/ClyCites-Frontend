@@ -2,6 +2,9 @@ import { getApiBaseUrl } from "@/lib/api/config";
 
 const ACCESS_TOKEN_KEY = "clycites.real.accessToken";
 const REFRESH_TOKEN_KEY = "clycites.real.refreshToken";
+const MAX_RETRY_ATTEMPTS = 3;
+const BASE_RETRY_DELAY_MS = 350;
+const MAX_RETRY_DELAY_MS = 4_000;
 
 export interface ApiErrorPayload {
   status: number;
@@ -36,6 +39,103 @@ function safeJsonParse(input: string): unknown {
   }
 }
 
+function asRecord(value: unknown): Record<string, unknown> | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  return value as Record<string, unknown>;
+}
+
+function asString(value: unknown): string | undefined {
+  return typeof value === "string" && value.trim().length > 0 ? value : undefined;
+}
+
+function parseValidationDetails(payload: unknown): string | undefined {
+  const record = asRecord(payload);
+  if (!record) return undefined;
+
+  const errors = record.errors;
+  if (Array.isArray(errors)) {
+    const first = errors.find((item) => asString(item));
+    if (typeof first === "string") return first;
+  }
+
+  if (errors && typeof errors === "object") {
+    const entries = Object.entries(errors as Record<string, unknown>);
+    const first = entries.find(([, value]) => typeof value === "string" || (Array.isArray(value) && value.length > 0));
+    if (!first) return undefined;
+    const [field, value] = first;
+    if (typeof value === "string") return `${field}: ${value}`;
+    if (Array.isArray(value)) {
+      const firstMessage = value.find((item) => typeof item === "string");
+      if (typeof firstMessage === "string") return `${field}: ${firstMessage}`;
+    }
+  }
+
+  return undefined;
+}
+
+export function parseApiErrorPayload(payload: unknown, status: number, fallback: string): ApiErrorPayload {
+  if (typeof payload === "string" && payload.trim().length > 0) {
+    return { status, message: payload.trim(), details: payload };
+  }
+
+  const root = asRecord(payload) ?? {};
+  const nestedError = asRecord(root.error);
+  const nestedData = asRecord(root.data);
+
+  const message =
+    asString(root.message) ??
+    asString(root.error_description) ??
+    asString(root.detail) ??
+    asString(nestedError?.message) ??
+    asString(nestedData?.message) ??
+    parseValidationDetails(root) ??
+    parseValidationDetails(nestedError) ??
+    fallback;
+
+  const code =
+    asString(root.code) ??
+    asString(root.errorCode) ??
+    asString(root.error) ??
+    asString(nestedError?.code) ??
+    asString(nestedData?.code);
+
+  return {
+    status,
+    message,
+    code,
+    details: payload,
+  };
+}
+
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+}
+
+function retryDelayFromAttempt(attempt: number): number {
+  const exponential = BASE_RETRY_DELAY_MS * 2 ** Math.max(0, attempt - 1);
+  const jitter = Math.floor(Math.random() * 150);
+  return Math.min(MAX_RETRY_DELAY_MS, exponential + jitter);
+}
+
+function parseRetryAfterMs(headerValue: string | null): number | null {
+  if (!headerValue) return null;
+
+  const seconds = Number(headerValue);
+  if (Number.isFinite(seconds) && seconds >= 0) {
+    return Math.max(0, Math.floor(seconds * 1_000));
+  }
+
+  const target = Date.parse(headerValue);
+  if (Number.isNaN(target)) return null;
+  return Math.max(0, target - Date.now());
+}
+
+function shouldRetryStatus(status: number): boolean {
+  return status === 429 || status === 502 || status === 503 || status === 504;
+}
+
 export interface AuthTokens {
   accessToken: string;
   refreshToken?: string;
@@ -67,35 +167,6 @@ export function clearTokens(): void {
   window.localStorage.removeItem(REFRESH_TOKEN_KEY);
 }
 
-function getErrorMessage(payload: unknown, fallback: string): string {
-  if (!payload || typeof payload !== "object") return fallback;
-
-  const objectPayload = payload as Record<string, unknown>;
-  if (typeof objectPayload.message === "string") return objectPayload.message;
-
-  if (objectPayload.error && typeof objectPayload.error === "object") {
-    const nested = objectPayload.error as Record<string, unknown>;
-    if (typeof nested.message === "string") return nested.message;
-  }
-
-  return fallback;
-}
-
-function getErrorCode(payload: unknown): string | undefined {
-  if (!payload || typeof payload !== "object") return undefined;
-  const objectPayload = payload as Record<string, unknown>;
-
-  if (typeof objectPayload.code === "string") return objectPayload.code;
-
-  const errorObject = objectPayload.error;
-  if (errorObject && typeof errorObject === "object") {
-    const nested = errorObject as Record<string, unknown>;
-    if (typeof nested.code === "string") return nested.code;
-  }
-
-  return undefined;
-}
-
 export function unwrapApiData<T>(payload: unknown): T {
   if (payload && typeof payload === "object") {
     const objectPayload = payload as Record<string, unknown>;
@@ -103,7 +174,6 @@ export function unwrapApiData<T>(payload: unknown): T {
       return objectPayload.data as T;
     }
   }
-
   return payload as T;
 }
 
@@ -124,11 +194,7 @@ function extractTokens(payload: unknown): AuthTokens | null {
     (typeof objectPayload.refreshToken === "string" ? (objectPayload.refreshToken as string) : undefined);
 
   if (!accessToken) return null;
-
-  return {
-    accessToken,
-    refreshToken,
-  };
+  return { accessToken, refreshToken };
 }
 
 async function refreshAccessToken(refreshToken: string): Promise<AuthTokens | null> {
@@ -154,7 +220,6 @@ async function refreshAccessToken(refreshToken: string): Promise<AuthTokens | nu
   if (tokens) {
     storeTokens(tokens);
   }
-
   return tokens;
 }
 
@@ -164,11 +229,12 @@ async function requestInternal<T>(
   options: {
     auth?: boolean;
     retryOnUnauthorized?: boolean;
+    attempt?: number;
   }
 ): Promise<T> {
   const authEnabled = options.auth ?? true;
-  const baseUrl = getApiBaseUrl();
-  const url = `${baseUrl}${path.startsWith("/") ? path : `/${path}`}`;
+  const attempt = options.attempt ?? 1;
+  const url = `${getApiBaseUrl()}${path.startsWith("/") ? path : `/${path}`}`;
 
   const headers = new Headers(init.headers ?? {});
   if (!headers.has("Accept")) {
@@ -183,10 +249,24 @@ async function requestInternal<T>(
     headers.set("Authorization", `Bearer ${tokens.accessToken}`);
   }
 
-  const response = await fetch(url, {
-    ...init,
-    headers,
-  });
+  let response: Response;
+  try {
+    response = await fetch(url, {
+      ...init,
+      headers,
+    });
+  } catch (error) {
+    if (attempt < MAX_RETRY_ATTEMPTS) {
+      await delay(retryDelayFromAttempt(attempt));
+      return requestInternal<T>(path, init, { ...options, attempt: attempt + 1 });
+    }
+    throw new ApiRequestError({
+      status: 0,
+      message: "Network request failed. Please check connection and retry.",
+      code: "NETWORK_ERROR",
+      details: error,
+    });
+  }
 
   const contentType = response.headers.get("content-type") ?? "";
   const raw = await response.text();
@@ -204,16 +284,23 @@ async function requestInternal<T>(
         return requestInternal<T>(path, init, {
           ...options,
           retryOnUnauthorized: false,
+          attempt: 1,
         });
       }
     }
 
-    throw new ApiRequestError({
-      status: response.status,
-      message: getErrorMessage(payload, `Request failed with status ${response.status}`),
-      code: getErrorCode(payload),
-      details: payload,
-    });
+    if (shouldRetryStatus(response.status) && attempt < MAX_RETRY_ATTEMPTS) {
+      const retryAfterMs = parseRetryAfterMs(response.headers.get("retry-after"));
+      await delay(retryAfterMs ?? retryDelayFromAttempt(attempt));
+      return requestInternal<T>(path, init, {
+        ...options,
+        attempt: attempt + 1,
+      });
+    }
+
+    throw new ApiRequestError(
+      parseApiErrorPayload(payload, response.status, `Request failed with status ${response.status}`)
+    );
   }
 
   if (path.includes("/auth/login") || path.includes("/auth/refresh-token")) {
@@ -234,5 +321,8 @@ export async function apiRequest<T>(
     retryOnUnauthorized?: boolean;
   } = {}
 ): Promise<T> {
-  return requestInternal<T>(path, init, options);
+  return requestInternal<T>(path, init, {
+    ...options,
+    attempt: 1,
+  });
 }

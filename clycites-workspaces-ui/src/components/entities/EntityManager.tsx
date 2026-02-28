@@ -8,6 +8,8 @@ import { entityServices } from "@/lib/api";
 import { ENTITY_DEFINITIONS } from "@/lib/store/catalog";
 import type { EntityKey, EntityRecord, FieldDefinition, ListParams, ListResult, WorkspaceId } from "@/lib/store/types";
 import { useMockSession } from "@/lib/auth/mock-session";
+import { queryKeys } from "@/lib/query/keys";
+import { invalidateEntityMutation } from "@/lib/query/invalidation";
 import { PageHeader } from "@/components/common/PageHeader";
 import { toast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
@@ -179,7 +181,8 @@ export function EntityManager({ workspaceId, entityKey }: EntityManagerProps) {
     [page, pageSize, searchText, sortDirection, sortField, statusFilter]
   );
 
-  const queryKey = ["entity", workspaceId, entityKey, listParams] as const;
+  const queryKey = queryKeys.entity.list(workspaceId, entityKey, listParams);
+  const entityScopeKey = queryKeys.entity.scope(workspaceId, entityKey);
 
   const query = useQuery<EntityListCache>({
     queryKey,
@@ -208,7 +211,7 @@ export function EntityManager({ workspaceId, entityKey }: EntityManagerProps) {
     onMutate: async () => {
       if (!session) return undefined;
 
-      await queryClient.cancelQueries({ queryKey: ["entity", workspaceId, entityKey] });
+      await queryClient.cancelQueries({ queryKey: entityScopeKey });
       const previous = queryClient.getQueryData<EntityListCache>(queryKey);
       if (!previous) return { previous };
 
@@ -269,14 +272,14 @@ export function EntityManager({ workspaceId, entityKey }: EntityManagerProps) {
       toast({ title: "Create failed", description: message, variant: "destructive" });
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["entity", workspaceId, entityKey] });
+      void invalidateEntityMutation(queryClient, { workspaceId, entityKey });
     },
   });
 
   const updateMutation = useMutation({
     onMutate: async () => {
       if (!selected) return undefined;
-      await queryClient.cancelQueries({ queryKey: ["entity", workspaceId, entityKey] });
+      await queryClient.cancelQueries({ queryKey: entityScopeKey });
       const previous = queryClient.getQueryData<EntityListCache>(queryKey);
       if (!previous) return { previous };
 
@@ -338,14 +341,14 @@ export function EntityManager({ workspaceId, entityKey }: EntityManagerProps) {
       toast({ title: "Update failed", description: message, variant: "destructive" });
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["entity", workspaceId, entityKey] });
+      void invalidateEntityMutation(queryClient, { workspaceId, entityKey });
     },
   });
 
   const deleteMutation = useMutation({
     onMutate: async () => {
       if (!selected) return undefined;
-      await queryClient.cancelQueries({ queryKey: ["entity", workspaceId, entityKey] });
+      await queryClient.cancelQueries({ queryKey: entityScopeKey });
       const previous = queryClient.getQueryData<EntityListCache>(queryKey);
       if (!previous) return { previous };
 
@@ -371,14 +374,14 @@ export function EntityManager({ workspaceId, entityKey }: EntityManagerProps) {
       toast({ title: "Delete failed", description: message, variant: "destructive" });
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["entity", workspaceId, entityKey] });
+      void invalidateEntityMutation(queryClient, { workspaceId, entityKey });
     },
   });
 
   const statusMutation = useMutation({
     onMutate: async (nextStatus) => {
       if (!selected) return undefined;
-      await queryClient.cancelQueries({ queryKey: ["entity", workspaceId, entityKey] });
+      await queryClient.cancelQueries({ queryKey: entityScopeKey });
       const previous = queryClient.getQueryData<EntityListCache>(queryKey);
       if (!previous) return { previous };
 
@@ -404,7 +407,7 @@ export function EntityManager({ workspaceId, entityKey }: EntityManagerProps) {
       toast({ title: "Status update failed", description: message, variant: "destructive" });
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["entity", workspaceId, entityKey] });
+      void invalidateEntityMutation(queryClient, { workspaceId, entityKey });
     },
   });
 
@@ -414,8 +417,7 @@ export function EntityManager({ workspaceId, entityKey }: EntityManagerProps) {
       return service.runAction(actionId, session.user.id, selected?.id);
     },
     onSuccess: (result) => {
-      queryClient.invalidateQueries({ queryKey: ["entity", workspaceId, entityKey] });
-      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+      void invalidateEntityMutation(queryClient, { workspaceId, entityKey });
       toast({ title: "Action executed", description: result.message, variant: "success" });
     },
     onError: (error) => {

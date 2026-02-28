@@ -857,6 +857,32 @@ const ENTITY_API_CONFIG: Partial<Record<EntityKey, EntityApiConfig>> = {
       farmType: typeof payload.data?.farmType === "string" ? payload.data.farmType : undefined,
     }),
   },
+  plots: {
+    listPath: "/api/v1/farmers/{farmerId}/farms",
+    createPath: "/api/v1/farmers/{farmerId}/farms",
+    updatePath: (id) => `/api/v1/farmers/farms/${encodeURIComponent(id)}`,
+    listQuery: (params) => ({
+      page: params.pagination.page,
+      limit: params.pagination.pageSize,
+      search: params.filters?.text,
+    }),
+    mapCreateBody: (payload) => ({
+      name: payload.title,
+      location: {
+        region: String(payload.data.region ?? payload.data.location ?? "Central"),
+        district: String(payload.data.district ?? "Unknown"),
+        village: String(payload.data.village ?? ""),
+      },
+      sizeInHectares: Number(payload.data.areaAcres ?? payload.data.sizeInHectares ?? 0.5),
+      farmType: "plot",
+      notes: payload.subtitle,
+    }),
+    mapUpdateBody: (_id, payload) => ({
+      name: payload.title,
+      sizeInHectares: Number(payload.data?.areaAcres ?? payload.data?.sizeInHectares ?? 0.5),
+      notes: payload.subtitle,
+    }),
+  },
   crops: {
     listPath: "/api/v1/farmers/{farmerId}/production",
     createPath: "/api/v1/farmers/{farmerId}/production/crops",
@@ -872,6 +898,131 @@ const ENTITY_API_CONFIG: Partial<Record<EntityKey, EntityApiConfig>> = {
       unit: String(payload.data.unit ?? "kg"),
       farmId: typeof payload.data.farmId === "string" ? payload.data.farmId : undefined,
       notes: payload.subtitle,
+    }),
+  },
+  inputs: {
+    listPath: "/api/v1/farmers/{farmerId}/production",
+    listQuery: (params) => ({
+      type: "crop",
+      page: params.pagination.page,
+      limit: params.pagination.pageSize,
+    }),
+  },
+  tasks: {
+    listPath: "/api/v1/expert-portal/inquiries/my",
+    createPath: "/api/v1/expert-portal/inquiries",
+    listQuery: (params) => ({
+      page: params.pagination.page,
+      limit: params.pagination.pageSize,
+      status: params.filters?.status?.[0],
+    }),
+    mapCreateBody: (payload) => ({
+      title: payload.title,
+      description: String(payload.subtitle ?? payload.data.notes ?? payload.title),
+      category: String(payload.data.category ?? "general"),
+      urgency: String(payload.data.urgency ?? "normal"),
+      cropType: typeof payload.data.cropType === "string" ? payload.data.cropType : undefined,
+      farmId: typeof payload.data.farmId === "string" ? payload.data.farmId : undefined,
+    }),
+    statusRequest: (id, status, note) => {
+      if (status === "doing") {
+        return {
+          path: `/api/v1/expert-portal/inquiries/${encodeURIComponent(id)}/followup`,
+          method: "POST",
+          body: {
+            message: note ?? "Task marked as in progress from workspace UI.",
+          },
+        };
+      }
+      if (status === "done") {
+        const response = note ?? "Issue handled and closed from task workflow in ClyCites UI.";
+        return {
+          path: `/api/v1/expert-portal/inquiries/${encodeURIComponent(id)}/respond`,
+          method: "POST",
+          body: {
+            response,
+          },
+        };
+      }
+      return null;
+    },
+  },
+  cropCycles: {
+    listPath: "/api/v1/farmers/{farmerId}/production",
+    createPath: "/api/v1/farmers/{farmerId}/production/crops",
+    listQuery: (params) => ({
+      type: "crop",
+      page: params.pagination.page,
+      limit: params.pagination.pageSize,
+    }),
+    mapCreateBody: (payload) => ({
+      cropType: String(payload.data.cropType ?? payload.title),
+      season: String(payload.data.season ?? payload.data.plantingTarget ?? "current"),
+      quantityHarvested: Number(payload.data.quantityHarvested ?? 0),
+      unit: String(payload.data.unit ?? "kg"),
+      farmId: typeof payload.data.plotId === "string" ? payload.data.plotId : undefined,
+      notes: payload.subtitle ?? `Harvest target: ${String(payload.data.harvestTarget ?? "n/a")}`,
+    }),
+  },
+  growthStages: {
+    listPath: "/api/v1/farmers/{farmerId}/production",
+    listQuery: (params) => ({
+      type: "crop",
+      page: params.pagination.page,
+      limit: params.pagination.pageSize,
+    }),
+  },
+  sensorReadings: {
+    listPath: "/api/v1/weather/profiles/{weatherProfileId}/conditions/history",
+    listQuery: (params) => ({
+      page: params.pagination.page,
+      limit: params.pagination.pageSize,
+      from: params.filters?.dateRange?.from,
+      to: params.filters?.dateRange?.to,
+    }),
+  },
+  pestIncidents: {
+    listPath: "/api/v1/pest-disease/farmers/{farmerId}/reports",
+    getPath: (id) => `/api/v1/pest-disease/reports/${encodeURIComponent(id)}`,
+    createPath: "/api/v1/pest-disease/detect",
+    listQuery: (params) => ({
+      page: params.pagination.page,
+      limit: params.pagination.pageSize,
+      status: params.filters?.status?.[0],
+      cropType: params.filters?.tags?.[0],
+    }),
+    mapCreateBody: (payload) => ({
+      cropType: String(payload.data.cropType ?? payload.data.cropId ?? payload.title),
+      imageUrl: typeof payload.data.photoUrl === "string" ? payload.data.photoUrl : undefined,
+      notes: payload.subtitle ?? String(payload.data.notes ?? payload.title),
+      severity: String(payload.data.severity ?? "medium"),
+      location: String(payload.data.location ?? "field"),
+    }),
+    statusRequest: (id, status, note) => {
+      if (status === "resolved" || status === "closed") {
+        return {
+          path: `/api/v1/pest-disease/reports/${encodeURIComponent(id)}/review`,
+          method: "POST",
+          body: {
+            diagnosis: note ?? "Resolved from workspace workflow",
+            confidence: 0.8,
+            recommendations: [note ?? "Apply recommended treatment"],
+            notes: note,
+          },
+        };
+      }
+      return null;
+    },
+  },
+  yieldPredictions: {
+    createPath: "/api/v1/pricing/predict",
+    mapCreateBody: (payload) => ({
+      productId: String(payload.data.cropId ?? payload.data.productId ?? payload.title),
+      marketId: typeof payload.data.marketId === "string" ? payload.data.marketId : undefined,
+      daysAhead: Number(payload.data.horizonDays ?? 30),
+      features: {
+        confidenceHint: Number(payload.data.confidence ?? 0.7),
+      },
     }),
   },
   listings: {
@@ -1084,6 +1235,43 @@ const ENTITY_API_CONFIG: Partial<Record<EntityKey, EntityApiConfig>> = {
       },
     }),
   },
+  stockMovements: {
+    listPath: "/api/v1/logistics/shipments",
+    createPath: "/api/v1/logistics/shipments",
+    listQuery: (params) => ({
+      page: params.pagination.page,
+      limit: params.pagination.pageSize,
+      status: params.filters?.status?.[0],
+    }),
+    mapCreateBody: (payload) => ({
+      organizationId: payload.data.organizationId,
+      orderId: payload.data.orderId,
+      from: {
+        location: String(payload.data.sourceId ?? payload.data.source ?? "warehouse"),
+      },
+      to: {
+        location: String(payload.data.destinationId ?? payload.data.destination ?? "dispatch"),
+      },
+    }),
+    statusRequest: (id, status, note) => ({
+      path: `/api/v1/logistics/shipments/${encodeURIComponent(id)}/status`,
+      method: "PATCH",
+      body: {
+        status: mapShipmentStatus(status),
+        note,
+      },
+    }),
+  },
+  spoilageReports: {
+    listPath: "/api/v1/pest-disease/outbreaks",
+    listMode: "collection",
+    listQuery: () => ({
+      page: undefined,
+      limit: undefined,
+      search: undefined,
+      status: undefined,
+    }),
+  },
   wallets: {
     listPath: "/api/v1/payments/wallet",
     listMode: "single",
@@ -1096,6 +1284,29 @@ const ENTITY_API_CONFIG: Partial<Record<EntityKey, EntityApiConfig>> = {
       type: params.filters?.tags?.[0],
       startDate: params.filters?.dateRange?.from,
       endDate: params.filters?.dateRange?.to,
+    }),
+  },
+  payouts: {
+    listPath: "/api/v1/payments/transactions",
+    createPath: "/api/v1/payments/wallet/withdraw",
+    listQuery: (params) => ({
+      page: params.pagination.page,
+      limit: params.pagination.pageSize,
+      type: "debit",
+      status: params.filters?.status?.[0],
+      startDate: params.filters?.dateRange?.from,
+      endDate: params.filters?.dateRange?.to,
+    }),
+    mapCreateBody: (payload) => ({
+      amount: Number(payload.data.amount ?? 0),
+      withdrawalMethod: String(payload.data.method ?? "bank_transfer"),
+      accountDetails:
+        asRecord(payload.data.accountDetails) ??
+        ({
+          accountNumber: String(payload.data.accountNumber ?? ""),
+          phoneNumber: String(payload.data.phoneNumber ?? ""),
+          accountName: String(payload.data.accountName ?? payload.title),
+        } as const),
     }),
   },
   escrowAccounts: {
@@ -1565,6 +1776,16 @@ const ENTITY_API_CONFIG: Partial<Record<EntityKey, EntityApiConfig>> = {
       quantity: undefined,
     }),
   },
+  dataSources: {
+    listPath: "/api/v1/weather/admin/providers",
+    listMode: "collection",
+    listQuery: () => ({
+      page: undefined,
+      limit: undefined,
+      search: undefined,
+      status: undefined,
+    }),
+  },
   apiTokens: {
     listPath: "/api/v1/auth/tokens",
     getPath: (id) => `/api/v1/auth/tokens/${encodeURIComponent(id)}`,
@@ -1768,6 +1989,25 @@ const ENTITY_API_CONFIG: Partial<Record<EntityKey, EntityApiConfig>> = {
       shareScope: String(payload.data.shareScope ?? "org_members"),
       tags: payload.tags ?? [],
       isDefault: false,
+    }),
+  },
+  reports: {
+    listPath: "/api/v1/prices/report",
+    createPath: "/api/v1/prices/schedule-report",
+    listQuery: (params) => ({
+      page: params.pagination.page,
+      limit: params.pagination.pageSize,
+      productId: params.filters?.text,
+      region: params.filters?.tags?.[0],
+      format: "json",
+    }),
+    mapCreateBody: (payload) => ({
+      frequency: String(payload.data.frequency ?? "weekly"),
+      email: String(payload.data.email ?? payload.data.recipient ?? ""),
+      filters: {
+        productIds: toStringArray(payload.data.productIds),
+        marketIds: toStringArray(payload.data.marketIds),
+      },
     }),
   },
   datasets: {
