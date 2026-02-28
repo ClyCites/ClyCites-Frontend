@@ -144,11 +144,30 @@ function createEntityDefinition<K extends EntityKey>(
 }
 
 export const ENTITY_DEFINITIONS: Record<EntityKey, EntityDefinition> = {
-  farmers: createEntityDefinition("farmers", "Farmer", "Farmers", ["active", "inactive"], [
-    textField("data.phone", "Phone"),
-    textField("data.region", "Region"),
-    textField("data.farmIds", "Linked Farm IDs"),
-  ]),
+  farmers: createEntityDefinition(
+    "farmers",
+    "Farmer",
+    "Farmers",
+    ["draft", "submitted", "verified", "rejected"],
+    [
+      textField("data.location.region", "Region"),
+      textField("data.location.district", "District"),
+      textField("data.location.village", "Village"),
+      numberField("data.location.coordinates.lat", "Latitude"),
+      numberField("data.location.coordinates.lng", "Longitude"),
+      numberField("data.farmSize", "Farm Size (acres)"),
+      textField("data.cropTypes", "Crop Types"),
+    ],
+    [
+      {
+        id: "submit-verification",
+        label: "Submit for Verification",
+        description: "Submit profile for verifier review.",
+      },
+      statusAction("verify-profile", "Verify", "Mark profile as verified.", "verified"),
+      statusAction("reject-profile", "Reject", "Reject profile verification.", "rejected"),
+    ]
+  ),
   farms: createEntityDefinition("farms", "Farm", "Farms", ["active", "inactive"], [
     textField("data.location", "Location"),
     numberField("data.lat", "Latitude"),

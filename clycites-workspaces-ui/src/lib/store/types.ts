@@ -151,9 +151,20 @@ export interface ListResult<T> {
 }
 
 export interface FarmerPayload {
-  phone: string;
-  region: string;
-  farmIds: string[];
+  businessName: string;
+  description?: string;
+  location: {
+    region: string;
+    district: string;
+    village?: string;
+    coordinates?: {
+      lat?: number;
+      lng?: number;
+    };
+  };
+  farmSize?: number;
+  cropTypes?: string[];
+  verified?: boolean;
 }
 
 export interface FarmPayload {

@@ -52,6 +52,16 @@ import { fadeIn, scaleIn, staggerContainer } from "@/lib/motion";
 interface EntityManagerProps {
   workspaceId: WorkspaceId;
   entityKey: EntityKey;
+  features?: EntityManagerFeatureFlags;
+}
+
+export interface EntityManagerFeatureFlags {
+  allowCreate?: boolean;
+  allowEdit?: boolean;
+  allowDelete?: boolean;
+  allowStatus?: boolean;
+  enabledWorkflowActionIds?: string[];
+  enabledToolbarActionIds?: string[];
 }
 
 type FormValues = Record<string, string | number | boolean>;
@@ -124,7 +134,7 @@ function toFormValues(record: EntityRecord, fields: FieldDefinition[]): FormValu
   return values;
 }
 
-export function EntityManager({ workspaceId, entityKey }: EntityManagerProps) {
+export function EntityManager({ workspaceId, entityKey, features }: EntityManagerProps) {
   const { session, canAccessEntity } = useMockSession();
   const queryClient = useQueryClient();
   const reducedMotion = useReducedMotion();
@@ -166,8 +176,28 @@ export function EntityManager({ workspaceId, entityKey }: EntityManagerProps) {
 
   const canRead = canAccessEntity(entityKey, "read");
   const canWrite = canAccessEntity(entityKey, "write");
-  const canDelete = canAccessEntity(entityKey, "delete");
-  const canStatus = canAccessEntity(entityKey, "status");
+  const canDeletePermission = canAccessEntity(entityKey, "delete");
+  const canStatusPermission = canAccessEntity(entityKey, "status");
+  const canCreate = canWrite && features?.allowCreate !== false;
+  const canEdit = canWrite && features?.allowEdit !== false;
+  const canDelete = canDeletePermission && features?.allowDelete !== false;
+  const canStatus = canStatusPermission && features?.allowStatus !== false;
+  const toolbarActions = (() => {
+    const configured = definition.toolbarActions ?? [];
+    if (!features?.enabledToolbarActionIds) {
+      return configured;
+    }
+    const enabled = new Set(features.enabledToolbarActionIds);
+    return configured.filter((action) => enabled.has(action.id));
+  })();
+  const workflowActions = (() => {
+    const configured = definition.workflowActions ?? [];
+    if (!features?.enabledWorkflowActionIds) {
+      return configured;
+    }
+    const enabled = new Set(features.enabledWorkflowActionIds);
+    return configured.filter((action) => enabled.has(action.id));
+  })();
 
   const listParams = useMemo<ListParams>(
     () => ({
@@ -532,13 +562,13 @@ export function EntityManager({ workspaceId, entityKey }: EntityManagerProps) {
         ]}
         actions={
           <>
-            {definition.toolbarActions?.map((action) => (
+            {toolbarActions.map((action) => (
               <Button key={action.id} variant="outline" onClick={() => actionMutation.mutate(action.id)}>
                 <Workflow className="mr-2 h-4 w-4" />
                 {action.label}
               </Button>
             ))}
-            {canWrite && (
+            {canCreate && (
               <Button onClick={openCreate}>
                 <Plus className="mr-2 h-4 w-4" />
                 New {definition.label}
@@ -622,8 +652,8 @@ export function EntityManager({ workspaceId, entityKey }: EntityManagerProps) {
               <EmptyState
                 title={`No ${definition.pluralLabel.toLowerCase()} yet`}
                 description="Create your first record or relax filters to see data."
-                actionLabel={canWrite ? `Create ${definition.label}` : undefined}
-                onAction={canWrite ? openCreate : undefined}
+                actionLabel={canCreate ? `Create ${definition.label}` : undefined}
+                onAction={canCreate ? openCreate : undefined}
               />
             ) : (
               <>
@@ -664,7 +694,7 @@ export function EntityManager({ workspaceId, entityKey }: EntityManagerProps) {
                             <Button size="icon" variant="ghost" onClick={() => setSelected(record)}>
                               <Eye className="h-4 w-4" />
                             </Button>
-                            {canWrite && (
+                            {canEdit && (
                               <Button size="icon" variant="ghost" onClick={() => openEdit(record)}>
                                 <Edit className="h-4 w-4" />
                               </Button>
@@ -782,7 +812,7 @@ export function EntityManager({ workspaceId, entityKey }: EntityManagerProps) {
                   Workflow actions
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  {canStatus && definition.workflowActions?.map((action) => (
+                  {canStatus && workflowActions.map((action) => (
                     <Button
                       key={action.id}
                       variant="outline"

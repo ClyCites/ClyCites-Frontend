@@ -283,6 +283,28 @@ function mapRemoteRecord(entityKey: EntityKey, row: unknown, index = 0): EntityR
           : status !== "disabled";
     status = isEnabled ? "enabled" : "disabled";
   }
+  if (entityKey === "farmers") {
+    const verificationStatus =
+      typeof record.verificationStatus === "string" ? record.verificationStatus.toLowerCase() : "";
+    const statusSource = (rawStatus ?? verificationStatus).toLowerCase();
+
+    if (statusSource.includes("reject")) {
+      status = "rejected";
+    } else if (statusSource.includes("verif")) {
+      status = "verified";
+    } else if (
+      statusSource.includes("submit") ||
+      statusSource.includes("review") ||
+      record.submittedForVerification === true ||
+      Boolean(record.verificationSubmittedAt)
+    ) {
+      status = "submitted";
+    } else if (typeof record.verified === "boolean") {
+      status = record.verified ? "verified" : "draft";
+    } else if (!statusSource) {
+      status = "draft";
+    }
+  }
   if ((entityKey === "priceSignals" || entityKey === "marketSignals") && !rawStatus) {
     const isActive = typeof record.active === "boolean" ? record.active : true;
     const investigated = typeof record.investigated === "boolean" ? record.investigated : false;
@@ -847,31 +869,101 @@ const ENTITY_API_CONFIG: Partial<Record<EntityKey, EntityApiConfig>> = {
     updatePath: (id) => `/api/v1/farmers/profiles/${encodeURIComponent(id)}`,
     deletePath: (id) => `/api/v1/farmers/profiles/${encodeURIComponent(id)}`,
     listQuery: (params) => ({
+      page: params.pagination.page,
+      limit: params.pagination.pageSize,
       search: params.filters?.text,
-      region: params.filters?.text,
+      region: undefined,
+      status: undefined,
+      sortBy: undefined,
+      sortDirection: undefined,
+      verified:
+        params.filters?.status?.[0] === "verified"
+          ? true
+          : params.filters?.status?.[0] === "draft" ||
+              params.filters?.status?.[0] === "submitted" ||
+              params.filters?.status?.[0] === "rejected"
+            ? false
+            : undefined,
     }),
-    mapCreateBody: (payload) => ({
-      businessName: payload.title,
-      description: payload.subtitle,
-      location: {
-        region: String(payload.data.region ?? "Central"),
-        district: String(payload.data.region ?? "Unknown"),
-        village: String(payload.data.village ?? ""),
-      },
-      farmSize: Number(payload.data.farmSize ?? payload.data.farmSizeAcres ?? 1),
-      cropTypes: toStringArray(payload.data.cropTypes),
-    }),
-    mapUpdateBody: (_id, payload) => ({
-      businessName: payload.title,
-      description: payload.subtitle,
-      location: {
-        region: String(payload.data?.region ?? "Central"),
-        district: String(payload.data?.region ?? "Unknown"),
-        village: String(payload.data?.village ?? ""),
-      },
-      farmSize: Number(payload.data?.farmSize ?? payload.data?.farmSizeAcres ?? 1),
-      cropTypes: toStringArray(payload.data?.cropTypes),
-    }),
+    mapCreateBody: (payload) => {
+      const location = asRecord(payload.data.location);
+      const coordinates = asRecord(location?.coordinates);
+      const lat = Number(coordinates?.lat ?? payload.data.lat ?? payload.data.latitude);
+      const lng = Number(coordinates?.lng ?? payload.data.lng ?? payload.data.longitude);
+      const region = String(location?.region ?? payload.data.region ?? "Central");
+      const district = String(location?.district ?? payload.data.district ?? region);
+
+      return {
+        businessName: payload.title,
+        description: payload.subtitle,
+        location: {
+          region,
+          district,
+          village: String(location?.village ?? payload.data.village ?? ""),
+          coordinates:
+            Number.isFinite(lat) && Number.isFinite(lng)
+              ? {
+                  lat,
+                  lng,
+                }
+              : undefined,
+        },
+        farmSize: Number(payload.data.farmSize ?? payload.data.farmSizeAcres ?? 1),
+        cropTypes: toStringArray(payload.data.cropTypes),
+      };
+    },
+    mapUpdateBody: (_id, payload) => {
+      const data = payload.data ?? {};
+      const location = asRecord(data.location);
+      const coordinates = asRecord(location?.coordinates);
+      const lat = Number(coordinates?.lat ?? data.lat ?? data.latitude);
+      const lng = Number(coordinates?.lng ?? data.lng ?? data.longitude);
+      const region = String(location?.region ?? data.region ?? "Central");
+      const district = String(location?.district ?? data.district ?? region);
+
+      return {
+        businessName: payload.title,
+        description: payload.subtitle,
+        location: {
+          region,
+          district,
+          village: String(location?.village ?? data.village ?? ""),
+          coordinates:
+            Number.isFinite(lat) && Number.isFinite(lng)
+              ? {
+                  lat,
+                  lng,
+                }
+              : undefined,
+        },
+        farmSize: Number(data.farmSize ?? data.farmSizeAcres ?? 1),
+        cropTypes: toStringArray(data.cropTypes),
+      };
+    },
+    statusRequest: (id, status, note) => {
+      if (status === "verified" || status === "rejected") {
+        return {
+          path: `/api/v1/farmers/profiles/${encodeURIComponent(id)}/verify`,
+          method: "POST",
+          body: {
+            status,
+            reason: note,
+          },
+        };
+      }
+      return null;
+    },
+    actionRequest: (actionId, _actorId, targetId) => {
+      if (actionId === "submit-verification" && targetId) {
+        return {
+          path: `/api/v1/farmers/profiles/${encodeURIComponent(targetId)}/verify/submit`,
+          method: "POST",
+          body: {},
+          message: "Profile submitted for verification.",
+        };
+      }
+      return null;
+    },
   },
   farms: {
     listPath: "/api/v1/farmers/{farmerId}/farms",
@@ -2493,6 +2585,18 @@ async function changeStatusRemote(
   );
 
   const row = extractSingle(response);
+  if (Object.keys(row).length === 0 && config.getPath) {
+    try {
+      const latest = await getRemote(entityKey, config, id);
+      return {
+        ...latest,
+        status,
+        updatedAt: new Date().toISOString(),
+      };
+    } catch {
+      // Ignore and fall back to synthetic payload mapping below.
+    }
+  }
   const normalized = mapRemoteRecord(entityKey, { ...row, id, status }, 0);
   return {
     ...normalized,
