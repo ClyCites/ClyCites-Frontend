@@ -287,20 +287,30 @@ export const ENTITY_DEFINITIONS: Record<EntityKey, EntityDefinition> = {
     textField("data.metric", "Metric"),
     numberField("data.value", "Value"),
   ]),
-  pestIncidents: createEntityDefinition("pestIncidents", "Pest Incident", "Pest Incidents", ["created", "assigned", "resolved", "closed"], [
-    textField("data.cropId", "Crop ID"),
-    {
-      key: "data.severity",
-      label: "Severity",
-      type: "select",
-      options: [
-        { label: "Low", value: "low" },
-        { label: "Medium", value: "medium" },
-        { label: "High", value: "high" },
-      ],
-    },
-    textField("data.photoUrl", "Photo URL Placeholder"),
-  ]),
+  pestIncidents: createEntityDefinition(
+    "pestIncidents",
+    "Pest Incident",
+    "Pest Incidents",
+    ["created", "assigned", "resolved", "closed"],
+    [
+      textField("data.cropId", "Crop ID"),
+      {
+        key: "data.severity",
+        label: "Severity",
+        type: "select",
+        options: [
+          { label: "Low", value: "low" },
+          { label: "Medium", value: "medium" },
+          { label: "High", value: "high" },
+        ],
+      },
+      textField("data.photoUrl", "Photo URL Placeholder"),
+    ],
+    [
+      statusAction("resolve-incident", "Resolve Incident", "Submit expert review and mark incident resolved.", "resolved"),
+      statusAction("close-incident", "Close Incident", "Close incident after review.", "closed"),
+    ]
+  ),
   yieldPredictions: createEntityDefinition(
     "yieldPredictions",
     "Yield Prediction",

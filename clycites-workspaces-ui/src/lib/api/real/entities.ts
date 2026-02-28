@@ -258,6 +258,7 @@ function mapRemoteRecord(entityKey: EntityKey, row: unknown, index = 0): EntityR
     (typeof record.state === "string" ? record.state : undefined) ||
     (typeof record.workflowStatus === "string" ? record.workflowStatus : undefined) ||
     (typeof record.lifecycleStatus === "string" ? record.lifecycleStatus : undefined) ||
+    (typeof record.productionStatus === "string" ? record.productionStatus : undefined) ||
     (typeof record.caseStatus === "string" ? record.caseStatus : undefined) ||
     (typeof record.stationStatus === "string" ? record.stationStatus : undefined) ||
     (typeof record.alertStatus === "string" ? record.alertStatus : undefined) ||
@@ -303,6 +304,56 @@ function mapRemoteRecord(entityKey: EntityKey, row: unknown, index = 0): EntityR
       status = record.verified ? "verified" : "draft";
     } else if (!statusSource) {
       status = "draft";
+    }
+  }
+  if (entityKey === "pestIncidents") {
+    const normalized = (rawStatus ?? "").toLowerCase();
+    if (normalized === "pending") {
+      status = "created";
+    } else if (normalized === "analyzed" || normalized === "ai_analyzed" || normalized === "expert_reviewed" || normalized === "verified") {
+      status = "assigned";
+    } else if (normalized === "resolved") {
+      status = "resolved";
+    } else if (normalized === "closed") {
+      status = "closed";
+    }
+  }
+  if (entityKey === "cropCycles") {
+    const normalized = (rawStatus ?? "").toLowerCase();
+    if (normalized === "planned") {
+      status = "planned";
+    } else if (normalized === "in_progress") {
+      status = "active";
+    } else if (normalized === "harvested" || normalized === "sold" || normalized === "stored" || normalized === "failed") {
+      status = "completed";
+    }
+  }
+  if (entityKey === "growthStages") {
+    const normalized = (rawStatus ?? "").toLowerCase();
+    const stage =
+      normalized === "seed" || normalized === "vegetative" || normalized === "flowering" || normalized === "maturity" || normalized === "harvested"
+        ? normalized
+        : normalized === "planned"
+          ? "seed"
+          : normalized === "in_progress"
+            ? "vegetative"
+            : normalized === "sold" || normalized === "stored" || normalized === "failed"
+              ? "maturity"
+              : undefined;
+    if (stage) {
+      status = stage;
+    }
+  }
+  if (entityKey === "crops") {
+    const normalized = (rawStatus ?? "").toLowerCase();
+    if (normalized === "planned") {
+      status = "planned";
+    } else if (normalized === "in_progress") {
+      status = "growing";
+    } else if (normalized === "harvested" || normalized === "sold" || normalized === "stored") {
+      status = "harvested";
+    } else if (normalized === "failed") {
+      status = "archived";
     }
   }
   if ((entityKey === "priceSignals" || entityKey === "marketSignals") && !rawStatus) {
@@ -861,6 +912,190 @@ async function resolvePath(path: string): Promise<string> {
   return resolved;
 }
 
+const CROP_PRODUCTION_CATEGORIES = new Set([
+  "cereals",
+  "legumes",
+  "vegetables",
+  "fruits",
+  "cash_crops",
+  "roots_tubers",
+  "fodder",
+  "other",
+]);
+
+const CROP_PRODUCTION_SEASONS = new Set(["season_a", "season_b", "dry_season", "wet_season", "year_round"]);
+const CROP_PRODUCTION_AREA_UNITS = new Set(["acres", "hectares", "square_meters"]);
+const CROP_PRODUCTION_YIELD_UNITS = new Set(["kg", "tons", "bags", "bunches", "pieces"]);
+
+function parseYear(value: unknown): number | undefined {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return undefined;
+  const year = Math.trunc(parsed);
+  return year >= 2000 && year <= 2100 ? year : undefined;
+}
+
+function parseYearFromDate(value: unknown): number | undefined {
+  if (typeof value !== "string" || value.trim().length === 0) return undefined;
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return undefined;
+  return parseYear(parsed.getUTCFullYear());
+}
+
+function toPositiveNumber(value: unknown, fallback: number): number {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return fallback;
+  if (parsed <= 0) return fallback;
+  return parsed;
+}
+
+function normalizeCropCategory(value: unknown): string {
+  const normalized = String(value ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/[\s-]+/g, "_");
+
+  if (CROP_PRODUCTION_CATEGORIES.has(normalized)) return normalized;
+  if (normalized.includes("grain") || normalized.includes("maize") || normalized.includes("rice")) return "cereals";
+  if (normalized.includes("bean") || normalized.includes("legume")) return "legumes";
+  if (normalized.includes("banana") || normalized.includes("fruit")) return "fruits";
+  if (normalized.includes("cassava") || normalized.includes("tuber")) return "roots_tubers";
+  return "other";
+}
+
+function normalizeCropSeason(value: unknown): string {
+  const normalized = String(value ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/[\s-]+/g, "_");
+  if (CROP_PRODUCTION_SEASONS.has(normalized)) return normalized;
+  if (normalized === "a") return "season_a";
+  if (normalized === "b") return "season_b";
+  return "season_a";
+}
+
+function normalizeAreaUnit(value: unknown): string {
+  const normalized = String(value ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/[\s-]+/g, "_");
+  if (CROP_PRODUCTION_AREA_UNITS.has(normalized)) return normalized;
+  if (normalized === "sqm") return "square_meters";
+  return "acres";
+}
+
+function normalizeYieldUnit(value: unknown): string {
+  const normalized = String(value ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/[\s-]+/g, "_");
+  if (CROP_PRODUCTION_YIELD_UNITS.has(normalized)) return normalized;
+  if (normalized === "ton" || normalized === "tonnes" || normalized === "tonne") return "tons";
+  return "kg";
+}
+
+function toCropProductionStatus(value: unknown): string | undefined {
+  const normalized = String(value ?? "")
+    .trim()
+    .toLowerCase();
+  if (!normalized) return undefined;
+
+  if (normalized === "planned") return "planned";
+  if (normalized === "active" || normalized === "growing" || normalized === "in_progress") return "in_progress";
+  if (normalized === "completed" || normalized === "harvested") return "harvested";
+  if (normalized === "archived" || normalized === "failed") return "failed";
+  if (normalized === "sold") return "sold";
+  if (normalized === "stored") return "stored";
+  return undefined;
+}
+
+function mapCropProductionListQuery(params: ListParams): Record<string, unknown> {
+  const text = typeof params.filters?.text === "string" ? params.filters.text.trim() : "";
+  const yearFromText = parseYear(text);
+  const year = yearFromText ?? parseYearFromDate(params.filters?.dateRange?.from);
+  const seasonCandidate =
+    typeof params.filters?.tags?.[0] === "string" && params.filters.tags[0].trim().length > 0
+      ? normalizeCropSeason(params.filters.tags[0])
+      : undefined;
+
+  return {
+    year,
+    season: seasonCandidate,
+    cropName: text.length > 0 && !yearFromText ? text : undefined,
+  };
+}
+
+function mapCropProductionCreateBody(payload: CreatePayload): Record<string, unknown> {
+  const data = payload.data;
+  const farmSeed =
+    (typeof data.farmId === "string" && data.farmId.length > 0 ? data.farmId : undefined) ??
+    (typeof data.plotId === "string" && data.plotId.length > 0 ? data.plotId : undefined) ??
+    payload.title;
+  const cropName =
+    (typeof data.cropName === "string" && data.cropName.trim().length > 0 ? data.cropName.trim() : undefined) ??
+    (typeof data.cropType === "string" && data.cropType.trim().length > 0 ? data.cropType.trim() : undefined) ??
+    payload.title;
+
+  return {
+    farmId: toMongoLikeId(farmSeed, String(farmSeed)),
+    cropName,
+    cropCategory: normalizeCropCategory(data.cropCategory ?? data.category ?? cropName),
+    season: normalizeCropSeason(data.season ?? data.stage),
+    year: parseYear(data.year) ?? parseYearFromDate(data.plantingDate ?? data.plantingTarget) ?? new Date().getUTCFullYear(),
+    areaPlanted: toPositiveNumber(data.areaPlanted ?? data.areaAcres ?? data.sizeInHectares, 1),
+    areaUnit: normalizeAreaUnit(data.areaUnit),
+    estimatedYield: toPositiveNumber(data.estimatedYield ?? data.expectedYield ?? data.quantityHarvested, 1),
+    yieldUnit: normalizeYieldUnit(data.yieldUnit ?? data.unit),
+  };
+}
+
+function mapCropProductionUpdateBody(payload: UpdatePayload): Record<string, unknown> {
+  const data = payload.data ?? {};
+  const farmSeed =
+    (typeof data.farmId === "string" && data.farmId.length > 0 ? data.farmId : undefined) ??
+    (typeof data.plotId === "string" && data.plotId.length > 0 ? data.plotId : undefined);
+  const cropName =
+    (typeof payload.title === "string" && payload.title.trim().length > 0 ? payload.title.trim() : undefined) ??
+    (typeof data.cropName === "string" && data.cropName.trim().length > 0 ? data.cropName.trim() : undefined) ??
+    (typeof data.cropType === "string" && data.cropType.trim().length > 0 ? data.cropType.trim() : undefined);
+  const actualYield = Number(data.actualYield ?? data.quantityHarvested ?? data.predictedYield);
+  const productionStatus = toCropProductionStatus(data.productionStatus ?? data.status ?? data.stage);
+  const notes =
+    (typeof payload.subtitle === "string" && payload.subtitle.trim().length > 0 ? payload.subtitle.trim() : undefined) ??
+    (typeof data.notes === "string" && data.notes.trim().length > 0 ? data.notes.trim() : undefined);
+
+  return {
+    farmId: farmSeed ? toMongoLikeId(farmSeed, farmSeed) : undefined,
+    cropName,
+    productionStatus,
+    actualYield: Number.isFinite(actualYield) ? actualYield : undefined,
+    notes,
+  };
+}
+
+function mapPestIncidentStatusFilter(status: string | undefined): string | undefined {
+  if (!status) return undefined;
+  const normalized = status.toLowerCase();
+  if (normalized === "created") return "pending";
+  if (normalized === "assigned") return "expert_reviewed";
+  if (normalized === "resolved" || normalized === "closed") return "resolved";
+  return undefined;
+}
+
+function toGrowthStageStatus(value: unknown): string {
+  const normalized = String(value ?? "")
+    .trim()
+    .toLowerCase();
+
+  if (normalized === "seed" || normalized === "vegetative" || normalized === "flowering" || normalized === "maturity" || normalized === "harvested") {
+    return normalized;
+  }
+  if (normalized === "planned") return "seed";
+  if (normalized === "in_progress" || normalized === "active") return "vegetative";
+  if (normalized === "sold" || normalized === "stored" || normalized === "failed") return "maturity";
+  if (normalized === "completed") return "harvested";
+  return "vegetative";
+}
+
 const ENTITY_API_CONFIG: Partial<Record<EntityKey, EntityApiConfig>> = {
   farmers: {
     listPath: "/api/v1/farmers/profiles",
@@ -1017,21 +1252,14 @@ const ENTITY_API_CONFIG: Partial<Record<EntityKey, EntityApiConfig>> = {
     }),
   },
   crops: {
-    listPath: "/api/v1/farmers/{farmerId}/production",
+    listPath: "/api/v1/farmers/{farmerId}/production/crops",
+    getPath: (id) => `/api/v1/farmers/production/crops/${encodeURIComponent(id)}`,
     createPath: "/api/v1/farmers/{farmerId}/production/crops",
-    listQuery: (params) => ({
-      type: "crop",
-      page: params.pagination.page,
-      limit: params.pagination.pageSize,
-    }),
-    mapCreateBody: (payload) => ({
-      cropType: String(payload.data.cropType ?? payload.title),
-      season: String(payload.data.season ?? payload.data.stage ?? "current"),
-      quantityHarvested: Number(payload.data.quantityHarvested ?? payload.data.expectedYield ?? 1),
-      unit: String(payload.data.unit ?? "kg"),
-      farmId: typeof payload.data.farmId === "string" ? payload.data.farmId : undefined,
-      notes: payload.subtitle,
-    }),
+    updatePath: (id) => `/api/v1/farmers/production/crops/${encodeURIComponent(id)}`,
+    deletePath: (id) => `/api/v1/farmers/production/crops/${encodeURIComponent(id)}`,
+    listQuery: (params) => mapCropProductionListQuery(params),
+    mapCreateBody: (payload) => mapCropProductionCreateBody(payload),
+    mapUpdateBody: (_id, payload) => mapCropProductionUpdateBody(payload),
   },
   inputs: {
     listPath: "/api/v1/farmers/{farmerId}/production",
@@ -1081,29 +1309,50 @@ const ENTITY_API_CONFIG: Partial<Record<EntityKey, EntityApiConfig>> = {
     },
   },
   cropCycles: {
-    listPath: "/api/v1/farmers/{farmerId}/production",
+    listPath: "/api/v1/farmers/{farmerId}/production/crops",
+    getPath: (id) => `/api/v1/farmers/production/crops/${encodeURIComponent(id)}`,
     createPath: "/api/v1/farmers/{farmerId}/production/crops",
-    listQuery: (params) => ({
-      type: "crop",
-      page: params.pagination.page,
-      limit: params.pagination.pageSize,
-    }),
-    mapCreateBody: (payload) => ({
-      cropType: String(payload.data.cropType ?? payload.title),
-      season: String(payload.data.season ?? payload.data.plantingTarget ?? "current"),
-      quantityHarvested: Number(payload.data.quantityHarvested ?? 0),
-      unit: String(payload.data.unit ?? "kg"),
-      farmId: typeof payload.data.plotId === "string" ? payload.data.plotId : undefined,
-      notes: payload.subtitle ?? `Harvest target: ${String(payload.data.harvestTarget ?? "n/a")}`,
-    }),
+    updatePath: (id) => `/api/v1/farmers/production/crops/${encodeURIComponent(id)}`,
+    deletePath: (id) => `/api/v1/farmers/production/crops/${encodeURIComponent(id)}`,
+    listQuery: (params) => mapCropProductionListQuery(params),
+    mapCreateBody: (payload) => mapCropProductionCreateBody(payload),
+    mapUpdateBody: (_id, payload) => mapCropProductionUpdateBody(payload),
   },
   growthStages: {
-    listPath: "/api/v1/farmers/{farmerId}/production",
-    listQuery: (params) => ({
-      type: "crop",
-      page: params.pagination.page,
-      limit: params.pagination.pageSize,
-    }),
+    listPath: "/api/v1/farmers/{farmerId}/production/crops",
+    listQuery: (params) => mapCropProductionListQuery(params),
+    mapListRows: (payload) =>
+      extractCollection(payload).map((item, index) => {
+        const row = asRecord(item) ?? {};
+        const stage = toGrowthStageStatus(row.stage ?? row.growthStage ?? row.currentStage ?? row.productionStatus ?? row.status);
+        const id = String(row.id ?? row._id ?? `growth-stage-${index + 1}`);
+        const cropName =
+          (typeof row.cropName === "string" && row.cropName.trim().length > 0 ? row.cropName.trim() : undefined) ??
+          (typeof row.name === "string" && row.name.trim().length > 0 ? row.name.trim() : undefined) ??
+          `Growth stage ${index + 1}`;
+        const season =
+          typeof row.season === "string" && row.season.trim().length > 0 ? String(row.season).trim() : undefined;
+        const year = parseYear(row.year);
+        const subtitle =
+          season && year
+            ? `${season} ${year}`
+            : season
+              ? season
+              : year
+                ? String(year)
+                : undefined;
+
+        return {
+          ...row,
+          id,
+          status: stage,
+          stage,
+          cycleId: String(row.cycleId ?? row.cropId ?? row.id ?? row._id ?? id),
+          observedAt: row.updatedAt ?? row.createdAt ?? new Date().toISOString(),
+          title: `${cropName} - ${stage}`,
+          subtitle,
+        };
+      }),
   },
   sensorReadings: {
     listPath: "/api/v1/weather/profiles/{weatherProfileId}/conditions/history",
@@ -1121,7 +1370,7 @@ const ENTITY_API_CONFIG: Partial<Record<EntityKey, EntityApiConfig>> = {
     listQuery: (params) => ({
       page: params.pagination.page,
       limit: params.pagination.pageSize,
-      status: params.filters?.status?.[0],
+      status: mapPestIncidentStatusFilter(params.filters?.status?.[0]),
       cropType: params.filters?.tags?.[0],
     }),
     mapCreateBody: (payload) => ({
@@ -1148,15 +1397,53 @@ const ENTITY_API_CONFIG: Partial<Record<EntityKey, EntityApiConfig>> = {
     },
   },
   yieldPredictions: {
-    createPath: "/api/v1/pricing/predict",
+    listPath: "/api/v1/farmers/{farmerId}/production/crops",
+    listQuery: (params) => mapCropProductionListQuery(params),
+    mapListRows: (payload) =>
+      extractCollection(payload).map((item, index) => {
+        const row = asRecord(item) ?? {};
+        const id = String(row.id ?? row._id ?? `yield-prediction-${index + 1}`);
+        const cropName =
+          (typeof row.cropName === "string" && row.cropName.trim().length > 0 ? row.cropName.trim() : undefined) ??
+          (typeof row.name === "string" && row.name.trim().length > 0 ? row.name.trim() : undefined) ??
+          `Prediction ${index + 1}`;
+        const predictedYield = Number(row.predictedYield ?? row.estimatedYield ?? row.actualYield ?? row.quantityHarvested ?? 0);
+        const confidence = Number(row.confidence ?? row.modelConfidence ?? 0.7);
+        const horizonDays = Number(row.horizonDays ?? 30);
+
+        return {
+          ...row,
+          id,
+          status: "generated",
+          title: `${cropName} yield outlook`,
+          cropId: String(row.cropId ?? row.id ?? row._id ?? id),
+          predictedYield: Number.isFinite(predictedYield) ? predictedYield : 0,
+          confidence: Number.isFinite(confidence) ? confidence : 0.7,
+          horizonDays: Number.isFinite(horizonDays) ? horizonDays : 30,
+        };
+      }),
+    createPath: "/api/v1/prices/predict",
     mapCreateBody: (payload) => ({
-      productId: String(payload.data.cropId ?? payload.data.productId ?? payload.title),
-      marketId: typeof payload.data.marketId === "string" ? payload.data.marketId : undefined,
+      productId: toMongoLikeId(payload.data.cropId ?? payload.data.productId ?? payload.title, payload.title),
+      marketId:
+        typeof payload.data.marketId === "string" && payload.data.marketId.length > 0
+          ? toMongoLikeId(payload.data.marketId, payload.data.marketId)
+          : undefined,
       daysAhead: Number(payload.data.horizonDays ?? 30),
-      features: {
-        confidenceHint: Number(payload.data.confidence ?? 0.7),
-      },
     }),
+    actionRequest: (actionId, _actorId, targetId) => {
+      if (actionId !== "refresh-prediction") return null;
+      const seed = targetId ?? "default-product";
+      return {
+        path: "/api/v1/prices/predict",
+        method: "POST",
+        body: {
+          productId: toMongoLikeId(seed, seed),
+          daysAhead: 30,
+        },
+        message: "Prediction refresh requested.",
+      };
+    },
   },
   listings: {
     listPath: "/api/v1/listings",
