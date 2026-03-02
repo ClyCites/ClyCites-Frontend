@@ -468,12 +468,23 @@ export const ENTITY_DEFINITIONS: Record<EntityKey, EntityDefinition> = {
     numberField("data.rating", "Rating"),
     textField("data.reviewText", "Review"),
   ]),
-  shipments: createEntityDefinition("shipments", "Shipment", "Shipments", ["planned", "in_transit", "delivered", "cancelled"], [
-    textField("data.orderId", "Order ID"),
-    textField("data.routeId", "Route ID"),
-    textField("data.vehicleId", "Vehicle ID"),
-    textField("data.driverId", "Driver ID"),
-  ]),
+  shipments: createEntityDefinition(
+    "shipments",
+    "Shipment",
+    "Shipments",
+    ["planned", "in_transit", "delivered", "cancelled"],
+    [
+      textField("data.orderId", "Order ID"),
+      textField("data.routeId", "Route ID"),
+      textField("data.vehicleId", "Vehicle ID"),
+      textField("data.driverId", "Driver ID"),
+    ],
+    [
+      statusAction("mark-in-transit", "Mark In Transit", "Transition shipment from planning to transit.", "in_transit"),
+      statusAction("mark-delivered", "Mark Delivered", "Mark shipment as delivered.", "delivered"),
+      statusAction("cancel-shipment", "Cancel Shipment", "Cancel shipment workflow.", "cancelled"),
+    ]
+  ),
   routes: createEntityDefinition("routes", "Route", "Routes", ["draft", "active", "archived"], [
     textField("data.origin", "Origin"),
     textField("data.destination", "Destination"),

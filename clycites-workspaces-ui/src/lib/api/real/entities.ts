@@ -356,6 +356,18 @@ function mapRemoteRecord(entityKey: EntityKey, row: unknown, index = 0): EntityR
       status = "archived";
     }
   }
+  if (entityKey === "shipments") {
+    const normalized = (rawStatus ?? "").toLowerCase();
+    if (normalized === "created" || normalized === "assigned" || normalized === "picked_up" || normalized === "planned") {
+      status = "planned";
+    } else if (normalized === "in_transit") {
+      status = "in_transit";
+    } else if (normalized === "delivered") {
+      status = "delivered";
+    } else if (normalized === "cancelled" || normalized === "returned") {
+      status = "cancelled";
+    }
+  }
   if ((entityKey === "priceSignals" || entityKey === "marketSignals") && !rawStatus) {
     const isActive = typeof record.active === "boolean" ? record.active : true;
     const investigated = typeof record.investigated === "boolean" ? record.investigated : false;
