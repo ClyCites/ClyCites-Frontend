@@ -368,6 +368,53 @@ function mapRemoteRecord(entityKey: EntityKey, row: unknown, index = 0): EntityR
       status = "cancelled";
     }
   }
+  if (entityKey === "wallets") {
+    const frozen =
+      typeof record.frozen === "boolean"
+        ? record.frozen
+        : typeof record.isFrozen === "boolean"
+          ? record.isFrozen
+          : false;
+    status = frozen ? "frozen" : "active";
+  }
+  if (entityKey === "transactions") {
+    const normalized = (rawStatus ?? "").toLowerCase();
+    if (normalized === "pending") {
+      status = "pending";
+    } else if (normalized === "completed") {
+      status = "completed";
+    } else if (normalized === "failed") {
+      status = "failed";
+    } else if (normalized === "cancelled") {
+      status = "reversed";
+    }
+  }
+  if (entityKey === "payouts") {
+    const normalized = (rawStatus ?? "").toLowerCase();
+    if (normalized === "pending") {
+      status = "processing";
+    } else if (normalized === "completed") {
+      status = "paid";
+    } else if (normalized === "failed" || normalized === "cancelled") {
+      status = "failed";
+    } else if (!normalized) {
+      status = "requested";
+    }
+  }
+  if (entityKey === "escrowAccounts") {
+    const normalized = (rawStatus ?? "").toLowerCase();
+    if (normalized === "active") {
+      status = "funded";
+    } else if (normalized === "released") {
+      status = "released";
+    } else if (normalized === "refunded") {
+      status = "refunded";
+    } else if (normalized === "disputed" || normalized === "closed") {
+      status = "closed";
+    } else if (!normalized) {
+      status = "created";
+    }
+  }
   if ((entityKey === "priceSignals" || entityKey === "marketSignals") && !rawStatus) {
     const isActive = typeof record.active === "boolean" ? record.active : true;
     const investigated = typeof record.investigated === "boolean" ? record.investigated : false;
