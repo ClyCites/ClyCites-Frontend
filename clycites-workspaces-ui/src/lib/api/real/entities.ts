@@ -415,6 +415,17 @@ function mapRemoteRecord(entityKey: EntityKey, row: unknown, index = 0): EntityR
       status = "created";
     }
   }
+  if (entityKey === "alertRules") {
+    const isEnabled =
+      typeof record.enabled === "boolean"
+        ? record.enabled
+        : typeof record.active === "boolean"
+          ? record.active
+        : typeof record.isActive === "boolean"
+          ? record.isActive
+          : status === "active";
+    status = isEnabled ? "active" : "disabled";
+  }
   if ((entityKey === "priceSignals" || entityKey === "marketSignals") && !rawStatus) {
     const isActive = typeof record.active === "boolean" ? record.active : true;
     const investigated = typeof record.investigated === "boolean" ? record.investigated : false;
@@ -433,6 +444,78 @@ function mapRemoteRecord(entityKey: EntityKey, row: unknown, index = 0): EntityR
       status = "acknowledged";
     } else {
       status = "new";
+    }
+  }
+  if (entityKey === "advisories") {
+    const normalized = (rawStatus ?? "").toLowerCase();
+    if (normalized === "submitted" || normalized === "in_review" || normalized === "under_review" || normalized === "review") {
+      status = "in_review";
+    } else if (normalized === "approved") {
+      status = "approved";
+    } else if (normalized === "rejected" || normalized === "declined") {
+      status = "rejected";
+    } else if (normalized === "published" || normalized === "sent" || normalized === "dispatched" || normalized === "active") {
+      status = "published";
+    } else if (normalized === "acknowledged" || normalized === "read") {
+      status = "acknowledged";
+    } else if (normalized === "draft" || normalized === "new" || !normalized) {
+      status = "draft";
+    }
+  }
+  if (entityKey === "knowledgeBaseArticles") {
+    const normalized = (rawStatus ?? "").toLowerCase();
+    if (normalized === "submitted" || normalized === "in_review" || normalized === "under_review") {
+      status = "in_review";
+    } else if (normalized === "approved") {
+      status = "approved";
+    } else if (normalized === "rejected") {
+      status = "rejected";
+    } else if (normalized === "published" || record.published === true) {
+      status = "published";
+    } else if (normalized === "unpublished") {
+      status = "unpublished";
+    } else if (normalized === "archived") {
+      status = "archived";
+    } else if (normalized === "draft" || !normalized) {
+      status = "draft";
+    }
+  }
+  if (entityKey === "fieldCases") {
+    const normalized = (rawStatus ?? "").toLowerCase();
+    if (normalized === "pending" || normalized === "open" || normalized === "new" || normalized === "created" || !normalized) {
+      status = "created";
+    } else if (normalized === "assigned") {
+      status = "assigned";
+    } else if (normalized === "in_progress" || normalized === "started" || normalized === "active") {
+      status = "in_visit";
+    } else if (normalized === "resolved" || normalized === "submitted" || normalized === "completed") {
+      status = "resolved";
+    } else if (normalized === "closed") {
+      status = "closed";
+    }
+  }
+  if (entityKey === "assignments") {
+    const normalized = (rawStatus ?? "").toLowerCase();
+    if (normalized === "pending" || normalized === "open" || normalized === "new" || normalized === "created" || !normalized) {
+      status = "created";
+    } else if (normalized === "assigned" || normalized === "in_progress" || normalized === "started") {
+      status = "assigned";
+    } else if (normalized === "resolved" || normalized === "completed" || normalized === "closed") {
+      status = "completed";
+    } else if (normalized === "cancelled" || normalized === "rejected") {
+      status = "cancelled";
+    }
+  }
+  if (entityKey === "reviewQueue") {
+    const normalized = (rawStatus ?? "").toLowerCase();
+    if (normalized === "pending" || normalized === "new" || normalized === "queued" || normalized === "unassigned" || !normalized) {
+      status = "queued";
+    } else if (normalized === "in_review" || normalized === "assigned" || normalized === "in_progress") {
+      status = "in_review";
+    } else if (normalized === "approved" || normalized === "resolved" || normalized === "completed") {
+      status = "approved";
+    } else if (normalized === "rejected" || normalized === "declined" || normalized === "closed") {
+      status = "rejected";
     }
   }
   if (entityKey === "stations" && typeof record.stationStatus === "string") {
@@ -670,13 +753,31 @@ function defaultUpdateBody(payload: UpdatePayload): unknown {
   };
 }
 
-function advisoryUrgency(status?: string): "low" | "medium" | "high" | "critical" {
-  if (!status) return "medium";
-  const normalized = status.toLowerCase();
-  if (normalized.includes("reject") || normalized.includes("critical")) return "critical";
-  if (normalized.includes("approve") || normalized.includes("published")) return "high";
-  if (normalized.includes("review")) return "medium";
+function advisoryCreateUrgency(value?: unknown): "info" | "warning" | "critical" {
+  const normalized = String(value ?? "").toLowerCase();
+  if (normalized.includes("critical") || normalized.includes("emergency") || normalized.includes("reject")) return "critical";
+  if (normalized.includes("high") || normalized.includes("warning") || normalized.includes("publish") || normalized.includes("approve")) {
+    return "warning";
+  }
+  return "info";
+}
+
+function advisoryUpdateUrgency(value?: unknown): "low" | "medium" | "high" | "critical" | "emergency" {
+  const normalized = String(value ?? "").toLowerCase();
+  if (normalized.includes("emergency")) return "emergency";
+  if (normalized.includes("critical")) return "critical";
+  if (normalized.includes("high") || normalized.includes("warning")) return "high";
+  if (normalized.includes("medium") || normalized.includes("review")) return "medium";
   return "low";
+}
+
+function normalizeAdvisoryCategory(value?: unknown): "weather" | "pest_outbreak" | "market" | "best_practice" | "regulatory" {
+  const normalized = String(value ?? "").toLowerCase();
+  if (normalized.includes("weather") || normalized.includes("climate")) return "weather";
+  if (normalized.includes("pest") || normalized.includes("disease") || normalized.includes("outbreak")) return "pest_outbreak";
+  if (normalized.includes("market") || normalized.includes("price")) return "market";
+  if (normalized.includes("regulat") || normalized.includes("policy") || normalized.includes("compliance")) return "regulatory";
+  return "best_practice";
 }
 
 function mapOrderStatus(nextStatus: string): string {
@@ -716,6 +817,16 @@ function toOrgMembershipRole(value: unknown): "admin" | "member" | "viewer" {
   if (normalized.includes("admin")) return "admin";
   if (normalized.includes("viewer")) return "viewer";
   return "member";
+}
+
+function normalizeShareScope(value: unknown): "owner_only" | "org_members" | "specific_roles" | "specific_users" | "public" {
+  const normalized = String(value ?? "").toLowerCase();
+  if (normalized === "owner_only" || normalized === "private") return "owner_only";
+  if (normalized === "org_members" || normalized === "org" || normalized === "organization") return "org_members";
+  if (normalized === "specific_roles" || normalized === "roles") return "specific_roles";
+  if (normalized === "specific_users" || normalized === "users") return "specific_users";
+  if (normalized === "public") return "public";
+  return "owner_only";
 }
 
 function workspaceLabel(workspaceId: string): string {
@@ -1153,6 +1264,16 @@ function toGrowthStageStatus(value: unknown): string {
   if (normalized === "sold" || normalized === "stored" || normalized === "failed") return "maturity";
   if (normalized === "completed") return "harvested";
   return "vegetative";
+}
+
+function normalizeWeatherRuleCondition(value: unknown): Record<string, unknown> {
+  const asObject = asRecord(value);
+  if (asObject) return asObject;
+
+  const expression = typeof value === "string" ? value.trim() : "";
+  return {
+    expression: expression.length > 0 ? expression : "rainfall > 0",
+  };
 }
 
 const ENTITY_API_CONFIG: Partial<Record<EntityKey, EntityApiConfig>> = {
@@ -1885,7 +2006,7 @@ const ENTITY_API_CONFIG: Partial<Record<EntityKey, EntityApiConfig>> = {
     },
   },
   stations: {
-    listPath: "/api/v1/weather/profiles",
+    listPath: "/api/v1/weather/profiles/me",
     getPath: (id) => `/api/v1/weather/profiles/${encodeURIComponent(id)}`,
     createPath: "/api/v1/weather/profiles",
     updatePath: (id) => `/api/v1/weather/profiles/${encodeURIComponent(id)}`,
@@ -1893,7 +2014,7 @@ const ENTITY_API_CONFIG: Partial<Record<EntityKey, EntityApiConfig>> = {
     listQuery: (params) => ({
       page: params.pagination.page,
       limit: params.pagination.pageSize,
-      search: params.filters?.text,
+      search: undefined,
     }),
     mapCreateBody: (payload) => ({
       farmId: toMongoLikeId(payload.data.farmId ?? payload.title, payload.title),
@@ -2001,6 +2122,16 @@ const ENTITY_API_CONFIG: Partial<Record<EntityKey, EntityApiConfig>> = {
           method: "POST",
         };
       }
+      if (status === "escalated") {
+        return {
+          path: `/api/v1/weather/alerts/${encodeURIComponent(id)}/escalate`,
+          method: "POST",
+          body: {
+            reason: "Escalated from workspace workflow",
+            severity: "high",
+          },
+        };
+      }
       if (status === "resolved" || status === "closed") {
         return {
           path: `/api/v1/weather/alerts/${encodeURIComponent(id)}/dismiss`,
@@ -2018,28 +2149,31 @@ const ENTITY_API_CONFIG: Partial<Record<EntityKey, EntityApiConfig>> = {
     deletePath: (id) => `/api/v1/weather/rules/${encodeURIComponent(id)}`,
     mapCreateBody: (payload) => ({
       name: payload.title,
-      condition: String(payload.data.condition ?? payload.title),
+      condition: normalizeWeatherRuleCondition(payload.data.condition ?? payload.title),
       severity: String(payload.data.severity ?? "medium"),
       message: payload.subtitle ?? String(payload.data.action ?? "Rule triggered"),
     }),
     mapUpdateBody: (_id, payload) => ({
       name: payload.title,
-      condition: String(payload.data?.condition ?? payload.title ?? "condition"),
+      condition: normalizeWeatherRuleCondition(payload.data?.condition ?? payload.title ?? "condition"),
       severity: String(payload.data?.severity ?? "medium"),
       message: payload.subtitle ?? String(payload.data?.action ?? "Rule updated"),
-      enabled: payload.data?.enabled,
+      active: payload.data?.enabled,
     }),
     statusRequest: (id, status) => ({
       path: `/api/v1/weather/rules/${encodeURIComponent(id)}`,
       method: "PATCH",
       body: {
-        enabled: status === "active",
+        active: status === "active",
       },
     }),
   },
   advisories: {
     listPath: "/api/v1/expert-portal/advisories",
+    getPath: (id) => `/api/v1/expert-portal/advisories/${encodeURIComponent(id)}`,
     createPath: "/api/v1/expert-portal/advisories",
+    updatePath: (id) => `/api/v1/expert-portal/advisories/${encodeURIComponent(id)}`,
+    deletePath: (id) => `/api/v1/expert-portal/advisories/${encodeURIComponent(id)}`,
     listQuery: (params) => ({
       category: params.filters?.text,
       status: params.filters?.status?.[0],
@@ -2047,16 +2181,50 @@ const ENTITY_API_CONFIG: Partial<Record<EntityKey, EntityApiConfig>> = {
     mapCreateBody: (payload) => ({
       title: payload.title,
       content: String(payload.data.notes ?? payload.subtitle ?? payload.title),
-      category: String(payload.data.targetGroup ?? "general"),
+      category: normalizeAdvisoryCategory(payload.data.targetGroup ?? payload.data.category),
       targetRegions: toStringArray(payload.data.region).length > 0 ? toStringArray(payload.data.region) : ["all"],
       targetCrops: toStringArray(payload.data.cropTypes),
-      urgency: advisoryUrgency(payload.status),
+      urgency: advisoryCreateUrgency(payload.data.urgency ?? payload.status),
     }),
-    statusRequest: (id, status) => {
+    mapUpdateBody: (_id, payload) => {
+      const body: Record<string, unknown> = {
+        title: payload.title,
+        message: String(payload.data?.notes ?? payload.subtitle ?? payload.title ?? "Updated advisory"),
+        targetRegions: toStringArray(payload.data?.region).length > 0 ? toStringArray(payload.data?.region) : undefined,
+        targetCrops: toStringArray(payload.data?.cropTypes),
+      };
+      if (payload.data?.urgency !== undefined) {
+        body.urgency = advisoryUpdateUrgency(payload.data.urgency);
+      }
+      if (typeof payload.data?.scheduledAt === "string") {
+        body.scheduledAt = payload.data.scheduledAt;
+      }
+      if (typeof payload.data?.expiresAt === "string") {
+        body.expiresAt = payload.data.expiresAt;
+      }
+      return body;
+    },
+    statusRequest: (id, status, note) => {
       if (status === "acknowledged") {
         return {
           path: `/api/v1/expert-portal/advisories/${encodeURIComponent(id)}/acknowledge`,
           method: "POST",
+        };
+      }
+      if (status === "in_review") {
+        return {
+          path: `/api/v1/expert-portal/advisories/${encodeURIComponent(id)}/submit`,
+          method: "POST",
+        };
+      }
+      if (status === "approved" || status === "rejected") {
+        return {
+          path: `/api/v1/expert-portal/advisories/${encodeURIComponent(id)}/review`,
+          method: "POST",
+          body: {
+            decision: status,
+            reason: note,
+          },
         };
       }
       if (status === "published") {
@@ -2089,10 +2257,7 @@ const ENTITY_API_CONFIG: Partial<Record<EntityKey, EntityApiConfig>> = {
     mapUpdateBody: (_id, payload) => ({
       title: payload.title,
       content: String(payload.data?.body ?? payload.subtitle ?? payload.title ?? "Updated article"),
-      summary: payload.subtitle,
-      category: String(payload.data?.category ?? "general"),
-      tags: toStringArray(payload.data?.tags).length > 0 ? toStringArray(payload.data?.tags) : payload.tags ?? [],
-      cropTypes: toStringArray(payload.data?.cropTypes),
+      ...(typeof payload.data?.status === "string" ? { status: payload.data.status } : {}),
     }),
     statusRequest: (id, status, note) => {
       if (status === "published") {
@@ -2609,6 +2774,7 @@ const ENTITY_API_CONFIG: Partial<Record<EntityKey, EntityApiConfig>> = {
     getPath: (id) => `/api/v1/analytics/charts/${encodeURIComponent(id)}`,
     createPath: "/api/v1/analytics/charts",
     updatePath: (id) => `/api/v1/analytics/charts/${encodeURIComponent(id)}`,
+    updateMethod: "PUT",
     deletePath: (id) => `/api/v1/analytics/charts/${encodeURIComponent(id)}`,
     listQuery: (params) => ({
       dataset: params.filters?.text,
@@ -2630,7 +2796,7 @@ const ENTITY_API_CONFIG: Partial<Record<EntityKey, EntityApiConfig>> = {
           },
         } as const),
       tags: payload.tags ?? [],
-      shareScope: String(payload.data.shareScope ?? "owner_only"),
+      shareScope: normalizeShareScope(payload.data.shareScope ?? "owner_only"),
     }),
     mapUpdateBody: (_id, payload) => ({
       name: payload.title,
@@ -2648,7 +2814,7 @@ const ENTITY_API_CONFIG: Partial<Record<EntityKey, EntityApiConfig>> = {
           },
         } as const),
       tags: payload.tags,
-      shareScope: String(payload.data?.shareScope ?? "owner_only"),
+      shareScope: normalizeShareScope(payload.data?.shareScope ?? "owner_only"),
     }),
   },
   dashboards: {
@@ -2659,7 +2825,7 @@ const ENTITY_API_CONFIG: Partial<Record<EntityKey, EntityApiConfig>> = {
     mapCreateBody: (payload) => ({
       name: payload.title,
       description: payload.subtitle,
-      shareScope: String(payload.data.shareScope ?? "org_members"),
+      shareScope: normalizeShareScope(payload.data.shareScope ?? "org_members"),
       tags: payload.tags ?? [],
       isDefault: false,
     }),
@@ -2676,7 +2842,9 @@ const ENTITY_API_CONFIG: Partial<Record<EntityKey, EntityApiConfig>> = {
     }),
     mapCreateBody: (payload) => ({
       frequency: String(payload.data.frequency ?? "weekly"),
-      email: String(payload.data.email ?? payload.data.recipient ?? ""),
+      ...(typeof payload.data.email === "string" && payload.data.email.trim().length > 0
+        ? { email: payload.data.email.trim() }
+        : {}),
       filters: {
         productIds: toStringArray(payload.data.productIds),
         marketIds: toStringArray(payload.data.marketIds),

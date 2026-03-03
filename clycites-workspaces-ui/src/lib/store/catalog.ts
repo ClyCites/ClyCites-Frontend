@@ -834,21 +834,45 @@ export const ENTITY_DEFINITIONS: Record<EntityKey, EntityDefinition> = {
       },
     ]
   ),
-  knowledgeBaseArticles: createEntityDefinition("knowledgeBaseArticles", "Article", "Knowledge Base Articles", ["draft", "published", "unpublished", "archived"], [
-    textField("data.category", "Category"),
-    textField("data.tags", "Tags"),
-    textField("data.body", "Article Body"),
-  ]),
+  knowledgeBaseArticles: createEntityDefinition(
+    "knowledgeBaseArticles",
+    "Article",
+    "Knowledge Base Articles",
+    ["draft", "in_review", "approved", "rejected", "published", "unpublished", "archived"],
+    [
+      textField("data.category", "Category"),
+      textField("data.tags", "Tags"),
+      textField("data.body", "Article Body"),
+    ],
+    [
+      statusAction("submit-review", "Submit for Review", "Submit article for peer review.", "in_review"),
+      statusAction("approve", "Approve", "Approve article after review.", "approved"),
+      statusAction("reject", "Reject", "Reject article with feedback.", "rejected"),
+      statusAction("publish", "Publish", "Publish approved article.", "published"),
+    ]
+  ),
   researchReports: createEntityDefinition("researchReports", "Research Report", "Research Reports", ["draft", "in_review", "published", "archived"], [
     textField("data.summary", "Summary"),
     textField("data.datasetRef", "Dataset Ref"),
   ]),
-  fieldCases: createEntityDefinition("fieldCases", "Field Case", "Field Cases", ["created", "assigned", "in_visit", "resolved", "closed"], [
-    textField("data.farmerId", "Farmer ID"),
-    textField("data.assignedOfficer", "Assigned Officer"),
-    dateField("data.visitSchedule", "Visit Schedule"),
-    textField("data.notes", "Notes"),
-  ]),
+  fieldCases: createEntityDefinition(
+    "fieldCases",
+    "Field Case",
+    "Field Cases",
+    ["created", "assigned", "in_visit", "resolved", "closed"],
+    [
+      textField("data.farmerId", "Farmer ID"),
+      textField("data.assignedOfficer", "Assigned Officer"),
+      dateField("data.visitSchedule", "Visit Schedule"),
+      textField("data.notes", "Notes"),
+    ],
+    [
+      statusAction("assign-case", "Assign Case", "Assign case to an expert.", "assigned"),
+      statusAction("start-visit", "Start Visit", "Mark case as in-field visit.", "in_visit"),
+      statusAction("resolve-case", "Resolve Case", "Submit diagnosis and resolve case.", "resolved"),
+      statusAction("close-case", "Close Case", "Close resolved case.", "closed"),
+    ]
+  ),
   assignments: createEntityDefinition("assignments", "Assignment", "Assignments", ["created", "assigned", "completed", "cancelled"], [
     textField("data.assignee", "Assignee"),
     dateField("data.dueDate", "Due Date"),

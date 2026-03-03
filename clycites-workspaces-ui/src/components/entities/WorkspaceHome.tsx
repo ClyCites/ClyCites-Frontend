@@ -177,7 +177,7 @@ export function WorkspaceHome({ workspaceId }: WorkspaceHomeProps) {
             <Badge variant="success">{totalRecords} Records</Badge>
             {workspaceId === "analytics" && (
               <Button asChild variant="outline" size="sm">
-                <Link href="/app/analytics/charts">Open Chart Workbench</Link>
+                <Link href="/app/analytics/charts/workbench">Open Chart Workbench</Link>
               </Button>
             )}
             <Button
