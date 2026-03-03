@@ -851,10 +851,21 @@ export const ENTITY_DEFINITIONS: Record<EntityKey, EntityDefinition> = {
       statusAction("publish", "Publish", "Publish approved article.", "published"),
     ]
   ),
-  researchReports: createEntityDefinition("researchReports", "Research Report", "Research Reports", ["draft", "in_review", "published", "archived"], [
-    textField("data.summary", "Summary"),
-    textField("data.datasetRef", "Dataset Ref"),
-  ]),
+  researchReports: createEntityDefinition(
+    "researchReports",
+    "Research Report",
+    "Research Reports",
+    ["draft", "in_review", "published", "archived"],
+    [
+      textField("data.summary", "Summary"),
+      textField("data.datasetRef", "Dataset Ref"),
+    ],
+    [
+      statusAction("submit-report", "Submit for Review", "Submit report for review.", "in_review"),
+      statusAction("publish-report", "Publish", "Publish reviewed report.", "published"),
+      statusAction("archive-report", "Archive", "Archive published report.", "archived"),
+    ]
+  ),
   fieldCases: createEntityDefinition(
     "fieldCases",
     "Field Case",
@@ -878,11 +889,21 @@ export const ENTITY_DEFINITIONS: Record<EntityKey, EntityDefinition> = {
     dateField("data.dueDate", "Due Date"),
     textField("data.relatedEntityId", "Related Entity ID"),
   ]),
-  reviewQueue: createEntityDefinition("reviewQueue", "Review Queue Item", "Review Queue", ["queued", "in_review", "approved", "rejected"], [
-    textField("data.relatedEntity", "Related Entity"),
-    textField("data.reviewer", "Reviewer"),
-    textField("data.comments", "Comments"),
-  ]),
+  reviewQueue: createEntityDefinition(
+    "reviewQueue",
+    "Review Queue Item",
+    "Review Queue",
+    ["queued", "in_review", "approved", "rejected"],
+    [
+      textField("data.relatedEntity", "Related Entity"),
+      textField("data.reviewer", "Reviewer"),
+      textField("data.comments", "Comments"),
+    ],
+    [
+      statusAction("approve-review", "Approve", "Approve selected review item.", "approved"),
+      statusAction("reject-review", "Reject", "Reject selected review item.", "rejected"),
+    ]
+  ),
   datasets: createEntityDefinition("datasets", "Dataset", "Datasets", ["active", "deprecated"], [
     textField("data.source", "Source"),
     textField("data.schemaVersion", "Schema Version"),

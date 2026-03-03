@@ -7,10 +7,11 @@ export function CreditsEntityPage() {
     <FinanceEntityPage
       entityKey="credits"
       features={{
-        allowCreate: false,
-        allowEdit: false,
-        allowDelete: false,
-        allowStatus: false,
+        allowCreate: true,
+        allowEdit: true,
+        allowDelete: true,
+        allowStatus: true,
+        enabledWorkflowActionIds: ["approve-credit", "reject-credit", "disburse-credit"],
       }}
     />
   );

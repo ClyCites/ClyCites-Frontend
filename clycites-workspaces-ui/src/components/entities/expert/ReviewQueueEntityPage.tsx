@@ -10,7 +10,8 @@ export function ReviewQueueEntityPage() {
         allowCreate: false,
         allowEdit: false,
         allowDelete: false,
-        allowStatus: false,
+        allowStatus: true,
+        enabledWorkflowActionIds: ["approve-review", "reject-review"],
       }}
     />
   );

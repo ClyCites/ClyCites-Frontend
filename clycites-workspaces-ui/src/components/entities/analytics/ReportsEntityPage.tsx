@@ -7,9 +7,9 @@ export function ReportsEntityPage() {
     <AnalyticsEntityPage
       entityKey="reports"
       features={{
-        allowCreate: false,
-        allowEdit: false,
-        allowDelete: false,
+        allowCreate: true,
+        allowEdit: true,
+        allowDelete: true,
         allowStatus: false,
         enabledToolbarActionIds: [],
       }}

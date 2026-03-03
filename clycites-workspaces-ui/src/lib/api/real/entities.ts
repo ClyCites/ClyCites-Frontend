@@ -1953,19 +1953,20 @@ const ENTITY_API_CONFIG: Partial<Record<EntityKey, EntityApiConfig>> = {
     }),
   },
   payouts: {
-    listPath: "/api/v1/payments/transactions",
-    createPath: "/api/v1/payments/wallet/withdraw",
+    listPath: "/api/v1/payments/payouts",
+    getPath: (id) => `/api/v1/payments/payouts/${encodeURIComponent(id)}`,
+    createPath: "/api/v1/payments/payouts",
+    updatePath: (id) => `/api/v1/payments/payouts/${encodeURIComponent(id)}`,
+    deletePath: (id) => `/api/v1/payments/payouts/${encodeURIComponent(id)}`,
     listQuery: (params) => ({
       page: params.pagination.page,
       limit: params.pagination.pageSize,
-      type: "debit",
       status: params.filters?.status?.[0],
-      startDate: params.filters?.dateRange?.from,
-      endDate: params.filters?.dateRange?.to,
+      method: params.filters?.tags?.[0],
     }),
     mapCreateBody: (payload) => ({
       amount: Number(payload.data.amount ?? 0),
-      withdrawalMethod: String(payload.data.method ?? "bank_transfer"),
+      method: String(payload.data.method ?? "bank_transfer"),
       accountDetails:
         asRecord(payload.data.accountDetails) ??
         ({
@@ -1973,7 +1974,44 @@ const ENTITY_API_CONFIG: Partial<Record<EntityKey, EntityApiConfig>> = {
           phoneNumber: String(payload.data.phoneNumber ?? ""),
           accountName: String(payload.data.accountName ?? payload.title),
         } as const),
+      reference: typeof payload.data.reference === "string" ? payload.data.reference : undefined,
+      notes: payload.subtitle,
     }),
+    mapUpdateBody: (_id, payload) => ({
+      method: typeof payload.data?.method === "string" ? payload.data.method : undefined,
+      accountDetails: asRecord(payload.data?.accountDetails),
+      reference: typeof payload.data?.reference === "string" ? payload.data.reference : undefined,
+      notes: payload.subtitle,
+      status: typeof payload.data?.status === "string" ? payload.data.status : undefined,
+      failureReason: typeof payload.data?.failureReason === "string" ? payload.data.failureReason : undefined,
+    }),
+    statusRequest: (id, status, note) => {
+      if (status === "paid") {
+        return {
+          path: `/api/v1/payments/payouts/${encodeURIComponent(id)}/approve`,
+          method: "POST",
+        };
+      }
+      if (status === "failed") {
+        return {
+          path: `/api/v1/payments/payouts/${encodeURIComponent(id)}/fail`,
+          method: "POST",
+          body: {
+            reason: note ?? "Marked failed from workspace workflow",
+          },
+        };
+      }
+      if (status === "requested" || status === "processing") {
+        return {
+          path: `/api/v1/payments/payouts/${encodeURIComponent(id)}`,
+          method: "PATCH",
+          body: {
+            status,
+          },
+        };
+      }
+      return null;
+    },
   },
   escrowAccounts: {
     listPath: "/api/v1/payments/escrow",
@@ -2004,6 +2042,152 @@ const ENTITY_API_CONFIG: Partial<Record<EntityKey, EntityApiConfig>> = {
       }
       return null;
     },
+  },
+  invoices: {
+    listPath: "/api/v1/finance/invoices",
+    getPath: (id) => `/api/v1/finance/invoices/${encodeURIComponent(id)}`,
+    createPath: "/api/v1/finance/invoices",
+    updatePath: (id) => `/api/v1/finance/invoices/${encodeURIComponent(id)}`,
+    deletePath: (id) => `/api/v1/finance/invoices/${encodeURIComponent(id)}`,
+    listQuery: (params) => ({
+      status: params.filters?.status?.[0],
+      customerName: params.filters?.text,
+    }),
+    mapCreateBody: (payload) => ({
+      customerName: payload.title,
+      amount: Number(payload.data.amount ?? 0),
+      dueDate:
+        typeof payload.data.dueDate === "string"
+          ? new Date(payload.data.dueDate).toISOString()
+          : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+      status: payload.status,
+      notes: payload.subtitle,
+      metadata: {
+        orderId: payload.data.orderId,
+      },
+    }),
+    mapUpdateBody: (_id, payload) => ({
+      customerName: payload.title,
+      amount: typeof payload.data?.amount === "number" ? payload.data.amount : undefined,
+      dueDate: typeof payload.data?.dueDate === "string" ? new Date(payload.data.dueDate).toISOString() : undefined,
+      status: typeof payload.data?.status === "string" ? payload.data.status : undefined,
+      notes: payload.subtitle,
+      metadata: {
+        orderId: payload.data?.orderId,
+      },
+    }),
+    actionRequest: (actionId, _actorId, targetId) => {
+      if (actionId !== "export-invoice" || !targetId) return null;
+      return {
+        path: `/api/v1/finance/invoices/${encodeURIComponent(targetId)}/export`,
+        method: "POST",
+        body: {
+          format: "pdf",
+        },
+        message: "Invoice export triggered.",
+      };
+    },
+  },
+  credits: {
+    listPath: "/api/v1/finance/credits",
+    getPath: (id) => `/api/v1/finance/credits/${encodeURIComponent(id)}`,
+    createPath: "/api/v1/finance/credits",
+    updatePath: (id) => `/api/v1/finance/credits/${encodeURIComponent(id)}`,
+    deletePath: (id) => `/api/v1/finance/credits/${encodeURIComponent(id)}`,
+    listQuery: (params) => ({
+      status: params.filters?.status?.[0],
+      applicantName: params.filters?.text,
+    }),
+    mapCreateBody: (payload) => ({
+      applicantName: payload.title,
+      applicantId: typeof payload.data.applicantId === "string" ? payload.data.applicantId : undefined,
+      amountRequested: Number(payload.data.requestedAmount ?? 0),
+      notes: payload.subtitle,
+      metadata: {
+        score: payload.data.score,
+      },
+    }),
+    mapUpdateBody: (_id, payload) => ({
+      status: typeof payload.data?.status === "string" ? payload.data.status : undefined,
+      amountApproved: typeof payload.data?.approvedAmount === "number" ? payload.data.approvedAmount : undefined,
+      rejectionReason: typeof payload.data?.rejectionReason === "string" ? payload.data.rejectionReason : undefined,
+      notes: payload.subtitle,
+      metadata: {
+        score: payload.data?.score,
+      },
+    }),
+    statusRequest: (id, status, note) => {
+      if (status === "approved") {
+        return {
+          path: `/api/v1/finance/credits/${encodeURIComponent(id)}/approve`,
+          method: "POST",
+        };
+      }
+      if (status === "rejected") {
+        return {
+          path: `/api/v1/finance/credits/${encodeURIComponent(id)}/reject`,
+          method: "POST",
+          body: {
+            reason: note,
+            rejectionReason: note,
+          },
+        };
+      }
+      if (status === "disbursed") {
+        return {
+          path: `/api/v1/finance/credits/${encodeURIComponent(id)}/disburse`,
+          method: "POST",
+        };
+      }
+      if (status === "under_review" || status === "applied") {
+        return {
+          path: `/api/v1/finance/credits/${encodeURIComponent(id)}`,
+          method: "PATCH",
+          body: {
+            status,
+          },
+        };
+      }
+      return null;
+    },
+  },
+  insurancePolicies: {
+    listPath: "/api/v1/finance/insurance/policies",
+    getPath: (id) => `/api/v1/finance/insurance/policies/${encodeURIComponent(id)}`,
+    createPath: "/api/v1/finance/insurance/policies",
+    updatePath: (id) => `/api/v1/finance/insurance/policies/${encodeURIComponent(id)}`,
+    deletePath: (id) => `/api/v1/finance/insurance/policies/${encodeURIComponent(id)}`,
+    listQuery: (params) => ({
+      status: params.filters?.status?.[0],
+      search: params.filters?.text,
+    }),
+    mapCreateBody: (payload) => ({
+      insuredEntityName: payload.title,
+      providerName: String(payload.data.provider ?? "Default Provider"),
+      coverageType: String(payload.data.coverageType ?? "general"),
+      premiumAmount: Number(payload.data.premiumAmount ?? 0),
+      coverageAmount: Number(payload.data.coverageAmount ?? 0),
+      startDate:
+        typeof payload.data.startDate === "string"
+          ? new Date(payload.data.startDate).toISOString()
+          : new Date().toISOString(),
+      endDate:
+        typeof payload.data.endDate === "string"
+          ? new Date(payload.data.endDate).toISOString()
+          : new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
+      status: typeof payload.data.claimStatus === "string" ? payload.data.claimStatus : payload.status,
+      notes: payload.subtitle,
+      metadata: {
+        policyNumber: payload.data.policyNumber,
+      },
+    }),
+    mapUpdateBody: (_id, payload) => ({
+      status: typeof payload.data?.claimStatus === "string" ? payload.data.claimStatus : payload.data?.status,
+      notes: payload.subtitle,
+      metadata: {
+        policyNumber: payload.data?.policyNumber,
+      },
+    }),
   },
   stations: {
     listPath: "/api/v1/weather/profiles/me",
@@ -2285,6 +2469,63 @@ const ENTITY_API_CONFIG: Partial<Record<EntityKey, EntityApiConfig>> = {
       return null;
     },
   },
+  researchReports: {
+    listPath: "/api/v1/expert-portal/research-reports",
+    getPath: (id) => `/api/v1/expert-portal/research-reports/${encodeURIComponent(id)}`,
+    createPath: "/api/v1/expert-portal/research-reports",
+    updatePath: (id) => `/api/v1/expert-portal/research-reports/${encodeURIComponent(id)}`,
+    deletePath: (id) => `/api/v1/expert-portal/research-reports/${encodeURIComponent(id)}`,
+    listQuery: (params) => ({
+      status: params.filters?.status?.[0],
+      search: params.filters?.text,
+    }),
+    mapCreateBody: (payload) => ({
+      title: payload.title,
+      summary: payload.subtitle,
+      content: String(payload.data.summary ?? payload.subtitle ?? payload.title),
+      tags: payload.tags ?? [],
+      relatedCaseId: typeof payload.data.datasetRef === "string" ? payload.data.datasetRef : undefined,
+      status: payload.status,
+    }),
+    mapUpdateBody: (_id, payload) => ({
+      title: payload.title,
+      summary: payload.subtitle,
+      content: String(payload.data?.summary ?? payload.subtitle ?? payload.title ?? "Updated research report"),
+      tags: payload.tags,
+      relatedCaseId: typeof payload.data?.datasetRef === "string" ? payload.data.datasetRef : undefined,
+      status: typeof payload.data?.status === "string" ? payload.data.status : undefined,
+    }),
+    statusRequest: (id, status) => {
+      if (status === "in_review") {
+        return {
+          path: `/api/v1/expert-portal/research-reports/${encodeURIComponent(id)}/submit`,
+          method: "POST",
+        };
+      }
+      if (status === "published") {
+        return {
+          path: `/api/v1/expert-portal/research-reports/${encodeURIComponent(id)}/publish`,
+          method: "POST",
+        };
+      }
+      if (status === "archived") {
+        return {
+          path: `/api/v1/expert-portal/research-reports/${encodeURIComponent(id)}/archive`,
+          method: "POST",
+        };
+      }
+      if (status === "draft") {
+        return {
+          path: `/api/v1/expert-portal/research-reports/${encodeURIComponent(id)}`,
+          method: "PATCH",
+          body: {
+            status: "draft",
+          },
+        };
+      }
+      return null;
+    },
+  },
   fieldCases: {
     listPath: "/api/v1/expert-portal/cases",
     createPath: "/api/v1/expert-portal/inquiries",
@@ -2335,16 +2576,48 @@ const ENTITY_API_CONFIG: Partial<Record<EntityKey, EntityApiConfig>> = {
     },
   },
   assignments: {
-    listPath: "/api/v1/expert-portal/cases/my",
+    listPath: "/api/v1/expert-portal/assignments",
+    getPath: (id) => `/api/v1/expert-portal/assignments/${encodeURIComponent(id)}`,
+    updatePath: (id) => `/api/v1/expert-portal/assignments/${encodeURIComponent(id)}`,
     listQuery: (params) => ({
       status: params.filters?.status?.[0],
+      search: params.filters?.text,
+    }),
+    mapUpdateBody: (_id, payload) => ({
+      expertId: typeof payload.data?.assignee === "string" ? payload.data.assignee : undefined,
+      status: typeof payload.data?.status === "string" ? payload.data.status : undefined,
+      notes: payload.subtitle,
     }),
   },
   reviewQueue: {
-    listPath: "/api/v1/expert-portal/cases",
+    listPath: "/api/v1/expert-portal/review-queue",
+    getPath: (id) => `/api/v1/expert-portal/review-queue/${encodeURIComponent(id)}`,
     listQuery: (params) => ({
-      status: params.filters?.status?.[0] ?? "pending",
+      status: params.filters?.status?.[0],
+      search: params.filters?.text,
     }),
+    statusRequest: (id, status, note) => {
+      if (status === "approved") {
+        return {
+          path: `/api/v1/expert-portal/review-queue/${encodeURIComponent(id)}/approve`,
+          method: "POST",
+          body: {
+            reason: note,
+          },
+        };
+      }
+      if (status === "rejected") {
+        return {
+          path: `/api/v1/expert-portal/review-queue/${encodeURIComponent(id)}/reject`,
+          method: "POST",
+          body: {
+            reason: note,
+            note,
+          },
+        };
+      }
+      return null;
+    },
   },
   commodities: {
     listPath: "/api/v1/products",
@@ -2662,7 +2935,7 @@ const ENTITY_API_CONFIG: Partial<Record<EntityKey, EntityApiConfig>> = {
     },
   },
   orgs: {
-    listPath: "/api/v1/organizations/me",
+    listPath: "/api/v1/admin/organizations",
     getPath: (id) => `/api/v1/organizations/${encodeURIComponent(id)}`,
     createPath: "/api/v1/organizations",
     updatePath: (id) => `/api/v1/organizations/${encodeURIComponent(id)}`,
@@ -2831,23 +3104,34 @@ const ENTITY_API_CONFIG: Partial<Record<EntityKey, EntityApiConfig>> = {
     }),
   },
   reports: {
-    listPath: "/api/v1/prices/report",
-    createPath: "/api/v1/prices/schedule-report",
+    listPath: "/api/v1/analytics/reports",
+    getPath: (id) => `/api/v1/analytics/reports/${encodeURIComponent(id)}`,
+    createPath: "/api/v1/analytics/reports",
+    updatePath: (id) => `/api/v1/analytics/reports/${encodeURIComponent(id)}`,
+    deletePath: (id) => `/api/v1/analytics/reports/${encodeURIComponent(id)}`,
     listQuery: (params) => ({
       page: params.pagination.page,
       limit: params.pagination.pageSize,
-      productId: params.filters?.text,
-      region: params.filters?.tags?.[0],
-      format: "json",
+      status: params.filters?.status?.[0],
+      search: params.filters?.text,
     }),
     mapCreateBody: (payload) => ({
-      frequency: String(payload.data.frequency ?? "weekly"),
-      ...(typeof payload.data.email === "string" && payload.data.email.trim().length > 0
-        ? { email: payload.data.email.trim() }
-        : {}),
-      filters: {
-        productIds: toStringArray(payload.data.productIds),
-        marketIds: toStringArray(payload.data.marketIds),
+      name: payload.title,
+      description: payload.subtitle,
+      dashboardId: typeof payload.data.dashboardId === "string" ? payload.data.dashboardId : undefined,
+      outputFormat: typeof payload.data.format === "string" ? payload.data.format : "json",
+      metadata: {
+        workspace: "analytics",
+      },
+    }),
+    mapUpdateBody: (_id, payload) => ({
+      name: payload.title,
+      description: payload.subtitle,
+      dashboardId: typeof payload.data?.dashboardId === "string" ? payload.data.dashboardId : undefined,
+      outputFormat: typeof payload.data?.format === "string" ? payload.data.format : undefined,
+      status: typeof payload.data?.status === "string" ? payload.data.status : undefined,
+      metadata: {
+        workspace: "analytics",
       },
     }),
   },
@@ -2865,50 +3149,70 @@ const ENTITY_API_CONFIG: Partial<Record<EntityKey, EntityApiConfig>> = {
     }),
   },
   roles: {
-    listPath: "/api/v1/auth/me",
-    listMode: "collection",
-    listQuery: () => ({
-      page: undefined,
-      limit: undefined,
-      search: undefined,
-      status: undefined,
+    listPath: "/api/v1/admin/roles",
+    getPath: (id) => `/api/v1/admin/roles/${encodeURIComponent(id)}`,
+    createPath: "/api/v1/admin/roles",
+    updatePath: (id) => `/api/v1/admin/roles/${encodeURIComponent(id)}`,
+    deletePath: (id) => `/api/v1/admin/roles/${encodeURIComponent(id)}`,
+    listQuery: (params) => ({
+      status: params.filters?.status?.[0],
+      search: params.filters?.text,
     }),
-    mapListRows: (payload) => {
-      const me = unwrapApiData<unknown>(payload);
-      const record = asRecord(me) ?? {};
-      const user = asRecord(record.user) ?? record;
-      const roles = toStringArray(user.roles);
-      return roles.map((role) => ({
-        id: role,
-        name: role,
-        code: role,
-        description: `Role assigned to current user: ${role}`,
-        status: "active",
-      }));
-    },
+    mapCreateBody: (payload) => ({
+      name: payload.title,
+      description: payload.subtitle ?? payload.title,
+      permissions: toStringArray(payload.data.permissions),
+      status: payload.status,
+    }),
+    mapUpdateBody: (_id, payload) => ({
+      name: payload.title,
+      description: payload.subtitle,
+      permissions: toStringArray(payload.data?.permissions),
+      status: typeof payload.data?.status === "string" ? payload.data.status : undefined,
+    }),
+    statusRequest: (id, status) => ({
+      path: `/api/v1/admin/roles/${encodeURIComponent(id)}`,
+      method: "PATCH",
+      body: {
+        status,
+      },
+    }),
   },
   permissions: {
-    listPath: "/api/v1/auth/me",
-    listMode: "collection",
-    listQuery: () => ({
-      page: undefined,
-      limit: undefined,
-      search: undefined,
-      status: undefined,
+    listPath: "/api/v1/admin/permissions",
+    getPath: (id) => `/api/v1/admin/permissions/${encodeURIComponent(id)}`,
+    createPath: "/api/v1/admin/permissions",
+    updatePath: (id) => `/api/v1/admin/permissions/${encodeURIComponent(id)}`,
+    deletePath: (id) => `/api/v1/admin/permissions/${encodeURIComponent(id)}`,
+    listQuery: (params) => ({
+      status: params.filters?.status?.[0],
+      search: params.filters?.text,
     }),
-    mapListRows: (payload) => {
-      const me = unwrapApiData<unknown>(payload);
-      const record = asRecord(me) ?? {};
-      const user = asRecord(record.user) ?? record;
-      const permissions = toStringArray(user.permissions);
-      return permissions.map((permission) => ({
-        id: permission,
-        code: permission,
-        name: permission,
-        description: `Permission available to current user: ${permission}`,
-        status: "active",
-      }));
-    },
+    mapCreateBody: (payload) => ({
+      resource: String(payload.data.resource ?? payload.title),
+      action: String(payload.data.action ?? "read"),
+      scope: String(payload.data.scope ?? "organization"),
+      description: payload.subtitle ?? String(payload.data.description ?? payload.title),
+      category: String(payload.data.category ?? "custom"),
+      name: typeof payload.data.name === "string" ? payload.data.name : payload.title,
+      status: payload.status,
+    }),
+    mapUpdateBody: (_id, payload) => ({
+      resource: typeof payload.data?.resource === "string" ? payload.data.resource : undefined,
+      action: typeof payload.data?.action === "string" ? payload.data.action : undefined,
+      scope: typeof payload.data?.scope === "string" ? payload.data.scope : undefined,
+      name: payload.title,
+      description: payload.subtitle,
+      category: typeof payload.data?.category === "string" ? payload.data.category : undefined,
+      status: typeof payload.data?.status === "string" ? payload.data.status : undefined,
+    }),
+    statusRequest: (id, status) => ({
+      path: `/api/v1/admin/permissions/${encodeURIComponent(id)}`,
+      method: "PATCH",
+      body: {
+        status,
+      },
+    }),
   },
 };
 

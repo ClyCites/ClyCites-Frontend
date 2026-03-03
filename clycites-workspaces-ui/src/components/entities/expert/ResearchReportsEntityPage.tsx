@@ -7,10 +7,11 @@ export function ResearchReportsEntityPage() {
     <ExpertEntityPage
       entityKey="researchReports"
       features={{
-        allowCreate: false,
-        allowEdit: false,
-        allowDelete: false,
-        allowStatus: false,
+        allowCreate: true,
+        allowEdit: true,
+        allowDelete: true,
+        allowStatus: true,
+        enabledWorkflowActionIds: ["submit-report", "publish-report", "archive-report"],
       }}
     />
   );

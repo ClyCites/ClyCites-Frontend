@@ -8,8 +8,8 @@ export function PayoutsEntityPage() {
       entityKey="payouts"
       features={{
         allowCreate: true,
-        allowEdit: false,
-        allowDelete: false,
+        allowEdit: true,
+        allowDelete: true,
         allowStatus: false,
       }}
     />

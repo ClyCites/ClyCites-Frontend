@@ -8,7 +8,7 @@ export function AssignmentsEntityPage() {
       entityKey="assignments"
       features={{
         allowCreate: false,
-        allowEdit: false,
+        allowEdit: true,
         allowDelete: false,
         allowStatus: false,
       }}

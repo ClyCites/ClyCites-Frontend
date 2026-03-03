@@ -7,9 +7,9 @@ export function InsurancePoliciesEntityPage() {
     <FinanceEntityPage
       entityKey="insurancePolicies"
       features={{
-        allowCreate: false,
-        allowEdit: false,
-        allowDelete: false,
+        allowCreate: true,
+        allowEdit: true,
+        allowDelete: true,
         allowStatus: false,
       }}
     />
