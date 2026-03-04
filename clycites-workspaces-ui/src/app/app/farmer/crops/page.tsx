@@ -1,6 +1,5 @@
-import { CropsEntityPage } from "@/components/entities/farmer/CropsEntityPage";
+import { FarmerEntityListPage } from "@/app/app/farmer/_components/FarmerEntityListPage";
 
 export default function FarmerCropsPage() {
-  return <CropsEntityPage />;
+  return <FarmerEntityListPage entityKey="crops" />;
 }
-

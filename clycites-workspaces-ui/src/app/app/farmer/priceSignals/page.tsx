@@ -1,6 +1,5 @@
-import { PriceSignalsEntityPage } from "@/components/entities/farmer/PriceSignalsEntityPage";
+import { FarmerEntityListPage } from "@/app/app/farmer/_components/FarmerEntityListPage";
 
 export default function FarmerPriceSignalsPage() {
-  return <PriceSignalsEntityPage />;
+  return <FarmerEntityListPage entityKey="priceSignals" />;
 }
-

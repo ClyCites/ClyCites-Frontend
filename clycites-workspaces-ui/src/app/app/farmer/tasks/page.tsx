@@ -1,6 +1,5 @@
-import { TasksEntityPage } from "@/components/entities/farmer/TasksEntityPage";
+import { FarmerEntityListPage } from "@/app/app/farmer/_components/FarmerEntityListPage";
 
 export default function FarmerTasksPage() {
-  return <TasksEntityPage />;
+  return <FarmerEntityListPage entityKey="tasks" />;
 }
-
