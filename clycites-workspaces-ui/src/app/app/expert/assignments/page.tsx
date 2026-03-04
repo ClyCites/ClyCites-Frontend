@@ -1,5 +1,5 @@
-import { AssignmentsEntityPage } from "@/components/entities/expert/AssignmentsEntityPage";
+import { ExpertEntityListPage } from "@/app/app/expert/_components/ExpertEntityListPage";
 
 export default function ExpertAssignmentsPage() {
-  return <AssignmentsEntityPage />;
+  return <ExpertEntityListPage entityKey="assignments" />;
 }

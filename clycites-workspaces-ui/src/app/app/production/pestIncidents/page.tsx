@@ -1,5 +1,5 @@
-import { PestIncidentsEntityPage } from "@/components/entities/production/PestIncidentsEntityPage";
+import { ProductionEntityListPage } from "@/app/app/production/_components/ProductionEntityListPage";
 
 export default function ProductionPestIncidentsPage() {
-  return <PestIncidentsEntityPage />;
+  return <ProductionEntityListPage entityKey="pestIncidents" />;
 }

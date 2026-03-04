@@ -1,5 +1,5 @@
-import { InvoicesEntityPage } from "@/components/entities/finance/InvoicesEntityPage";
+import { FinanceEntityListPage } from "@/app/app/finance/_components/FinanceEntityListPage";
 
 export default function FinanceInvoicesPage() {
-  return <InvoicesEntityPage />;
+  return <FinanceEntityListPage entityKey="invoices" />;
 }

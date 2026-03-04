@@ -1,5 +1,5 @@
-import { GrowthStagesEntityPage } from "@/components/entities/production/GrowthStagesEntityPage";
+import { ProductionEntityListPage } from "@/app/app/production/_components/ProductionEntityListPage";
 
 export default function ProductionGrowthStagesPage() {
-  return <GrowthStagesEntityPage />;
+  return <ProductionEntityListPage entityKey="growthStages" />;
 }

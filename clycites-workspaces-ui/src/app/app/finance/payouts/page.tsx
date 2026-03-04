@@ -1,5 +1,5 @@
-import { PayoutsEntityPage } from "@/components/entities/finance/PayoutsEntityPage";
+import { FinanceEntityListPage } from "@/app/app/finance/_components/FinanceEntityListPage";
 
 export default function FinancePayoutsPage() {
-  return <PayoutsEntityPage />;
+  return <FinanceEntityListPage entityKey="payouts" />;
 }

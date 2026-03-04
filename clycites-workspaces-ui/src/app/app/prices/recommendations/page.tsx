@@ -1,5 +1,5 @@
-import { RecommendationsEntityPage } from "@/components/entities/prices/RecommendationsEntityPage";
+import { PricesEntityListPage } from "@/app/app/prices/_components/PricesEntityListPage";
 
 export default function PricesRecommendationsPage() {
-  return <RecommendationsEntityPage />;
+  return <PricesEntityListPage entityKey="recommendations" />;
 }

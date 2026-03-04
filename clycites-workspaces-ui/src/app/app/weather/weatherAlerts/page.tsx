@@ -1,5 +1,5 @@
-import { WeatherAlertsEntityPage } from "@/components/entities/weather/WeatherAlertsEntityPage";
+import { WeatherEntityListPage } from "@/app/app/weather/_components/WeatherEntityListPage";
 
-export default function WeatherAlertsPage() {
-  return <WeatherAlertsEntityPage />;
+export default function WeatherWeatherAlertsPage() {
+  return <WeatherEntityListPage entityKey="weatherAlerts" />;
 }

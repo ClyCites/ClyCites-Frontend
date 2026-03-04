@@ -1,5 +1,5 @@
-import { StockMovementsEntityPage } from "@/components/entities/aggregation/StockMovementsEntityPage";
+import { AggregationEntityListPage } from "@/app/app/aggregation/_components/AggregationEntityListPage";
 
 export default function AggregationStockMovementsPage() {
-  return <StockMovementsEntityPage />;
+  return <AggregationEntityListPage entityKey="stockMovements" />;
 }

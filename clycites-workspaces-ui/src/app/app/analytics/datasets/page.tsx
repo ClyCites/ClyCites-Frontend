@@ -1,5 +1,5 @@
-import { DatasetsEntityPage } from "@/components/entities/analytics/DatasetsEntityPage";
+import { AnalyticsEntityListPage } from "@/app/app/analytics/_components/AnalyticsEntityListPage";
 
 export default function AnalyticsDatasetsPage() {
-  return <DatasetsEntityPage />;
+  return <AnalyticsEntityListPage entityKey="datasets" />;
 }

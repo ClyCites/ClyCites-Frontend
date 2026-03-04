@@ -1,5 +1,5 @@
-import { KnowledgeBaseArticlesEntityPage } from "@/components/entities/expert/KnowledgeBaseArticlesEntityPage";
+import { ExpertEntityListPage } from "@/app/app/expert/_components/ExpertEntityListPage";
 
 export default function ExpertKnowledgeBaseArticlesPage() {
-  return <KnowledgeBaseArticlesEntityPage />;
+  return <ExpertEntityListPage entityKey="knowledgeBaseArticles" />;
 }

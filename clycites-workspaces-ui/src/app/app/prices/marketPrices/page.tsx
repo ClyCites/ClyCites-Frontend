@@ -1,5 +1,5 @@
-import { MarketPricesEntityPage } from "@/components/entities/prices/MarketPricesEntityPage";
+import { PricesEntityListPage } from "@/app/app/prices/_components/PricesEntityListPage";
 
 export default function PricesMarketPricesPage() {
-  return <MarketPricesEntityPage />;
+  return <PricesEntityListPage entityKey="marketPrices" />;
 }

@@ -1,5 +1,5 @@
-import { WalletsEntityPage } from "@/components/entities/finance/WalletsEntityPage";
+import { FinanceEntityListPage } from "@/app/app/finance/_components/FinanceEntityListPage";
 
 export default function FinanceWalletsPage() {
-  return <WalletsEntityPage />;
+  return <FinanceEntityListPage entityKey="wallets" />;
 }

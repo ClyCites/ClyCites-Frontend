@@ -1,5 +1,5 @@
-import { ReviewsEntityPage } from "@/components/entities/marketplace/ReviewsEntityPage";
+import { MarketplaceEntityListPage } from "@/app/app/marketplace/_components/MarketplaceEntityListPage";
 
 export default function MarketplaceReviewsPage() {
-  return <ReviewsEntityPage />;
+  return <MarketplaceEntityListPage entityKey="reviews" />;
 }

@@ -1,5 +1,5 @@
-import { ChartsEntityPage } from "@/components/entities/analytics/ChartsEntityPage";
+import { AnalyticsEntityListPage } from "@/app/app/analytics/_components/AnalyticsEntityListPage";
 
 export default function AnalyticsChartsPage() {
-  return <ChartsEntityPage />;
+  return <AnalyticsEntityListPage entityKey="charts" />;
 }

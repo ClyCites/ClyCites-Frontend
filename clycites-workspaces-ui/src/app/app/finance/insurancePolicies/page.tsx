@@ -1,5 +1,5 @@
-import { InsurancePoliciesEntityPage } from "@/components/entities/finance/InsurancePoliciesEntityPage";
+import { FinanceEntityListPage } from "@/app/app/finance/_components/FinanceEntityListPage";
 
 export default function FinanceInsurancePoliciesPage() {
-  return <InsurancePoliciesEntityPage />;
+  return <FinanceEntityListPage entityKey="insurancePolicies" />;
 }

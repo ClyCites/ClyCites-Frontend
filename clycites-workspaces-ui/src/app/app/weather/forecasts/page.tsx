@@ -1,5 +1,5 @@
-import { ForecastsEntityPage } from "@/components/entities/weather/ForecastsEntityPage";
+import { WeatherEntityListPage } from "@/app/app/weather/_components/WeatherEntityListPage";
 
 export default function WeatherForecastsPage() {
-  return <ForecastsEntityPage />;
+  return <WeatherEntityListPage entityKey="forecasts" />;
 }

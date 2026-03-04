@@ -1,5 +1,5 @@
-import { NegotiationsEntityPage } from "@/components/entities/marketplace/NegotiationsEntityPage";
+import { MarketplaceEntityListPage } from "@/app/app/marketplace/_components/MarketplaceEntityListPage";
 
 export default function MarketplaceNegotiationsPage() {
-  return <NegotiationsEntityPage />;
+  return <MarketplaceEntityListPage entityKey="negotiations" />;
 }

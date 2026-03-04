@@ -1,5 +1,5 @@
-import { UsersEntityPage } from "@/components/entities/admin/UsersEntityPage";
+import { AdminEntityListPage } from "@/app/app/admin/_components/AdminEntityListPage";
 
 export default function AdminUsersPage() {
-  return <UsersEntityPage />;
+  return <AdminEntityListPage entityKey="users" />;
 }

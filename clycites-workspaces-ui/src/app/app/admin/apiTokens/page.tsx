@@ -1,5 +1,5 @@
-import { ApiTokensEntityPage } from "@/components/entities/admin/ApiTokensEntityPage";
+import { AdminEntityListPage } from "@/app/app/admin/_components/AdminEntityListPage";
 
 export default function AdminApiTokensPage() {
-  return <ApiTokensEntityPage />;
+  return <AdminEntityListPage entityKey="apiTokens" />;
 }

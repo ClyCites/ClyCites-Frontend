@@ -1,5 +1,5 @@
-import { ColdChainLogsEntityPage } from "@/components/entities/logistics/ColdChainLogsEntityPage";
+import { LogisticsEntityListPage } from "@/app/app/logistics/_components/LogisticsEntityListPage";
 
 export default function LogisticsColdChainLogsPage() {
-  return <ColdChainLogsEntityPage />;
+  return <LogisticsEntityListPage entityKey="coldChainLogs" />;
 }

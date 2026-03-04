@@ -1,5 +1,5 @@
-import { CommoditiesEntityPage } from "@/components/entities/prices/CommoditiesEntityPage";
+import { PricesEntityListPage } from "@/app/app/prices/_components/PricesEntityListPage";
 
 export default function PricesCommoditiesPage() {
-  return <CommoditiesEntityPage />;
+  return <PricesEntityListPage entityKey="commodities" />;
 }

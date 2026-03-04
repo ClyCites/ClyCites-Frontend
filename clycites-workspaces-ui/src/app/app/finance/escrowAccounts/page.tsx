@@ -1,5 +1,5 @@
-import { EscrowAccountsEntityPage } from "@/components/entities/finance/EscrowAccountsEntityPage";
+import { FinanceEntityListPage } from "@/app/app/finance/_components/FinanceEntityListPage";
 
 export default function FinanceEscrowAccountsPage() {
-  return <EscrowAccountsEntityPage />;
+  return <FinanceEntityListPage entityKey="escrowAccounts" />;
 }

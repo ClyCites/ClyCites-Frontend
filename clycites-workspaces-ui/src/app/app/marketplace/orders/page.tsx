@@ -1,5 +1,5 @@
-import { OrdersEntityPage } from "@/components/entities/marketplace/OrdersEntityPage";
+import { MarketplaceEntityListPage } from "@/app/app/marketplace/_components/MarketplaceEntityListPage";
 
 export default function MarketplaceOrdersPage() {
-  return <OrdersEntityPage />;
+  return <MarketplaceEntityListPage entityKey="orders" />;
 }

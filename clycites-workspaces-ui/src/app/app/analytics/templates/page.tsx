@@ -1,5 +1,5 @@
-import { TemplatesEntityPage } from "@/components/entities/analytics/TemplatesEntityPage";
+import { AnalyticsEntityListPage } from "@/app/app/analytics/_components/AnalyticsEntityListPage";
 
 export default function AnalyticsTemplatesPage() {
-  return <TemplatesEntityPage />;
+  return <AnalyticsEntityListPage entityKey="templates" />;
 }

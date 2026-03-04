@@ -1,5 +1,5 @@
-import { DashboardsEntityPage } from "@/components/entities/analytics/DashboardsEntityPage";
+import { AnalyticsEntityListPage } from "@/app/app/analytics/_components/AnalyticsEntityListPage";
 
 export default function AnalyticsDashboardsPage() {
-  return <DashboardsEntityPage />;
+  return <AnalyticsEntityListPage entityKey="dashboards" />;
 }

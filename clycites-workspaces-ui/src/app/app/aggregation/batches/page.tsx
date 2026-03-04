@@ -1,5 +1,5 @@
-import { BatchesEntityPage } from "@/components/entities/aggregation/BatchesEntityPage";
+import { AggregationEntityListPage } from "@/app/app/aggregation/_components/AggregationEntityListPage";
 
 export default function AggregationBatchesPage() {
-  return <BatchesEntityPage />;
+  return <AggregationEntityListPage entityKey="batches" />;
 }

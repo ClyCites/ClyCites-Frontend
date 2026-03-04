@@ -1,5 +1,5 @@
-import { OrgsEntityPage } from "@/components/entities/admin/OrgsEntityPage";
+import { AdminEntityListPage } from "@/app/app/admin/_components/AdminEntityListPage";
 
 export default function AdminOrgsPage() {
-  return <OrgsEntityPage />;
+  return <AdminEntityListPage entityKey="orgs" />;
 }

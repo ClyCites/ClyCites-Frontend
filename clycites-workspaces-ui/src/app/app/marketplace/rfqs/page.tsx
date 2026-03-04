@@ -1,5 +1,5 @@
-import { RfqsEntityPage } from "@/components/entities/marketplace/RfqsEntityPage";
+import { MarketplaceEntityListPage } from "@/app/app/marketplace/_components/MarketplaceEntityListPage";
 
 export default function MarketplaceRfqsPage() {
-  return <RfqsEntityPage />;
+  return <MarketplaceEntityListPage entityKey="rfqs" />;
 }

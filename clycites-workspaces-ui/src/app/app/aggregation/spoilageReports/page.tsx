@@ -1,5 +1,5 @@
-import { SpoilageReportsEntityPage } from "@/components/entities/aggregation/SpoilageReportsEntityPage";
+import { AggregationEntityListPage } from "@/app/app/aggregation/_components/AggregationEntityListPage";
 
 export default function AggregationSpoilageReportsPage() {
-  return <SpoilageReportsEntityPage />;
+  return <AggregationEntityListPage entityKey="spoilageReports" />;
 }

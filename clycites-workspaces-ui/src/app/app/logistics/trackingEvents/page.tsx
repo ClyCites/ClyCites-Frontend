@@ -1,5 +1,5 @@
-import { TrackingEventsEntityPage } from "@/components/entities/logistics/TrackingEventsEntityPage";
+import { LogisticsEntityListPage } from "@/app/app/logistics/_components/LogisticsEntityListPage";
 
 export default function LogisticsTrackingEventsPage() {
-  return <TrackingEventsEntityPage />;
+  return <LogisticsEntityListPage entityKey="trackingEvents" />;
 }

@@ -1,5 +1,5 @@
-import { RolesEntityPage } from "@/components/entities/admin/RolesEntityPage";
+import { AdminEntityListPage } from "@/app/app/admin/_components/AdminEntityListPage";
 
 export default function AdminRolesPage() {
-  return <RolesEntityPage />;
+  return <AdminEntityListPage entityKey="roles" />;
 }

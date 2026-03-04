@@ -1,5 +1,5 @@
-import { ShipmentsEntityPage } from "@/components/entities/logistics/ShipmentsEntityPage";
+import { LogisticsEntityListPage } from "@/app/app/logistics/_components/LogisticsEntityListPage";
 
 export default function LogisticsShipmentsPage() {
-  return <ShipmentsEntityPage />;
+  return <LogisticsEntityListPage entityKey="shipments" />;
 }

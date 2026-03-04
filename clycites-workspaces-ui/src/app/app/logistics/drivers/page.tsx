@@ -1,5 +1,5 @@
-import { DriversEntityPage } from "@/components/entities/logistics/DriversEntityPage";
+import { LogisticsEntityListPage } from "@/app/app/logistics/_components/LogisticsEntityListPage";
 
 export default function LogisticsDriversPage() {
-  return <DriversEntityPage />;
+  return <LogisticsEntityListPage entityKey="drivers" />;
 }

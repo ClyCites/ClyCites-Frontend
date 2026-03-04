@@ -1,5 +1,5 @@
-import { ReviewQueueEntityPage } from "@/components/entities/expert/ReviewQueueEntityPage";
+import { ExpertEntityListPage } from "@/app/app/expert/_components/ExpertEntityListPage";
 
 export default function ExpertReviewQueuePage() {
-  return <ReviewQueueEntityPage />;
+  return <ExpertEntityListPage entityKey="reviewQueue" />;
 }

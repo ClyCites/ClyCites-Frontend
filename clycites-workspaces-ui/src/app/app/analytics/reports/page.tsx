@@ -1,5 +1,5 @@
-import { ReportsEntityPage } from "@/components/entities/analytics/ReportsEntityPage";
+import { AnalyticsEntityListPage } from "@/app/app/analytics/_components/AnalyticsEntityListPage";
 
 export default function AnalyticsReportsPage() {
-  return <ReportsEntityPage />;
+  return <AnalyticsEntityListPage entityKey="reports" />;
 }

@@ -1,5 +1,5 @@
-import { CropCyclesEntityPage } from "@/components/entities/production/CropCyclesEntityPage";
+import { ProductionEntityListPage } from "@/app/app/production/_components/ProductionEntityListPage";
 
 export default function ProductionCropCyclesPage() {
-  return <CropCyclesEntityPage />;
+  return <ProductionEntityListPage entityKey="cropCycles" />;
 }

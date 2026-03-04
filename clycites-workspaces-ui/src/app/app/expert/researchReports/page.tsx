@@ -1,5 +1,5 @@
-import { ResearchReportsEntityPage } from "@/components/entities/expert/ResearchReportsEntityPage";
+import { ExpertEntityListPage } from "@/app/app/expert/_components/ExpertEntityListPage";
 
 export default function ExpertResearchReportsPage() {
-  return <ResearchReportsEntityPage />;
+  return <ExpertEntityListPage entityKey="researchReports" />;
 }

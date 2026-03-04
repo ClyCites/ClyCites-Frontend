@@ -1,5 +1,5 @@
-import { DataSourcesEntityPage } from "@/components/entities/prices/DataSourcesEntityPage";
+import { PricesEntityListPage } from "@/app/app/prices/_components/PricesEntityListPage";
 
 export default function PricesDataSourcesPage() {
-  return <DataSourcesEntityPage />;
+  return <PricesEntityListPage entityKey="dataSources" />;
 }

@@ -1,5 +1,5 @@
-import { PermissionsEntityPage } from "@/components/entities/admin/PermissionsEntityPage";
+import { AdminEntityListPage } from "@/app/app/admin/_components/AdminEntityListPage";
 
 export default function AdminPermissionsPage() {
-  return <PermissionsEntityPage />;
+  return <AdminEntityListPage entityKey="permissions" />;
 }
