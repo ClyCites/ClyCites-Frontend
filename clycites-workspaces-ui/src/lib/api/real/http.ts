@@ -181,17 +181,23 @@ function extractTokens(payload: unknown): AuthTokens | null {
   if (!payload || typeof payload !== "object") return null;
 
   const objectPayload = payload as Record<string, unknown>;
-  const data = ("data" in objectPayload ? objectPayload.data : objectPayload) as Record<string, unknown> | null;
-  if (!data || typeof data !== "object") return null;
+  const dataSource = "data" in objectPayload ? objectPayload.data : objectPayload;
+  const data = asRecord(dataSource);
+  if (!data) return null;
+
+  const nestedTokens = asRecord(data.tokens) ?? asRecord(objectPayload.tokens);
 
   const accessToken =
-    (typeof data.accessToken === "string" ? data.accessToken : undefined) ||
-    (typeof data.token === "string" ? data.token : undefined) ||
-    (typeof objectPayload.accessToken === "string" ? (objectPayload.accessToken as string) : undefined);
+    asString(nestedTokens?.accessToken) ??
+    asString(data.accessToken) ??
+    asString(data.token) ??
+    asString(objectPayload.accessToken) ??
+    asString(objectPayload.token);
 
   const refreshToken =
-    (typeof data.refreshToken === "string" ? data.refreshToken : undefined) ||
-    (typeof objectPayload.refreshToken === "string" ? (objectPayload.refreshToken as string) : undefined);
+    asString(nestedTokens?.refreshToken) ??
+    asString(data.refreshToken) ??
+    asString(objectPayload.refreshToken);
 
   if (!accessToken) return null;
   return { accessToken, refreshToken };

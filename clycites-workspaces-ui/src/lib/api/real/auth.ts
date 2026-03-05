@@ -199,8 +199,59 @@ function asRecord(value: unknown): Record<string, unknown> | null {
   return value as Record<string, unknown>;
 }
 
+function asNonEmptyString(value: unknown): string | undefined {
+  return typeof value === "string" && value.trim().length > 0 ? value : undefined;
+}
+
 function asText(value: unknown): string {
   return typeof value === "string" ? value.trim().toLowerCase() : "";
+}
+
+function parseLoginTokens(payload: unknown): { accessToken?: string; refreshToken?: string } {
+  const root = asRecord(payload) ?? {};
+  const data = asRecord(unwrapApiData<Record<string, unknown>>(payload)) ?? {};
+  const nestedTokens = asRecord(data.tokens) ?? asRecord(root.tokens);
+
+  const accessToken =
+    asNonEmptyString(nestedTokens?.accessToken) ??
+    asNonEmptyString(data.accessToken) ??
+    asNonEmptyString(data.token) ??
+    asNonEmptyString(root.accessToken) ??
+    asNonEmptyString(root.token);
+
+  const refreshToken =
+    asNonEmptyString(nestedTokens?.refreshToken) ??
+    asNonEmptyString(data.refreshToken) ??
+    asNonEmptyString(root.refreshToken);
+
+  return { accessToken, refreshToken };
+}
+
+function normalizeSessionFromLoginPayload(payload: unknown, token: string): AuthSession | null {
+  const root = asRecord(payload) ?? {};
+  const data = asRecord(unwrapApiData<Record<string, unknown>>(payload)) ?? {};
+
+  const userRecord = asRecord(data.user) ?? asRecord(root.user) ?? data;
+  if (!userRecord) return null;
+
+  const organizationRecord = asRecord(data.organization) ?? asRecord(root.organization) ?? undefined;
+  const organization = normalizeOrganization(organizationRecord);
+  const user = normalizeUser(userRecord, organization);
+
+  const preferred = getActiveWorkspace();
+  const activeWorkspace =
+    preferred && organization.enabledModules.includes(preferred)
+      ? preferred
+      : organization.enabledModules[0] ?? "farmer";
+
+  setActiveWorkspace(activeWorkspace);
+
+  return {
+    token,
+    user,
+    organization,
+    activeWorkspace,
+  };
 }
 
 function hasMfaFlag(record: Record<string, unknown>): boolean {
@@ -299,17 +350,19 @@ export const authService: AuthServiceContract = {
     const data = unwrapApiData<Record<string, unknown>>(payload);
     const dataAsRecord = data && typeof data === "object" ? data : {};
 
-    const accessToken =
-      (typeof dataAsRecord.accessToken === "string" && dataAsRecord.accessToken) ||
-      (typeof (payload as Record<string, unknown>)?.accessToken === "string" &&
-        ((payload as Record<string, unknown>).accessToken as string));
-    const refreshToken =
-      (typeof dataAsRecord.refreshToken === "string" && dataAsRecord.refreshToken) ||
-      (typeof (payload as Record<string, unknown>)?.refreshToken === "string" &&
-        ((payload as Record<string, unknown>).refreshToken as string));
+    const { accessToken, refreshToken } = parseLoginTokens(payload);
     const payloadUser = dataAsRecord.user;
     const userRecord = payloadUser && typeof payloadUser === "object" ? (payloadUser as Record<string, unknown>) : dataAsRecord;
-    const mfaEnabled = typeof userRecord.isMfaEnabled === "boolean" ? userRecord.isMfaEnabled : undefined;
+    const payloadSecurity =
+      dataAsRecord.security && typeof dataAsRecord.security === "object"
+        ? (dataAsRecord.security as Record<string, unknown>)
+        : undefined;
+    const mfaEnabled =
+      typeof payloadSecurity?.isMfaEnabled === "boolean"
+        ? payloadSecurity.isMfaEnabled
+        : typeof userRecord.isMfaEnabled === "boolean"
+          ? userRecord.isMfaEnabled
+          : undefined;
     if (typeof mfaEnabled === "boolean") {
       cacheMfaStatus(email, mfaEnabled);
     }
@@ -331,6 +384,13 @@ export const authService: AuthServiceContract = {
     const session = await fetchSession();
     if (session) {
       return session;
+    }
+
+    if (accessToken) {
+      const fallbackSession = normalizeSessionFromLoginPayload(payload, accessToken);
+      if (fallbackSession) {
+        return fallbackSession;
+      }
     }
 
     throw new Error("Login succeeded but no active session could be resolved.");
