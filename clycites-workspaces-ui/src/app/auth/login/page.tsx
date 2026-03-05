@@ -258,6 +258,9 @@ export default function LoginPage() {
                   <Link href="/auth/forgot-password" className="text-primary hover:underline">
                     Forgot password?
                   </Link>
+                  <Link href="/auth/verify-otp" className="text-primary hover:underline">
+                    Verify OTP
+                  </Link>
                   <Link href="/auth/profile" className="text-muted-foreground hover:text-foreground">
                     View auth profile
                   </Link>

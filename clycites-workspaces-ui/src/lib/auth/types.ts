@@ -33,6 +33,17 @@ export interface RegistrationResult {
   email: string;
 }
 
+export type OtpPurpose = "login" | "verification" | "password_reset";
+
+export interface AuthProfileUpdatePayload {
+  firstName?: string;
+  lastName?: string;
+  phone?: string;
+  timezone?: string;
+  language?: string;
+  profile?: Record<string, unknown>;
+}
+
 export interface OnboardingProfile {
   userId: string;
   accountType: RegistrationAccountType;

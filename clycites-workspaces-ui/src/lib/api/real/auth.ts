@@ -1,4 +1,9 @@
-import type { RegisterAccountPayload, RegistrationAccountType } from "@/lib/auth/types";
+import type {
+  AuthProfileUpdatePayload,
+  OtpPurpose,
+  RegisterAccountPayload,
+  RegistrationAccountType,
+} from "@/lib/auth/types";
 import { ROLE_DEFINITIONS, WORKSPACES } from "@/lib/store/catalog";
 import type { Permission, RoleId, WorkspaceId, AuthSession, UserAccount, Organization } from "@/lib/store/types";
 import type { AuthServiceContract, MfaPolicy } from "@/lib/api/contracts";
@@ -131,6 +136,15 @@ function normalizeUser(raw: Record<string, unknown>, organization: Organization)
     id: String(raw.id ?? raw.userId ?? raw._id ?? "user-real"),
     name: String(raw.name ?? `${firstName} ${lastName}`.trim()),
     email: String(raw.email ?? "user@clycites.com"),
+    firstName,
+    lastName,
+    phone: asNonEmptyString(raw.phone),
+    role: asNonEmptyString(raw.role),
+    isActive: typeof raw.isActive === "boolean" ? raw.isActive : undefined,
+    isEmailVerified: typeof raw.isEmailVerified === "boolean" ? raw.isEmailVerified : undefined,
+    isPhoneVerified: typeof raw.isPhoneVerified === "boolean" ? raw.isPhoneVerified : undefined,
+    timezone: asNonEmptyString(raw.timezone),
+    language: asNonEmptyString(raw.language),
     orgId: String(raw.orgId ?? raw.organizationId ?? organization.id),
     roles: roles.length > 0 ? roles : ["org_admin"],
     permissions,
@@ -147,10 +161,18 @@ function normalizeSessionFromMe(payload: unknown): AuthSession {
   const rawUser = nestedUser && typeof nestedUser === "object" ? (nestedUser as Record<string, unknown>) : dataAsRecord;
   const nestedOrg = dataAsRecord.organization;
   const rawOrg = nestedOrg && typeof nestedOrg === "object" ? (nestedOrg as Record<string, unknown>) : undefined;
+  const nestedSecurity = dataAsRecord.security;
+  const rawSecurity =
+    nestedSecurity && typeof nestedSecurity === "object" ? (nestedSecurity as Record<string, unknown>) : undefined;
 
   const organization = normalizeOrganization(rawOrg);
   const user = normalizeUser(rawUser, organization);
-  const mfaEnabled = typeof rawUser.isMfaEnabled === "boolean" ? rawUser.isMfaEnabled : undefined;
+  const mfaEnabled =
+    typeof rawSecurity?.isMfaEnabled === "boolean"
+      ? rawSecurity.isMfaEnabled
+      : typeof rawUser.isMfaEnabled === "boolean"
+        ? rawUser.isMfaEnabled
+        : undefined;
   if (typeof mfaEnabled === "boolean") {
     cacheMfaStatus(user.email, mfaEnabled);
   }
@@ -183,12 +205,27 @@ async function fetchSession(): Promise<AuthSession | null> {
   }
 }
 
-async function sendOtpForLogin(email: string): Promise<void> {
+async function postOtpResend(email: string, purpose: OtpPurpose): Promise<void> {
   await apiRequest<unknown>(
     "/api/v1/auth/resend-otp",
     {
       method: "POST",
-      body: JSON.stringify({ email, purpose: "login" }),
+      body: JSON.stringify({ email, purpose }),
+    },
+    { auth: false }
+  );
+}
+
+async function postOtpVerification(email: string, code: string, purpose: OtpPurpose): Promise<void> {
+  await apiRequest<unknown>(
+    "/api/v1/auth/verify-otp",
+    {
+      method: "POST",
+      body: JSON.stringify({
+        email,
+        code,
+        purpose,
+      }),
     },
     { auth: false }
   );
@@ -338,7 +375,7 @@ export const authService: AuthServiceContract = {
       if (error instanceof ApiRequestError && isMfaChallengeError(error)) {
         cacheMfaStatus(email, true);
         try {
-          await sendOtpForLogin(email);
+          await postOtpResend(email, "login");
         } catch {
           // Best effort; backend may already issue OTP during login challenge.
         }
@@ -370,7 +407,7 @@ export const authService: AuthServiceContract = {
     if (payloadRequiresMfa(payload) && !accessToken) {
       cacheMfaStatus(email, true);
       try {
-        await sendOtpForLogin(email);
+        await postOtpResend(email, "login");
       } catch {
         // Best effort.
       }
@@ -396,8 +433,28 @@ export const authService: AuthServiceContract = {
     throw new Error("Login succeeded but no active session could be resolved.");
   },
 
+  async verifyOtp(email: string, code: string, purpose: OtpPurpose): Promise<void> {
+    if (!code.trim()) {
+      throw new Error("OTP code is required.");
+    }
+    await postOtpVerification(email, code.trim(), purpose);
+    if (purpose === "login") {
+      cacheMfaStatus(email, true);
+    }
+  },
+
+  async resendOtp(email: string, purpose: OtpPurpose): Promise<void> {
+    if (!email.trim()) {
+      throw new Error("Email is required.");
+    }
+    await postOtpResend(email.trim(), purpose);
+    if (purpose === "login") {
+      cacheMfaStatus(email, true);
+    }
+  },
+
   async requestLoginOtp(email: string): Promise<void> {
-    await sendOtpForLogin(email);
+    await postOtpResend(email, "login");
     cacheMfaStatus(email, true);
   },
 
@@ -405,9 +462,64 @@ export const authService: AuthServiceContract = {
     return fetchSession();
   },
 
+  async updateMyProfile(payload: AuthProfileUpdatePayload): Promise<AuthSession> {
+    await apiRequest<unknown>(
+      "/api/v1/auth/me/profile",
+      {
+        method: "PATCH",
+        body: JSON.stringify(payload),
+      },
+      { auth: true }
+    );
+
+    const session = await fetchSession();
+    if (!session) {
+      throw new Error("Profile updated but session could not be refreshed.");
+    }
+
+    return session;
+  },
+
+  async changePassword(currentPassword: string, newPassword: string): Promise<void> {
+    if (!currentPassword.trim() || !newPassword.trim()) {
+      throw new Error("Current and new passwords are required.");
+    }
+
+    await apiRequest<unknown>(
+      "/api/v1/auth/change-password",
+      {
+        method: "POST",
+        body: JSON.stringify({
+          currentPassword,
+          newPassword,
+        }),
+      },
+      { auth: true }
+    );
+
+    clearTokens();
+    if (isBrowser()) {
+      window.localStorage.removeItem(ACTIVE_WORKSPACE_KEY);
+    }
+  },
+
   async logout(): Promise<void> {
+    const tokens = getStoredTokens();
     try {
-      await apiRequest<unknown>("/api/v1/auth/logout", { method: "POST" }, { auth: true });
+      await apiRequest<unknown>(
+        "/api/v1/auth/logout",
+        {
+          method: "POST",
+          body: JSON.stringify(
+            tokens?.refreshToken
+              ? {
+                  refreshToken: tokens.refreshToken,
+                }
+              : {}
+          ),
+        },
+        { auth: true }
+      );
     } catch {
       // Ignore remote logout failures; local cleanup still happens.
     } finally {
@@ -437,28 +549,35 @@ export const authService: AuthServiceContract = {
 
   async register(payload: RegisterAccountPayload) {
     const names = splitName(payload.fullName);
+    const normalizedEmail = payload.email.trim().toLowerCase();
+    const normalizedPhone = asNonEmptyString(payload.phone);
+    const normalizedCountry = payload.country.trim();
+    const normalizedRegion = payload.region.trim();
 
-    const body = {
-      firstName: names.firstName,
-      lastName: names.lastName,
-      email: payload.email,
-      phone: payload.phone,
+    const body: Record<string, unknown> = {
+      firstName: names.firstName.trim(),
+      lastName: names.lastName.trim(),
+      email: normalizedEmail,
       password: payload.password,
       role: roleForRegistration(payload.accountType),
       timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "Africa/Kampala",
       language: "en",
       profile: {
-        displayName: payload.fullName,
-        nationality: payload.country,
+        displayName: payload.fullName.trim(),
+        nationality: normalizedCountry,
         address: {
-          city: payload.region,
-          country: payload.country,
+          city: normalizedRegion,
+          country: normalizedCountry,
         },
         preferences: {
-          preferredContactMethod: "email",
+          preferredContactMethod: normalizedPhone ? "phone" : "email",
         },
       },
     };
+
+    if (normalizedPhone) {
+      body.phone = normalizedPhone;
+    }
 
     const response = await apiRequest<unknown>(
       "/api/v1/auth/register",
@@ -475,7 +594,7 @@ export const authService: AuthServiceContract = {
     return {
       userId: String(dataAsRecord.userId ?? dataAsRecord.id ?? payload.email),
       accountType: payload.accountType,
-      email: payload.email,
+      email: normalizedEmail,
     };
   },
 
@@ -519,19 +638,7 @@ export const authService: AuthServiceContract = {
     if (!code.trim()) {
       throw new Error("MFA code is required.");
     }
-
-    await apiRequest<unknown>(
-      "/api/v1/auth/verify-otp",
-      {
-        method: "POST",
-        body: JSON.stringify({
-          email,
-          code,
-          purpose: "login",
-        }),
-      },
-      { auth: false }
-    );
+    await postOtpVerification(email, code.trim(), "login");
   },
 
   hasToken(): boolean {

@@ -1,5 +1,7 @@
 import type {
+  AuthProfileUpdatePayload,
   OnboardingProfile,
+  OtpPurpose,
   RegisterAccountPayload,
   RegistrationResult,
   SecuritySession,
@@ -14,9 +16,13 @@ export interface MfaPolicy {
 
 export interface AuthServiceContract {
   login(email: string, password: string): Promise<AuthSession>;
+  verifyOtp(email: string, code: string, purpose: OtpPurpose): Promise<void>;
+  resendOtp(email: string, purpose: OtpPurpose): Promise<void>;
   requestLoginOtp(email: string): Promise<void>;
   me(): Promise<AuthSession | null>;
   logout(actorId?: string): Promise<void>;
+  updateMyProfile(payload: AuthProfileUpdatePayload): Promise<AuthSession>;
+  changePassword(currentPassword: string, newPassword: string): Promise<void>;
   switchWorkspace(workspace: WorkspaceId): Promise<AuthSession>;
   getCredentials(): Array<{ email: string; password: string; role: string }>;
   register(payload: RegisterAccountPayload): Promise<RegistrationResult>;

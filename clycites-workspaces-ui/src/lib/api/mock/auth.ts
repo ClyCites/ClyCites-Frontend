@@ -8,7 +8,7 @@ import {
   resolveSession,
   updateSessionWorkspace,
 } from "@/lib/store";
-import type { RegisterAccountPayload } from "@/lib/auth/types";
+import type { AuthProfileUpdatePayload, OtpPurpose, RegisterAccountPayload } from "@/lib/auth/types";
 import { getSecuritySettings } from "@/lib/store/security";
 import type { AuthSession, WorkspaceId } from "@/lib/store/types";
 
@@ -74,6 +74,45 @@ export const authService = {
     // Mock adapter treats login OTP challenge as client-driven.
   },
 
+  async verifyOtp(email: string, code: string, purpose: OtpPurpose): Promise<void> {
+    const normalized = code.replace(/\s+/g, "");
+    if (purpose === "password_reset") {
+      const state = readPasswordResetState();
+      const challenge = state[email.trim().toLowerCase()];
+      if (!challenge || challenge.code !== normalized) {
+        throw new Error("Invalid OTP code.");
+      }
+      return;
+    }
+
+    if (normalized !== MFA_DEMO_CODE) {
+      throw new Error("Invalid OTP code.");
+    }
+  },
+
+  async resendOtp(email: string, purpose: OtpPurpose): Promise<void> {
+    const normalized = email.trim().toLowerCase();
+    if (!normalized) {
+      throw new Error("Email is required.");
+    }
+
+    if (purpose === "password_reset") {
+      const user = findUserByEmail(normalized);
+      if (!user) {
+        return;
+      }
+
+      const state = readPasswordResetState();
+      state[normalized] = {
+        email: normalized,
+        code: PASSWORD_RESET_DEMO_CODE,
+        requestedAt: new Date().toISOString(),
+        expiresAt: new Date(Date.now() + 1000 * 60 * 15).toISOString(),
+      };
+      writePasswordResetState(state);
+    }
+  },
+
   async me(): Promise<AuthSession | null> {
     const token = readToken();
     if (!token) return null;
@@ -95,6 +134,41 @@ export const authService = {
     } finally {
       clearToken();
     }
+  },
+
+  async updateMyProfile(payload: AuthProfileUpdatePayload): Promise<AuthSession> {
+    const token = readToken();
+    if (!token) {
+      throw new Error("No active session token");
+    }
+
+    const session = await resolveSession(token);
+    const firstName = payload.firstName?.trim() || "";
+    const lastName = payload.lastName?.trim() || "";
+    const nextName = `${firstName} ${lastName}`.trim() || session.user.name;
+
+    return {
+      ...session,
+      user: {
+        ...session.user,
+        name: nextName,
+      },
+    };
+  },
+
+  async changePassword(currentPassword: string, newPassword: string): Promise<void> {
+    if (!currentPassword.trim() || !newPassword.trim()) {
+      throw new Error("Current and new passwords are required.");
+    }
+
+    const token = readToken();
+    if (!token) {
+      throw new Error("No active session token");
+    }
+
+    const session = await resolveSession(token);
+    await resetUserPasswordByEmail(session.user.email, newPassword);
+    clearToken();
   },
 
   async switchWorkspace(workspace: WorkspaceId): Promise<AuthSession> {

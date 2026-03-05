@@ -21,6 +21,7 @@ export default function ForgotPasswordPage() {
   const [code, setCode] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [isResendingCode, setIsResendingCode] = useState(false);
 
   const handleRequestReset = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -80,6 +81,35 @@ export default function ForgotPasswordPage() {
       });
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleResendCode = async () => {
+    if (!email.trim()) {
+      toast({
+        title: "Email required",
+        description: "Enter your account email first.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsResendingCode(true);
+    try {
+      await authService.requestPasswordReset(email);
+      toast({
+        title: "Reset code sent",
+        description: "A new reset code has been sent to your email.",
+        variant: "success",
+      });
+    } catch (error) {
+      toast({
+        title: "Resend failed",
+        description: error instanceof Error ? error.message : "Unable to resend reset code.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsResendingCode(false);
     }
   };
 
@@ -164,17 +194,27 @@ export default function ForgotPasswordPage() {
                 <Button type="button" variant="outline" onClick={() => setStep("request")}>
                   Back
                 </Button>
-                <Button type="submit" loading={isSubmitting}>
-                  Reset password
-                </Button>
+                <div className="flex flex-wrap gap-2">
+                  <Button type="button" variant="outline" onClick={handleResendCode} loading={isResendingCode}>
+                    Resend code
+                  </Button>
+                  <Button type="submit" loading={isSubmitting}>
+                    Reset password
+                  </Button>
+                </div>
               </div>
             </form>
           )}
 
-          <div className="mt-4 text-sm text-muted-foreground">
-            Back to{" "}
-            <Link href="/auth/login" className="text-primary hover:underline">
-              Sign in
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-2 text-sm text-muted-foreground">
+            <span>
+              Back to{" "}
+              <Link href="/auth/login" className="text-primary hover:underline">
+                Sign in
+              </Link>
+            </span>
+            <Link href={`/auth/verify-otp?email=${encodeURIComponent(email)}`} className="text-primary hover:underline">
+              Open OTP tools
             </Link>
           </div>
         </CardContent>

@@ -52,6 +52,23 @@ function parseValidationDetails(payload: unknown): string | undefined {
   const record = asRecord(payload);
   if (!record) return undefined;
 
+  const details = record.details;
+  if (Array.isArray(details)) {
+    const first = details.find((item) => {
+      const row = asRecord(item);
+      return Boolean(asString(row?.message));
+    });
+
+    if (first && typeof first === "object") {
+      const row = first as Record<string, unknown>;
+      const message = asString(row.message);
+      const field = asString(row.field);
+      if (message) {
+        return field ? `${field}: ${message}` : message;
+      }
+    }
+  }
+
   const errors = record.errors;
   if (Array.isArray(errors)) {
     const first = errors.find((item) => asString(item));
@@ -81,15 +98,18 @@ export function parseApiErrorPayload(payload: unknown, status: number, fallback:
   const root = asRecord(payload) ?? {};
   const nestedError = asRecord(root.error);
   const nestedData = asRecord(root.data);
+  const validationMessage =
+    parseValidationDetails(root) ??
+    parseValidationDetails(nestedError) ??
+    parseValidationDetails(nestedData);
 
   const message =
+    validationMessage ??
     asString(root.message) ??
     asString(root.error_description) ??
     asString(root.detail) ??
     asString(nestedError?.message) ??
     asString(nestedData?.message) ??
-    parseValidationDetails(root) ??
-    parseValidationDetails(nestedError) ??
     fallback;
 
   const code =

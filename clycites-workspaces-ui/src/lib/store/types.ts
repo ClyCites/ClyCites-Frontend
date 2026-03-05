@@ -676,6 +676,15 @@ export interface UserAccount {
   name: string;
   email: string;
   password: string;
+  firstName?: string;
+  lastName?: string;
+  phone?: string;
+  role?: string;
+  isActive?: boolean;
+  isEmailVerified?: boolean;
+  isPhoneVerified?: boolean;
+  timezone?: string;
+  language?: string;
   orgId: string;
   roles: RoleId[];
   permissions: Permission[];
