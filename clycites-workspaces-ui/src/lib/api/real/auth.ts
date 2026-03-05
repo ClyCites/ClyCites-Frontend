@@ -2,10 +2,11 @@ import type { RegisterAccountPayload, RegistrationAccountType } from "@/lib/auth
 import { ROLE_DEFINITIONS, WORKSPACES } from "@/lib/store/catalog";
 import type { Permission, RoleId, WorkspaceId, AuthSession, UserAccount, Organization } from "@/lib/store/types";
 import type { AuthServiceContract, MfaPolicy } from "@/lib/api/contracts";
-import { apiRequest, clearTokens, getStoredTokens, storeTokens, unwrapApiData } from "@/lib/api/real/http";
+import { apiRequest, ApiRequestError, clearTokens, getStoredTokens, storeTokens, unwrapApiData } from "@/lib/api/real/http";
 
 const ACTIVE_WORKSPACE_KEY = "clycites.real.activeWorkspace";
 const MFA_STATUS_CACHE_KEY = "clycites.real.mfa.status";
+const MFA_REQUIRED_CODE = "MFA_REQUIRED";
 
 function isBrowser(): boolean {
   return typeof window !== "undefined";
@@ -193,16 +194,107 @@ async function sendOtpForLogin(email: string): Promise<void> {
   );
 }
 
+function asRecord(value: unknown): Record<string, unknown> | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  return value as Record<string, unknown>;
+}
+
+function asText(value: unknown): string {
+  return typeof value === "string" ? value.trim().toLowerCase() : "";
+}
+
+function hasMfaFlag(record: Record<string, unknown>): boolean {
+  const flags = [
+    record.requiresMfa,
+    record.mfaRequired,
+    record.requiresOtp,
+    record.otpRequired,
+    record.twoFactorRequired,
+  ];
+  if (flags.some((value) => value === true)) return true;
+
+  const nextAction = asText(record.nextAction);
+  const nextStep = asText(record.nextStep);
+  const status = asText(record.status);
+  const challenge = asText(record.challenge);
+
+  return (
+    nextAction.includes("otp") ||
+    nextAction.includes("mfa") ||
+    nextStep.includes("otp") ||
+    nextStep.includes("mfa") ||
+    status.includes("otp") ||
+    status.includes("mfa") ||
+    challenge.includes("otp") ||
+    challenge.includes("mfa")
+  );
+}
+
+function payloadRequiresMfa(payload: unknown): boolean {
+  const root = asRecord(payload);
+  if (!root) return false;
+  if (hasMfaFlag(root)) return true;
+
+  const data = asRecord(root.data);
+  if (data && hasMfaFlag(data)) return true;
+
+  const error = asRecord(root.error);
+  if (error && hasMfaFlag(error)) return true;
+
+  return false;
+}
+
+function isMfaChallengeError(error: ApiRequestError): boolean {
+  const code = asText(error.code);
+  const message = asText(error.message);
+  const details = asRecord(error.details);
+
+  if (code.includes("mfa") || code.includes("otp")) return true;
+  if (message.includes("mfa") || message.includes("otp") || message.includes("one-time")) return true;
+
+  if (details) {
+    const detailsCode = asText(details.code) || asText(details.errorCode) || asText(details.error);
+    const detailsMessage = asText(details.message) || asText(asRecord(details.error)?.message);
+    if (detailsCode.includes("mfa") || detailsCode.includes("otp")) return true;
+    if (detailsMessage.includes("mfa") || detailsMessage.includes("otp") || detailsMessage.includes("one-time")) return true;
+    if (payloadRequiresMfa(details)) return true;
+  }
+
+  return false;
+}
+
+function createMfaRequiredError(email: string): Error & { code: string; email: string } {
+  const error = new Error("Multi-factor verification is required to continue.") as Error & { code: string; email: string };
+  error.name = "AuthMfaRequiredError";
+  error.code = MFA_REQUIRED_CODE;
+  error.email = email.trim().toLowerCase();
+  return error;
+}
+
 export const authService: AuthServiceContract = {
   async login(email: string, password: string): Promise<AuthSession> {
-    const payload = await apiRequest<unknown>(
-      "/api/v1/auth/login",
-      {
-        method: "POST",
-        body: JSON.stringify({ email, password }),
-      },
-      { auth: false }
-    );
+    let payload: unknown;
+    try {
+      payload = await apiRequest<unknown>(
+        "/api/v1/auth/login",
+        {
+          method: "POST",
+          body: JSON.stringify({ email, password }),
+        },
+        { auth: false }
+      );
+    } catch (error) {
+      if (error instanceof ApiRequestError && isMfaChallengeError(error)) {
+        cacheMfaStatus(email, true);
+        try {
+          await sendOtpForLogin(email);
+        } catch {
+          // Best effort; backend may already issue OTP during login challenge.
+        }
+        throw createMfaRequiredError(email);
+      }
+      throw error;
+    }
 
     const data = unwrapApiData<Record<string, unknown>>(payload);
     const dataAsRecord = data && typeof data === "object" ? data : {};
@@ -222,6 +314,16 @@ export const authService: AuthServiceContract = {
       cacheMfaStatus(email, mfaEnabled);
     }
 
+    if (payloadRequiresMfa(payload) && !accessToken) {
+      cacheMfaStatus(email, true);
+      try {
+        await sendOtpForLogin(email);
+      } catch {
+        // Best effort.
+      }
+      throw createMfaRequiredError(email);
+    }
+
     if (accessToken) {
       storeTokens({ accessToken, refreshToken: refreshToken || undefined });
     }
@@ -232,6 +334,11 @@ export const authService: AuthServiceContract = {
     }
 
     throw new Error("Login succeeded but no active session could be resolved.");
+  },
+
+  async requestLoginOtp(email: string): Promise<void> {
+    await sendOtpForLogin(email);
+    cacheMfaStatus(email, true);
   },
 
   async me(): Promise<AuthSession | null> {
@@ -353,7 +460,6 @@ export const authService: AuthServiceContract = {
       throw new Error("MFA code is required.");
     }
 
-    await sendOtpForLogin(email);
     await apiRequest<unknown>(
       "/api/v1/auth/verify-otp",
       {

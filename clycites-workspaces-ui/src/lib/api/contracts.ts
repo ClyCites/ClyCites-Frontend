@@ -14,6 +14,7 @@ export interface MfaPolicy {
 
 export interface AuthServiceContract {
   login(email: string, password: string): Promise<AuthSession>;
+  requestLoginOtp(email: string): Promise<void>;
   me(): Promise<AuthSession | null>;
   logout(actorId?: string): Promise<void>;
   switchWorkspace(workspace: WorkspaceId): Promise<AuthSession>;

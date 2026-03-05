@@ -66,6 +66,14 @@ export const authService = {
     return resolveSession(loginResult.token);
   },
 
+  async requestLoginOtp(email: string): Promise<void> {
+    const normalized = email.trim().toLowerCase();
+    if (!normalized) {
+      throw new Error("Email is required.");
+    }
+    // Mock adapter treats login OTP challenge as client-driven.
+  },
+
   async me(): Promise<AuthSession | null> {
     const token = readToken();
     if (!token) return null;

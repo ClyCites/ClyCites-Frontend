@@ -2,11 +2,11 @@
 
 import Link from "next/link";
 import { createElement, useMemo, useState } from "react";
-import { useMutation, useQueries, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion, useReducedMotion } from "framer-motion";
 import { ArrowRight, TrendingDown, TrendingUp } from "lucide-react";
 import { WORKSPACE_ENTITY_MAP, getEntityDefinition, getWorkspaceDefinition } from "@/lib/store/catalog";
-import { chartService } from "@/lib/api";
+import { chartService, securityService } from "@/lib/api";
 import type { ChartDefinition } from "@/lib/api/contracts";
 import { entityServices } from "@/lib/api";
 import type { WorkspaceId } from "@/lib/store/types";
@@ -47,7 +47,7 @@ export function WorkspaceHome({ workspaceId }: WorkspaceHomeProps) {
   const entities = useMemo(() => WORKSPACE_ENTITY_MAP[workspaceId] ?? [], [workspaceId]);
   const workspaceLabel = workspace?.label ?? "Workspace";
   const workspaceDescription = workspace?.description ?? "Workspace overview";
-  const { canAccessWorkspace } = useMockSession();
+  const { session, canAccessWorkspace } = useMockSession();
   const reducedMotion = useReducedMotion();
   const queryClient = useQueryClient();
 
@@ -60,6 +60,12 @@ export function WorkspaceHome({ workspaceId }: WorkspaceHomeProps) {
           sort: { field: "updatedAt", direction: "desc" },
         }),
     })),
+  });
+
+  const onboardingStatusQuery = useQuery({
+    queryKey: ["auth-onboarding-status", session?.user.id],
+    queryFn: () => securityService.isOnboardingComplete(session!.user.id),
+    enabled: Boolean(session),
   });
 
   const summary = useMemo(
@@ -194,6 +200,26 @@ export function WorkspaceHome({ workspaceId }: WorkspaceHomeProps) {
           </div>
         }
       />
+
+      {onboardingStatusQuery.data === false && (
+        <motion.section variants={fadeIn(Boolean(reducedMotion))}>
+          <Card className="border-warning/50">
+            <CardHeader className="pb-2">
+              <CardTitle>Complete Onboarding</CardTitle>
+              <CardDescription>
+                Your account setup is incomplete. Finish onboarding to personalize workspace defaults and security preferences.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button asChild>
+                <Link href={`/auth/onboarding?next=${encodeURIComponent(`/app/${workspaceId}`)}`}>
+                  Continue Onboarding
+                </Link>
+              </Button>
+            </CardContent>
+          </Card>
+        </motion.section>
+      )}
 
       <motion.section variants={fadeIn(Boolean(reducedMotion))} className="grid grid-cols-12 gap-4">
         <Card className="col-span-12">

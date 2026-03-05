@@ -8,13 +8,14 @@ import { useMockSession } from "@/lib/auth/mock-session";
 export function AppGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
-  const { isLoading, isAuthenticated } = useMockSession();
+  const { isLoading, isAuthenticated, hasStaleSession } = useMockSession();
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
-      router.replace(`/auth/login?next=${encodeURIComponent(pathname)}`);
+      const target = hasStaleSession ? "/auth/restore-session" : "/auth/login";
+      router.replace(`${target}?next=${encodeURIComponent(pathname)}`);
     }
-  }, [isAuthenticated, isLoading, pathname, router]);
+  }, [hasStaleSession, isAuthenticated, isLoading, pathname, router]);
 
   if (isLoading) {
     return (

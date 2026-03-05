@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { useMutation } from "@tanstack/react-query";
 import { securityService } from "@/lib/api";
@@ -29,6 +29,8 @@ const GOALS = [
 
 export default function OnboardingPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const nextPath = searchParams.get("next") || "/app";
   const { session, isLoading } = useMockSession();
 
   const [step, setStep] = useState(1);
@@ -48,9 +50,9 @@ export default function OnboardingPage() {
 
   useEffect(() => {
     if (!isLoading && !session) {
-      router.replace("/auth/login");
+      router.replace(`/auth/login?next=${encodeURIComponent(nextPath)}`);
     }
-  }, [isLoading, router, session]);
+  }, [isLoading, nextPath, router, session]);
 
   const submitMutation = useMutation({
     mutationFn: async () => {
@@ -78,7 +80,7 @@ export default function OnboardingPage() {
     },
     onSuccess: () => {
       toast({ title: "Onboarding complete", variant: "success" });
-      router.replace("/app");
+      router.replace(nextPath);
     },
     onError: (error) => {
       toast({

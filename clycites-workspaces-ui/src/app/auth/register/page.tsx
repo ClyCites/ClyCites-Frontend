@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { Building2, UserRound } from "lucide-react";
-import { authService } from "@/lib/api";
+import { authService, securityService } from "@/lib/api";
 import type { RegisterAccountPayload, RegistrationAccountType } from "@/lib/auth/types";
 import { WORKSPACES } from "@/lib/store/catalog";
 import type { WorkspaceId } from "@/lib/store/types";
@@ -86,10 +86,31 @@ export default function RegisterPage() {
             };
 
       await authService.register(payload);
-      await login(email, password);
+      const session = await login(email, password);
 
-      toast({ title: "Registration complete", description: "Continue to onboarding.", variant: "success" });
-      router.replace("/auth/onboarding");
+      const primaryWorkspace =
+        accountType === "organization"
+          ? ((enabledModules[0] as WorkspaceId | undefined) ?? "farmer")
+          : "farmer";
+
+      await securityService.saveOnboarding(session.user.id, {
+        accountType,
+        preferredLanguage: "English",
+        region,
+        primaryWorkspace,
+        goals:
+          accountType === "organization"
+            ? ["Track marketplace performance", "Strengthen financial controls"]
+            : ["Improve production planning", "Monitor weather risk"],
+        notificationChannels: {
+          email: true,
+          sms: false,
+          inApp: true,
+        },
+      });
+
+      toast({ title: "Registration complete", description: "Your workspace is ready.", variant: "success" });
+      router.replace("/app");
     } catch (error) {
       toast({
         title: "Registration failed",
@@ -107,7 +128,7 @@ export default function RegisterPage() {
             <Image src="/logo.png" alt="ClyCites" width={752} height={927} className="h-16 w-auto" priority />
           </div>
           <CardTitle>Create ClyCites Account</CardTitle>
-          <CardDescription>Register as a sole operator or an organization and continue with onboarding.</CardDescription>
+          <CardDescription>Register as a sole operator or an organization and start directly in your dashboard.</CardDescription>
           <Progress value={progressValue} className="mt-2" />
         </CardHeader>
         <CardContent>
