@@ -198,9 +198,9 @@ export default function LoginPage() {
               <Image
                 src="/logo.png"
                 alt="ClyCites"
-                width={752}
-                height={927}
-                className="mb-2 h-14 w-auto lg:hidden"
+                width={100}
+                height={100}
+                className="justify-center self-center"
                 priority
               />
               <div className="flex items-center justify-between gap-3">
