@@ -1,24 +1,9 @@
-import { notificationsService as mockNotificationsService } from "@/lib/api/mock";
-import { apiRequest, ApiRequestError, unwrapApiData } from "@/lib/api/real/http";
+import { apiRequest, unwrapApiData } from "@/lib/api/real/http";
 import type { AppNotification, ListResult, NotificationFilterParams } from "@/lib/store/types";
 
 function asRecord(value: unknown): Record<string, unknown> | null {
   if (!value || typeof value !== "object" || Array.isArray(value)) return null;
   return value as Record<string, unknown>;
-}
-
-function shouldFallback(error: unknown): boolean {
-  if (!(error instanceof ApiRequestError)) return true;
-  return error.status !== 401 && error.status !== 403;
-}
-
-async function withFallback<T>(remote: () => Promise<T>, fallback: () => Promise<T>): Promise<T> {
-  try {
-    return await remote();
-  } catch (error) {
-    if (!shouldFallback(error)) throw error;
-    return fallback();
-  }
 }
 
 function extractRows(payload: unknown): unknown[] {
@@ -126,100 +111,75 @@ function applyPaging(items: AppNotification[], params: NotificationFilterParams)
 
 export const notificationsService = {
   async list(params: NotificationFilterParams) {
-    return withFallback(
-      async () => {
-        const query = new URLSearchParams();
-        query.set("page", String(params.page));
-        query.set("limit", String(params.pageSize));
-        if (params.unreadOnly) query.set("read", "false");
-        const payload = await apiRequest<unknown>(`/api/v1/notifications?${query.toString()}`, { method: "GET" }, { auth: true });
-        const rows = extractRows(payload).map((row, index) => normalizeNotification(row, index));
-        const filtered = params.unreadOnly ? rows.filter((row) => !row.read) : rows;
-        const remotePagination = extractRemotePagination(payload, params.page, params.pageSize, filtered.length);
-        if (remotePagination) {
-          return {
-            items: filtered,
-            pagination: remotePagination,
-          };
-        }
-        return applyPaging(filtered, params);
-      },
-      () => mockNotificationsService.list(params)
+    const query = new URLSearchParams();
+    query.set("page", String(params.page));
+    query.set("limit", String(params.pageSize));
+    if (params.unreadOnly) query.set("read", "false");
+    const payload = await apiRequest<unknown>(`/api/v1/notifications?${query.toString()}`, { method: "GET" }, { auth: true });
+    const rows = extractRows(payload).map((row, index) => normalizeNotification(row, index));
+    const filtered = params.unreadOnly ? rows.filter((row) => !row.read) : rows;
+    const remotePagination = extractRemotePagination(payload, params.page, params.pageSize, filtered.length);
+    if (remotePagination) {
+      return {
+        items: filtered,
+        pagination: remotePagination,
+      };
+    }
+    return applyPaging(filtered, params);
+  },
+  async markRead(notificationId: string, _actorId: string) {
+    void _actorId;
+    await apiRequest<unknown>(
+      `/api/v1/notifications/${encodeURIComponent(notificationId)}/read`,
+      { method: "PATCH" },
+      { auth: true }
     );
   },
-  async markRead(notificationId: string, actorId: string) {
-    return withFallback(
-      () =>
-        apiRequest<unknown>(
-          `/api/v1/notifications/${encodeURIComponent(notificationId)}/read`,
-          { method: "PATCH" },
-          { auth: true }
-        ).then(() => undefined),
-      () => mockNotificationsService.markRead(notificationId, actorId)
+  async markUnread(notificationId: string, _actorId: string) {
+    void _actorId;
+    await apiRequest<unknown>(
+      `/api/v1/notifications/${encodeURIComponent(notificationId)}/unread`,
+      { method: "PATCH" },
+      { auth: true }
     );
   },
-  async markUnread(notificationId: string, actorId: string) {
-    return mockNotificationsService.markUnread(notificationId, actorId);
-  },
-  async markAllRead(actorId: string) {
-    return withFallback(
-      () => apiRequest<unknown>("/api/v1/notifications/mark-all-read", { method: "PATCH" }, { auth: true }).then(() => undefined),
-      () => mockNotificationsService.markAllRead(actorId)
-    );
+  async markAllRead(_actorId: string) {
+    void _actorId;
+    await apiRequest<unknown>("/api/v1/notifications/mark-all-read", { method: "PATCH" }, { auth: true });
   },
   async getUnreadCount() {
-    return withFallback(
-      async () => {
-        const payload = await apiRequest<unknown>("/api/v1/notifications/unread-count", { method: "GET" }, { auth: true });
-        const data = asRecord(unwrapApiData<unknown>(payload)) ?? {};
-        const direct = Number(data.count ?? data.unreadCount ?? data.total ?? 0);
-        return Number.isFinite(direct) ? Math.max(0, Math.trunc(direct)) : 0;
-      },
-      () => mockNotificationsService.getUnreadCount()
-    );
+    const payload = await apiRequest<unknown>("/api/v1/notifications/unread-count", { method: "GET" }, { auth: true });
+    const data = asRecord(unwrapApiData<unknown>(payload)) ?? {};
+    const direct = Number(data.count ?? data.unreadCount ?? data.total ?? 0);
+    return Number.isFinite(direct) ? Math.max(0, Math.trunc(direct)) : 0;
   },
   async listTemplates() {
-    return withFallback(
-      async () => {
-        const payload = await apiRequest<unknown>("/api/v1/notifications/templates", { method: "GET" }, { auth: true });
-        const rows = extractRows(payload);
-        return rows.map((row, index) => {
-          const record = asRecord(row) ?? {};
-          return {
-            id: String(record.id ?? `template-${index + 1}`),
-            key: String(record.key ?? record.name ?? `template_${index + 1}`),
-            channels: Array.isArray(record.channels)
-              ? record.channels.filter((item): item is string => typeof item === "string")
-              : [],
-          };
-        });
-      },
-      () => mockNotificationsService.listTemplates()
-    );
+    const payload = await apiRequest<unknown>("/api/v1/notifications/templates", { method: "GET" }, { auth: true });
+    const rows = extractRows(payload);
+    return rows.map((row, index) => {
+      const record = asRecord(row) ?? {};
+      return {
+        id: String(record.id ?? `template-${index + 1}`),
+        key: String(record.key ?? record.name ?? `template_${index + 1}`),
+        channels: Array.isArray(record.channels)
+          ? record.channels.filter((item): item is string => typeof item === "string")
+          : [],
+      };
+    });
   },
   async retryFailed() {
-    return withFallback(
-      async () => {
-        const payload = await apiRequest<unknown>("/api/v1/notifications/admin/retry-failed", { method: "POST" }, { auth: true });
-        const data = asRecord(unwrapApiData<unknown>(payload)) ?? {};
-        return {
-          queued: Number(data.queued ?? 0),
-          retried: Number(data.retried ?? data.count ?? 0),
-        };
-      },
-      () => mockNotificationsService.retryFailed()
-    );
+    const payload = await apiRequest<unknown>("/api/v1/notifications/admin/retry-failed", { method: "POST" }, { auth: true });
+    const data = asRecord(unwrapApiData<unknown>(payload)) ?? {};
+    return {
+      queued: Number(data.queued ?? 0),
+      retried: Number(data.retried ?? data.count ?? 0),
+    };
   },
   async expireOld() {
-    return withFallback(
-      async () => {
-        const payload = await apiRequest<unknown>("/api/v1/notifications/admin/expire-old", { method: "POST" }, { auth: true });
-        const data = asRecord(unwrapApiData<unknown>(payload)) ?? {};
-        return {
-          expired: Number(data.expired ?? data.count ?? 0),
-        };
-      },
-      () => mockNotificationsService.expireOld()
-    );
+    const payload = await apiRequest<unknown>("/api/v1/notifications/admin/expire-old", { method: "POST" }, { auth: true });
+    const data = asRecord(unwrapApiData<unknown>(payload)) ?? {};
+    return {
+      expired: Number(data.expired ?? data.count ?? 0),
+    };
   },
 };

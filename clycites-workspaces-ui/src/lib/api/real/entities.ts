@@ -1,26 +1,12 @@
 import { ENTITY_DEFINITIONS, WORKSPACE_ENTITY_MAP, WORKSPACES } from "@/lib/store/catalog";
 import type { EntityKey, EntityRecord, ListParams, ListResult, WorkspaceId } from "@/lib/store/types";
-import { entityServices as mockEntityServices, type EntityService } from "@/lib/api/mock/entities";
-import { apiRequest, ApiRequestError, unwrapApiData } from "@/lib/api/real/http";
+import type { EntityCreatePayload, EntityService, EntityUpdatePayload } from "@/lib/api/entities/service-types";
+import { apiRequest, unwrapApiData } from "@/lib/api/real/http";
 
 type RequestMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
-type CreatePayload = {
-  actorId: string;
-  title: string;
-  subtitle?: string;
-  status?: string;
-  tags?: string[];
-  data: Record<string, unknown>;
-};
-
-type UpdatePayload = {
-  actorId: string;
-  title?: string;
-  subtitle?: string;
-  tags?: string[];
-  data?: Record<string, unknown>;
-};
+type CreatePayload = EntityCreatePayload;
+type UpdatePayload = EntityUpdatePayload;
 
 interface StatusRequestConfig {
   path: string;
@@ -716,22 +702,6 @@ function toQueryString(values: Record<string, unknown>): string {
     params.set(key, String(value));
   });
   return params.toString();
-}
-
-function shouldFallback(error: unknown): boolean {
-  if (!(error instanceof ApiRequestError)) return true;
-  return error.status !== 401 && error.status !== 403;
-}
-
-async function withFallback<T>(remote: () => Promise<T>, fallback: () => Promise<T>): Promise<T> {
-  try {
-    return await remote();
-  } catch (error) {
-    if (!shouldFallback(error)) {
-      throw error;
-    }
-    return fallback();
-  }
 }
 
 function defaultCreateBody(payload: CreatePayload): unknown {
@@ -3449,65 +3419,66 @@ async function runActionRemote(
 }
 
 function createRealEntityService<K extends EntityKey>(entityKey: K): EntityService<K> {
-  const mock = mockEntityServices[entityKey] as EntityService<K>;
   const config = ENTITY_API_CONFIG[entityKey];
 
   if (!config) {
-    return mock;
+    return {
+      listX: async () => unsupportedEntityOperation(entityKey, "list"),
+      getX: async () => unsupportedEntityOperation(entityKey, "get"),
+      createX: async () => unsupportedEntityOperation(entityKey, "create"),
+      updateX: async () => unsupportedEntityOperation(entityKey, "update"),
+      deleteX: async () => unsupportedEntityOperation(entityKey, "delete"),
+      changeStatus: async () => unsupportedEntityOperation(entityKey, "changeStatus"),
+      runAction: async () => unsupportedEntityOperation(entityKey, "runAction"),
+    };
   }
 
   return {
-    listX: (params) =>
-      withFallback(
-        () => listRemote(entityKey, config, params as ListParams) as Promise<ListResult<EntityRecord<K>>>,
-        () => mock.listX(params)
-      ),
-    getX: (id) =>
-      config.getPath
-        ? withFallback(
-            () => getRemote(entityKey, config, id) as Promise<EntityRecord<K>>,
-            () => mock.getX(id)
-          )
-        : mock.getX(id),
-    createX: (payload) =>
-      config.createPath
-        ? withFallback(
-            () => createRemote(entityKey, config, payload as CreatePayload) as Promise<EntityRecord<K>>,
-            () => mock.createX(payload)
-          )
-        : mock.createX(payload),
-    updateX: (id, payload) =>
-      config.updatePath
-        ? withFallback(
-            () => updateRemote(entityKey, config, id, payload as UpdatePayload) as Promise<EntityRecord<K>>,
-            () => mock.updateX(id, payload)
-          )
-        : mock.updateX(id, payload),
-    deleteX: (id, actorId) =>
-      config.deletePath
-        ? withFallback(
-            () => deleteRemote(config, id),
-            () => mock.deleteX(id, actorId)
-          )
-        : mock.deleteX(id, actorId),
-    changeStatus: (id, actorId, status, note) =>
-      config.statusRequest || config.updatePath
-        ? withFallback(
-            () => changeStatusRemote(entityKey, config, id, status, note) as Promise<EntityRecord<K>>,
-            () => mock.changeStatus(id, actorId, status, note)
-          )
-        : mock.changeStatus(id, actorId, status, note),
-    runAction: (actionId, actorId, targetId) =>
-      config.actionRequest
-        ? withFallback(
-            () => runActionRemote(config, actionId, actorId, targetId),
-            () => mock.runAction(actionId, actorId, targetId)
-          )
-        : mock.runAction(actionId, actorId, targetId),
+    listX: (params) => listRemote(entityKey, config, params as ListParams) as Promise<ListResult<EntityRecord<K>>>,
+    getX: (id) => {
+      if (!config.getPath) {
+        return unsupportedEntityOperation(entityKey, "get");
+      }
+      return getRemote(entityKey, config, id) as Promise<EntityRecord<K>>;
+    },
+    createX: (payload) => {
+      if (!config.createPath) {
+        return unsupportedEntityOperation(entityKey, "create");
+      }
+      return createRemote(entityKey, config, payload as CreatePayload) as Promise<EntityRecord<K>>;
+    },
+    updateX: (id, payload) => {
+      if (!config.updatePath) {
+        return unsupportedEntityOperation(entityKey, "update");
+      }
+      return updateRemote(entityKey, config, id, payload as UpdatePayload) as Promise<EntityRecord<K>>;
+    },
+    deleteX: (id) => {
+      if (!config.deletePath) {
+        return unsupportedEntityOperation(entityKey, "delete");
+      }
+      return deleteRemote(config, id);
+    },
+    changeStatus: (id, _actorId, status, note) => {
+      if (!config.statusRequest && !config.updatePath) {
+        return unsupportedEntityOperation(entityKey, "changeStatus");
+      }
+      return changeStatusRemote(entityKey, config, id, status, note) as Promise<EntityRecord<K>>;
+    },
+    runAction: (actionId, actorId, targetId) => {
+      if (!config.actionRequest) {
+        return unsupportedEntityOperation(entityKey, "runAction");
+      }
+      return runActionRemote(config, actionId, actorId, targetId);
+    },
   };
 }
 
-const entityKeys = Object.keys(mockEntityServices) as EntityKey[];
+function unsupportedEntityOperation(entityKey: EntityKey, operation: string): never {
+  throw new Error(`Entity "${entityKey}" does not support "${operation}" via the real API adapter.`);
+}
+
+const entityKeys = Object.keys(ENTITY_DEFINITIONS) as EntityKey[];
 
 export const entityServices = Object.fromEntries(
   entityKeys.map((key) => [key, createRealEntityService(key)])

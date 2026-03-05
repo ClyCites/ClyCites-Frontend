@@ -7,33 +7,8 @@ import {
   runEntityAction,
   updateEntity,
 } from "@/lib/store";
-import type { EntityKey, EntityRecord, ListParams, ListResult } from "@/lib/store/types";
-
-export interface EntityService<K extends EntityKey> {
-  listX: (params: ListParams) => Promise<ListResult<EntityRecord<K>>>;
-  getX: (id: string) => Promise<EntityRecord<K>>;
-  createX: (payload: {
-    actorId: string;
-    title: string;
-    subtitle?: string;
-    status?: string;
-    tags?: string[];
-    data: Record<string, unknown>;
-  }) => Promise<EntityRecord<K>>;
-  updateX: (
-    id: string,
-    payload: {
-      actorId: string;
-      title?: string;
-      subtitle?: string;
-      tags?: string[];
-      data?: Record<string, unknown>;
-    }
-  ) => Promise<EntityRecord<K>>;
-  deleteX: (id: string, actorId: string) => Promise<void>;
-  changeStatus: (id: string, actorId: string, status: string, note?: string) => Promise<EntityRecord<K>>;
-  runAction: (actionId: string, actorId: string, targetId?: string) => Promise<{ message: string }>;
-}
+import type { EntityService } from "@/lib/api/entities/service-types";
+import type { EntityKey } from "@/lib/store/types";
 
 function createEntityService<K extends EntityKey>(entityKey: K): EntityService<K> {
   return {

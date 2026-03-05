@@ -3,12 +3,10 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { securityService } from "@/lib/api";
-import { runtimeService } from "@/lib/api/mock";
 import { useMockSession } from "@/lib/auth/mock-session";
 import type { MfaMethod } from "@/lib/auth/types";
 import { PageHeader } from "@/components/common/PageHeader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
@@ -17,13 +15,8 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "@/components/ui/use-toast";
 
 export default function AppProfilePage() {
-  const { session, can } = useMockSession();
+  const { session } = useMockSession();
   const queryClient = useQueryClient();
-
-  const runtimeQuery = useQuery({
-    queryKey: ["runtime-config"],
-    queryFn: () => Promise.resolve(runtimeService.getConfig()),
-  });
 
   const securityQuery = useQuery({
     queryKey: ["security-settings", session?.user.id],
@@ -37,13 +30,6 @@ export default function AppProfilePage() {
     enabled: Boolean(session),
   });
 
-  const [runtimeDraft, setRuntimeDraft] = useState<{
-    latencyMs: number;
-    jitterMs: number;
-    errorRate: number;
-    enableRandomErrors: boolean;
-  } | null>(null);
-
   const [securityDraft, setSecurityDraft] = useState<{
     mfaEnabled: boolean;
     mfaMethod: MfaMethod;
@@ -51,18 +37,6 @@ export default function AppProfilePage() {
     loginAlerts: boolean;
     trustedDevicesOnly: boolean;
   } | null>(null);
-
-  const runtimeValues = useMemo(() => {
-    return (
-      runtimeDraft ??
-      runtimeQuery.data ?? {
-        latencyMs: 420,
-        jitterMs: 220,
-        errorRate: 0.08,
-        enableRandomErrors: false,
-      }
-    );
-  }, [runtimeDraft, runtimeQuery.data]);
 
   const securityValues = useMemo(() => {
     return (
@@ -75,24 +49,6 @@ export default function AppProfilePage() {
       }
     );
   }, [securityDraft, securityQuery.data]);
-
-  const updateRuntimeMutation = useMutation({
-    mutationFn: () => {
-      if (!session) throw new Error("No session");
-      return runtimeService.updateConfig(session.user.id, runtimeValues);
-    },
-    onSuccess: () => {
-      setRuntimeDraft(null);
-      queryClient.invalidateQueries({ queryKey: ["runtime-config"] });
-      toast({ title: "Runtime config updated", variant: "success" });
-    },
-    onError: (error) =>
-      toast({
-        title: "Failed to update runtime config",
-        description: error instanceof Error ? error.message : "Unknown error",
-        variant: "destructive",
-      }),
-  });
 
   const updateSecurityMutation = useMutation({
     mutationFn: () => {
@@ -147,7 +103,7 @@ export default function AppProfilePage() {
     <div className="space-y-4">
       <PageHeader
         title="Profile & Security"
-        subtitle="Manage authentication posture, active sessions, and mock runtime diagnostics."
+        subtitle="Manage authentication posture and active sessions."
         breadcrumbs={[{ label: "App", href: "/app" }, { label: "Profile" }]}
       />
 
@@ -293,75 +249,6 @@ export default function AppProfilePage() {
         </CardContent>
       </Card>
 
-      {can("admin.config.write") && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Mock Backend Runtime</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid gap-3 md:grid-cols-3">
-              <div className="space-y-1.5">
-                <Label>Latency (ms)</Label>
-                <Input
-                  type="number"
-                  value={runtimeValues.latencyMs}
-                  onChange={(event) =>
-                    setRuntimeDraft((current) => ({
-                      ...(current ?? runtimeValues),
-                      latencyMs: Number(event.target.value),
-                    }))
-                  }
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label>Jitter (ms)</Label>
-                <Input
-                  type="number"
-                  value={runtimeValues.jitterMs}
-                  onChange={(event) =>
-                    setRuntimeDraft((current) => ({
-                      ...(current ?? runtimeValues),
-                      jitterMs: Number(event.target.value),
-                    }))
-                  }
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label>Error Rate (0-1)</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={runtimeValues.errorRate}
-                  onChange={(event) =>
-                    setRuntimeDraft((current) => ({
-                      ...(current ?? runtimeValues),
-                      errorRate: Number(event.target.value),
-                    }))
-                  }
-                />
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <Switch
-                checked={runtimeValues.enableRandomErrors}
-                onCheckedChange={(value) =>
-                  setRuntimeDraft((current) => ({
-                    ...(current ?? runtimeValues),
-                    enableRandomErrors: value,
-                  }))
-                }
-              />
-              <span className="text-sm">Enable random failures</span>
-            </div>
-            <Button onClick={() => updateRuntimeMutation.mutate()} loading={updateRuntimeMutation.isPending}>
-              Save Runtime Config
-            </Button>
-            <pre className="overflow-auto rounded-xl border border-border/60 bg-muted/40 p-3 text-xs">
-              {JSON.stringify(runtimeQuery.data, null, 2)}
-            </pre>
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 }

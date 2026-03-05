@@ -170,37 +170,6 @@ function normalizeSessionFromMe(payload: unknown): AuthSession {
   };
 }
 
-function fallbackSession(email: string): AuthSession {
-  const organization: Organization = {
-    id: "org-real",
-    name: "ClyCites Organization",
-    enabledModules: WORKSPACES.map((workspace) => workspace.id),
-  };
-
-  const roles: RoleId[] = ["org_admin"];
-  const permissions = permissionsFromRoles(roles);
-  const preferred = getActiveWorkspace();
-  const activeWorkspace = preferred && organization.enabledModules.includes(preferred)
-    ? preferred
-    : organization.enabledModules[0];
-
-  return {
-    token: getStoredTokens()?.accessToken ?? "",
-    user: {
-      id: `real-${email.toLowerCase()}`,
-      name: email.split("@")[0],
-      email,
-      orgId: organization.id,
-      roles,
-      permissions,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    },
-    organization,
-    activeWorkspace,
-  };
-}
-
 async function fetchSession(): Promise<AuthSession | null> {
   const tokens = getStoredTokens();
   if (!tokens?.accessToken) return null;
@@ -262,7 +231,7 @@ export const authService: AuthServiceContract = {
       return session;
     }
 
-    return fallbackSession(email);
+    throw new Error("Login succeeded but no active session could be resolved.");
   },
 
   async me(): Promise<AuthSession | null> {

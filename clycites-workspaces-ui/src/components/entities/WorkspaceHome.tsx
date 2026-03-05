@@ -6,7 +6,7 @@ import { useMutation, useQueries, useQueryClient } from "@tanstack/react-query";
 import { motion, useReducedMotion } from "framer-motion";
 import { ArrowRight, TrendingDown, TrendingUp } from "lucide-react";
 import { WORKSPACE_ENTITY_MAP, getEntityDefinition, getWorkspaceDefinition } from "@/lib/store/catalog";
-import { chartService, isRealApiMode } from "@/lib/api";
+import { chartService } from "@/lib/api";
 import type { ChartDefinition } from "@/lib/api/contracts";
 import { entityServices } from "@/lib/api";
 import type { WorkspaceId } from "@/lib/store/types";
@@ -114,7 +114,7 @@ export function WorkspaceHome({ workspaceId }: WorkspaceHomeProps) {
       setLivePreviewRows(result.rows);
       toast({
         title: "Chart preview ready",
-        description: `${result.rows.length} rows loaded from ${isRealApiMode ? "real API" : "mock service"}.`,
+        description: `${result.rows.length} rows loaded from staging API.`,
         variant: "success",
       });
     },
@@ -200,7 +200,7 @@ export function WorkspaceHome({ workspaceId }: WorkspaceHomeProps) {
           <CardHeader className="pb-3">
             <CardTitle>Workspace Intelligence Summary</CardTitle>
             <CardDescription>
-              Overview of active entities in {workspaceLabel}. Counts are powered by {isRealApiMode ? "live API reads with fallback." : "local mock persistence."}
+              Overview of active entities in {workspaceLabel}. Counts are powered by live API reads.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -289,7 +289,7 @@ export function WorkspaceHome({ workspaceId }: WorkspaceHomeProps) {
             <CardHeader>
               <CardTitle>Live Chart Preview Data</CardTitle>
               <CardDescription>
-                Showing first 5 rows returned from {isRealApiMode ? "staging API" : "mock service"} preview endpoint.
+                Showing first 5 rows returned from the staging API preview endpoint.
               </CardDescription>
             </CardHeader>
             <CardContent>

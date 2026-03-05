@@ -1,4 +1,3 @@
-import { chartService as mockChartService } from "@/lib/api/mock/charts";
 import type {
   ChartExportResult,
   ChartPreviewResult,
@@ -11,7 +10,7 @@ import type {
   SavedChart,
   SavedDashboard,
 } from "@/lib/api/contracts";
-import { apiRequest, ApiRequestError, unwrapApiData } from "@/lib/api/real/http";
+import { apiRequest, unwrapApiData } from "@/lib/api/real/http";
 
 function asRecord(value: unknown): Record<string, unknown> | null {
   if (!value || typeof value !== "object" || Array.isArray(value)) return null;
@@ -21,20 +20,6 @@ function asRecord(value: unknown): Record<string, unknown> | null {
 function asStringArray(value: unknown): string[] {
   if (!Array.isArray(value)) return [];
   return value.filter((item): item is string => typeof item === "string" && item.trim().length > 0);
-}
-
-function shouldFallback(error: unknown): boolean {
-  if (!(error instanceof ApiRequestError)) return true;
-  return error.status !== 401 && error.status !== 403;
-}
-
-async function withFallback<T>(remote: () => Promise<T>, fallback: () => Promise<T>): Promise<T> {
-  try {
-    return await remote();
-  } catch (error) {
-    if (!shouldFallback(error)) throw error;
-    return fallback();
-  }
 }
 
 function extractPreviewRows(payload: unknown): Array<Record<string, unknown>> {
@@ -200,296 +185,221 @@ async function replaceDashboardCharts(dashboardId: string, items: DashboardChart
 
 export const chartService: ChartServiceContract = {
   async previewChart(definition) {
-    return withFallback(
-      async () => {
-        const payload = await apiRequest<unknown>(
-          "/api/v1/analytics/charts/preview",
-          {
-            method: "POST",
-            body: JSON.stringify(definition),
-          },
-          { auth: true }
-        );
-
-        return {
-          rows: extractPreviewRows(payload),
-          raw: unwrapApiData<unknown>(payload),
-        } as ChartPreviewResult;
+    const payload = await apiRequest<unknown>(
+      "/api/v1/analytics/charts/preview",
+      {
+        method: "POST",
+        body: JSON.stringify(definition),
       },
-      () => mockChartService.previewChart(definition)
+      { auth: true }
     );
+
+    return {
+      rows: extractPreviewRows(payload),
+      raw: unwrapApiData<unknown>(payload),
+    } as ChartPreviewResult;
   },
 
   async saveChart(payload: SaveChartRequest) {
-    return withFallback(
-      async () => {
-        const response = await apiRequest<unknown>(
-          "/api/v1/analytics/charts",
-          {
-            method: "POST",
-            body: JSON.stringify(payload),
-          },
-          { auth: true }
-        );
-
-        return normalizeSavedChart(response);
+    const response = await apiRequest<unknown>(
+      "/api/v1/analytics/charts",
+      {
+        method: "POST",
+        body: JSON.stringify(payload),
       },
-      () => mockChartService.saveChart(payload)
+      { auth: true }
     );
+
+    return normalizeSavedChart(response);
   },
 
   async exportPreview(definition, options) {
-    return withFallback(
-      async () => {
-        const format = options?.format ?? "csv";
-        const filename = options?.filename?.trim() || `preview-${definition.datasetId}.${format}`;
-        const payload = await apiRequest<unknown>(
-          "/api/v1/analytics/charts/preview/export",
-          {
-            method: "POST",
-            body: JSON.stringify({
-              definition,
-              format,
-              filename,
-            }),
-          },
-          { auth: true }
-        );
-        return createBlobFromPayload(payload, format, filename);
+    const format = options?.format ?? "csv";
+    const filename = options?.filename?.trim() || `preview-${definition.datasetId}.${format}`;
+    const payload = await apiRequest<unknown>(
+      "/api/v1/analytics/charts/preview/export",
+      {
+        method: "POST",
+        body: JSON.stringify({
+          definition,
+          format,
+          filename,
+        }),
       },
-      () => mockChartService.exportPreview(definition, options)
+      { auth: true }
     );
+    return createBlobFromPayload(payload, format, filename);
   },
 
   async updateChart(chartId, payload) {
-    return withFallback(
-      async () => {
-        const response = await apiRequest<unknown>(
-          `/api/v1/analytics/charts/${encodeURIComponent(chartId)}`,
-          {
-            method: "PUT",
-            body: JSON.stringify(payload),
-          },
-          { auth: true }
-        );
-        return normalizeSavedChart({
-          ...asRecord(unwrapApiData<unknown>(response)),
-          id: chartId,
-        });
+    const response = await apiRequest<unknown>(
+      `/api/v1/analytics/charts/${encodeURIComponent(chartId)}`,
+      {
+        method: "PUT",
+        body: JSON.stringify(payload),
       },
-      () => mockChartService.updateChart(chartId, payload)
+      { auth: true }
     );
+    return normalizeSavedChart({
+      ...asRecord(unwrapApiData<unknown>(response)),
+      id: chartId,
+    });
   },
 
   async deleteChart(chartId) {
-    return withFallback(
-      async () => {
-        await apiRequest<unknown>(
-          `/api/v1/analytics/charts/${encodeURIComponent(chartId)}`,
-          { method: "DELETE" },
-          { auth: true }
-        );
-      },
-      () => mockChartService.deleteChart(chartId)
+    await apiRequest<unknown>(
+      `/api/v1/analytics/charts/${encodeURIComponent(chartId)}`,
+      { method: "DELETE" },
+      { auth: true }
     );
   },
 
   async listCharts(params) {
-    return withFallback(
-      async () => {
-        const query = new URLSearchParams();
-        if (params?.page) query.set("page", String(params.page));
-        if (params?.limit) query.set("limit", String(params.limit));
-        if (params?.dataset) query.set("dataset", params.dataset);
-        if (params?.tags) query.set("tags", params.tags);
+    const query = new URLSearchParams();
+    if (params?.page) query.set("page", String(params.page));
+    if (params?.limit) query.set("limit", String(params.limit));
+    if (params?.dataset) query.set("dataset", params.dataset);
+    if (params?.tags) query.set("tags", params.tags);
 
-        const response = await apiRequest<unknown>(
-          `/api/v1/analytics/charts${query.size > 0 ? `?${query.toString()}` : ""}`,
-          { method: "GET" },
-          { auth: true }
-        );
-
-        return extractRows(response).map((item) => normalizeSavedChart(item));
-      },
-      () => mockChartService.listCharts(params)
+    const response = await apiRequest<unknown>(
+      `/api/v1/analytics/charts${query.size > 0 ? `?${query.toString()}` : ""}`,
+      { method: "GET" },
+      { auth: true }
     );
+
+    return extractRows(response).map((item) => normalizeSavedChart(item));
   },
 
   async exportChart(chartId, options) {
-    return withFallback(
-      async () => {
-        const format = options?.format ?? "csv";
-        const filename = options?.filename?.trim() || `chart-${chartId}.${format}`;
-        const payload = await apiRequest<unknown>(
-          `/api/v1/analytics/charts/${encodeURIComponent(chartId)}/export`,
-          {
-            method: "POST",
-            body: JSON.stringify({
-              format,
-              filename,
-            }),
-          },
-          { auth: true }
-        );
-
-        return createBlobFromPayload(payload, format, filename);
+    const format = options?.format ?? "csv";
+    const filename = options?.filename?.trim() || `chart-${chartId}.${format}`;
+    const payload = await apiRequest<unknown>(
+      `/api/v1/analytics/charts/${encodeURIComponent(chartId)}/export`,
+      {
+        method: "POST",
+        body: JSON.stringify({
+          format,
+          filename,
+        }),
       },
-      () => mockChartService.exportChart(chartId, options)
+      { auth: true }
     );
+
+    return createBlobFromPayload(payload, format, filename);
   },
 
   async listDashboards(params) {
-    return withFallback(
-      async () => {
-        const query = new URLSearchParams();
-        if (params?.page) query.set("page", String(params.page));
-        if (params?.limit) query.set("limit", String(params.limit));
-        const response = await apiRequest<unknown>(
-          `/api/v1/analytics/dashboards${query.size > 0 ? `?${query.toString()}` : ""}`,
-          { method: "GET" },
-          { auth: true }
-        );
-        return extractRows(response).map((item) => normalizeDashboard(item));
-      },
-      () => mockChartService.listDashboards(params)
+    const query = new URLSearchParams();
+    if (params?.page) query.set("page", String(params.page));
+    if (params?.limit) query.set("limit", String(params.limit));
+    const response = await apiRequest<unknown>(
+      `/api/v1/analytics/dashboards${query.size > 0 ? `?${query.toString()}` : ""}`,
+      { method: "GET" },
+      { auth: true }
     );
+    return extractRows(response).map((item) => normalizeDashboard(item));
   },
 
   async createDashboard(payload: SaveDashboardRequest) {
-    return withFallback(
-      async () => {
-        const response = await apiRequest<unknown>(
-          "/api/v1/analytics/dashboards",
-          {
-            method: "POST",
-            body: JSON.stringify({
-              ...payload,
-              isDefault: false,
-            }),
-          },
-          { auth: true }
-        );
-        return normalizeDashboard(response);
+    const response = await apiRequest<unknown>(
+      "/api/v1/analytics/dashboards",
+      {
+        method: "POST",
+        body: JSON.stringify({
+          ...payload,
+          isDefault: false,
+        }),
       },
-      () => mockChartService.createDashboard(payload)
+      { auth: true }
     );
+    return normalizeDashboard(response);
   },
 
   async updateDashboardSharing(dashboardId: string, payload: DashboardSharingUpdateRequest) {
-    return withFallback(
-      async () => {
-        await apiRequest<unknown>(
-          `/api/v1/analytics/dashboards/${encodeURIComponent(dashboardId)}/sharing`,
-          {
-            method: "PATCH",
-            body: JSON.stringify({
-              scope: payload.scope,
-              roles: payload.roles,
-              userIds: payload.userIds,
-            }),
-          },
-          { auth: true }
-        );
-        return fetchDashboard(dashboardId);
+    await apiRequest<unknown>(
+      `/api/v1/analytics/dashboards/${encodeURIComponent(dashboardId)}/sharing`,
+      {
+        method: "PATCH",
+        body: JSON.stringify({
+          scope: payload.scope,
+          roles: payload.roles,
+          userIds: payload.userIds,
+        }),
       },
-      () => mockChartService.updateDashboardSharing(dashboardId, payload)
+      { auth: true }
     );
+    return fetchDashboard(dashboardId);
   },
 
   async deleteDashboard(dashboardId) {
-    return withFallback(
-      async () => {
-        await apiRequest<unknown>(
-          `/api/v1/analytics/dashboards/${encodeURIComponent(dashboardId)}`,
-          { method: "DELETE" },
-          { auth: true }
-        );
-      },
-      () => mockChartService.deleteDashboard(dashboardId)
+    await apiRequest<unknown>(
+      `/api/v1/analytics/dashboards/${encodeURIComponent(dashboardId)}`,
+      { method: "DELETE" },
+      { auth: true }
     );
   },
 
   async attachChartToDashboard(dashboardId, payload) {
-    return withFallback(
-      async () => {
-        await apiRequest<unknown>(
-          `/api/v1/analytics/dashboards/${encodeURIComponent(dashboardId)}/charts`,
-          {
-            method: "POST",
-            body: JSON.stringify({
-              chartId: payload.chartId,
-              position: payload.position ?? { col: 0, row: 0 },
-              size: payload.size ?? { w: 6, h: 4 },
-            }),
-          },
-          { auth: true }
-        );
-        return fetchDashboard(dashboardId);
+    await apiRequest<unknown>(
+      `/api/v1/analytics/dashboards/${encodeURIComponent(dashboardId)}/charts`,
+      {
+        method: "POST",
+        body: JSON.stringify({
+          chartId: payload.chartId,
+          position: payload.position ?? { col: 0, row: 0 },
+          size: payload.size ?? { w: 6, h: 4 },
+        }),
       },
-      () => mockChartService.attachChartToDashboard(dashboardId, payload)
+      { auth: true }
     );
+    return fetchDashboard(dashboardId);
   },
 
   async removeChartFromDashboard(dashboardId, chartId) {
-    return withFallback(
-      async () => {
-        await apiRequest<unknown>(
-          `/api/v1/analytics/dashboards/${encodeURIComponent(dashboardId)}/charts/${encodeURIComponent(chartId)}`,
-          { method: "DELETE" },
-          { auth: true }
-        );
-        return fetchDashboard(dashboardId);
-      },
-      () => mockChartService.removeChartFromDashboard(dashboardId, chartId)
+    await apiRequest<unknown>(
+      `/api/v1/analytics/dashboards/${encodeURIComponent(dashboardId)}/charts/${encodeURIComponent(chartId)}`,
+      { method: "DELETE" },
+      { auth: true }
     );
+    return fetchDashboard(dashboardId);
   },
 
   async reorderDashboardCharts(dashboardId, orderedChartIds) {
-    return withFallback(
-      async () => {
-        const current = await fetchDashboard(dashboardId);
-        const byChartId = new Map(current.charts.map((item) => [item.chartId, item]));
-        const ordered = orderedChartIds
-          .map((chartId, index) => {
-            const existing = byChartId.get(chartId);
-            if (!existing) return null;
-            return {
-              ...existing,
-              position: {
-                col: existing.position.col,
-                row: index * Math.max(1, existing.size.h),
-              },
-            };
-          })
-          .filter((item): item is DashboardChartItem => Boolean(item));
+    const current = await fetchDashboard(dashboardId);
+    const byChartId = new Map(current.charts.map((item) => [item.chartId, item]));
+    const ordered = orderedChartIds
+      .map((chartId, index) => {
+        const existing = byChartId.get(chartId);
+        if (!existing) return null;
+        return {
+          ...existing,
+          position: {
+            col: existing.position.col,
+            row: index * Math.max(1, existing.size.h),
+          },
+        };
+      })
+      .filter((item): item is DashboardChartItem => Boolean(item));
 
-        return replaceDashboardCharts(dashboardId, ordered);
-      },
-      () => mockChartService.reorderDashboardCharts(dashboardId, orderedChartIds)
-    );
+    return replaceDashboardCharts(dashboardId, ordered);
   },
 
   async generateReport(payload: GenerateReportRequest) {
-    return withFallback(
-      async () => {
-        const format = payload.format ?? "csv";
-        const filename = payload.filename?.trim() || `analytics-report-${Date.now()}.${format}`;
-        const query = queryFromObject({
-          format,
-          page: 1,
-          limit: 200,
-          dashboardId: payload.dashboardId,
-          ...payload.filters,
-        });
+    const format = payload.format ?? "csv";
+    const filename = payload.filename?.trim() || `analytics-report-${Date.now()}.${format}`;
+    const query = queryFromObject({
+      format,
+      page: 1,
+      limit: 200,
+      dashboardId: payload.dashboardId,
+      ...payload.filters,
+    });
 
-        const response = await apiRequest<unknown>(
-          `/api/v1/prices/report${query ? `?${query}` : ""}`,
-          { method: "GET" },
-          { auth: true }
-        );
-        return createBlobFromPayload(response, format, filename);
-      },
-      () => mockChartService.generateReport(payload)
+    const response = await apiRequest<unknown>(
+      `/api/v1/prices/report${query ? `?${query}` : ""}`,
+      { method: "GET" },
+      { auth: true }
     );
+    return createBlobFromPayload(response, format, filename);
   },
 };

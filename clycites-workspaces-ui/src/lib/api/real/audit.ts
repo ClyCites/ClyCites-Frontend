@@ -1,24 +1,9 @@
-import { auditService as mockAuditService } from "@/lib/api/mock";
-import { apiRequest, ApiRequestError, unwrapApiData } from "@/lib/api/real/http";
+import { apiRequest, unwrapApiData } from "@/lib/api/real/http";
 import type { AuditAction, AuditFilterParams, AuditRecord, ListResult } from "@/lib/store/types";
 
 function asRecord(value: unknown): Record<string, unknown> | null {
   if (!value || typeof value !== "object" || Array.isArray(value)) return null;
   return value as Record<string, unknown>;
-}
-
-function shouldFallback(error: unknown): boolean {
-  if (!(error instanceof ApiRequestError)) return true;
-  return error.status !== 401 && error.status !== 403;
-}
-
-async function withFallback<T>(remote: () => Promise<T>, fallback: () => Promise<T>): Promise<T> {
-  try {
-    return await remote();
-  } catch (error) {
-    if (!shouldFallback(error)) throw error;
-    return fallback();
-  }
 }
 
 function normalizeAction(value: unknown): AuditAction {
@@ -138,34 +123,29 @@ function applyClientFilters(items: AuditRecord[], params: AuditFilterParams): Li
 
 export const auditService = {
   async list(params: AuditFilterParams) {
-    return withFallback(
-      async () => {
-        const query = new URLSearchParams();
-        query.set("page", String(params.page));
-        query.set("limit", String(params.pageSize));
-        if (params.action) query.set("action", params.action);
-        if (params.dateRange?.from) query.set("startDate", params.dateRange.from);
-        if (params.dateRange?.to) query.set("endDate", params.dateRange.to);
+    const query = new URLSearchParams();
+    query.set("page", String(params.page));
+    query.set("limit", String(params.pageSize));
+    if (params.action) query.set("action", params.action);
+    if (params.dateRange?.from) query.set("startDate", params.dateRange.from);
+    if (params.dateRange?.to) query.set("endDate", params.dateRange.to);
 
-        const payload = await apiRequest<unknown>(`/api/v1/audit/me?${query.toString()}`, { method: "GET" }, { auth: true });
-        const rows = extractRows(payload).map((row, index) => normalizeAuditRecord(row, index));
+    const payload = await apiRequest<unknown>(`/api/v1/audit/me?${query.toString()}`, { method: "GET" }, { auth: true });
+    const rows = extractRows(payload).map((row, index) => normalizeAuditRecord(row, index));
 
-        const hasClientOnlyFilters = Boolean(params.text || params.entityType);
-        if (hasClientOnlyFilters) {
-          return applyClientFilters(rows, params);
-        }
+    const hasClientOnlyFilters = Boolean(params.text || params.entityType);
+    if (hasClientOnlyFilters) {
+      return applyClientFilters(rows, params);
+    }
 
-        const remotePagination = extractRemotePagination(payload, params.page, params.pageSize, rows.length);
-        if (remotePagination) {
-          return {
-            items: rows,
-            pagination: remotePagination,
-          };
-        }
+    const remotePagination = extractRemotePagination(payload, params.page, params.pageSize, rows.length);
+    if (remotePagination) {
+      return {
+        items: rows,
+        pagination: remotePagination,
+      };
+    }
 
-        return applyClientFilters(rows, params);
-      },
-      () => mockAuditService.list(params)
-    );
+    return applyClientFilters(rows, params);
   },
 };

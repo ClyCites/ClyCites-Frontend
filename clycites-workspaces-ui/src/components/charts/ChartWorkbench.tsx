@@ -17,7 +17,7 @@ import {
   YAxis,
 } from "recharts";
 import { ArrowDown, ArrowUp, Pencil, Plus, Trash2 } from "lucide-react";
-import { chartService, isRealApiMode } from "@/lib/api";
+import { chartService } from "@/lib/api";
 import type { ChartDefinition, SavedChart } from "@/lib/api/contracts";
 import {
   CHART_DATASETS,
@@ -154,7 +154,7 @@ export function ChartWorkbench({ workspaceLabel, canSave = true, canExport = tru
       setPreviewRows(result.rows);
       toast({
         title: "Preview generated",
-        description: `${result.rows.length} rows loaded from ${isRealApiMode ? "real API" : "mock service"}.`,
+        description: `${result.rows.length} rows loaded from staging API.`,
         variant: "success",
       });
     },
@@ -407,7 +407,7 @@ export function ChartWorkbench({ workspaceLabel, canSave = true, canExport = tru
               <div className="rounded-2xl border border-border/60 bg-background/50 p-3">
                 <div className="mb-2 flex items-center justify-between text-sm">
                   <span>Preview</span>
-                  <Badge variant={isRealApiMode ? "success" : "outline"}>{isRealApiMode ? "Real API" : "Mock"}</Badge>
+                  <Badge variant="success">Real API</Badge>
                 </div>
                 <div className="h-[300px]">
                   {preview.rows.length === 0 ? (
