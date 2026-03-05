@@ -15,11 +15,34 @@ const displayFont = Space_Grotesk({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://clycites.com"),
   title: {
     default: "ClyCites Workspaces",
     template: "%s | ClyCites Workspaces",
   },
   description: "Enterprise-grade multi-workspace UI for the ClyCites agriculture value chain.",
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    title: "ClyCites Workspaces",
+    description: "Enterprise-grade multi-workspace UI for the ClyCites agriculture value chain.",
+    url: "https://clycites.com",
+    siteName: "ClyCites",
+    images: [
+      {
+        url: "/logo.png",
+        width: 752,
+        height: 927,
+      },
+    ],
+    type: "website",
+  },
+  icons: {
+    icon: [{ url: "/logo.png", type: "image/png" }],
+    shortcut: ["/logo.png"],
+    apple: [{ url: "/logo.png", type: "image/png" }],
+  },
 };
 
 const designSystemCss = createDesignSystemCss();

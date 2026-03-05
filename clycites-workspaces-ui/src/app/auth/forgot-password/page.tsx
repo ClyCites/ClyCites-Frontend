@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { authService } from "@/lib/api";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -28,7 +29,7 @@ export default function ForgotPasswordPage() {
       await authService.requestPasswordReset(email);
       toast({
         title: "Reset instructions sent",
-        description: "If your email exists, you will receive a reset code. For mock mode, use 654321.",
+        description: "If your email exists, you will receive a reset code.",
         variant: "success",
       });
       setStep("reset");
@@ -86,6 +87,9 @@ export default function ForgotPasswordPage() {
     <div className="mx-auto flex min-h-screen w-full max-w-3xl items-center px-4 py-10">
       <Card className="panel-surface w-full">
         <CardHeader>
+          <div className="mb-2">
+            <Image src="/logo.png" alt="ClyCites" width={752} height={927} className="h-16 w-auto" priority />
+          </div>
           <CardTitle>Recover account access</CardTitle>
           <CardDescription>
             {step === "request"

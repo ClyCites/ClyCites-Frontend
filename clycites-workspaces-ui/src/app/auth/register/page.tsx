@@ -3,6 +3,7 @@
 import { FormEvent, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { Building2, UserRound } from "lucide-react";
 import { authService } from "@/lib/api";
 import type { RegisterAccountPayload, RegistrationAccountType } from "@/lib/auth/types";
@@ -102,6 +103,9 @@ export default function RegisterPage() {
     <div className="mx-auto flex min-h-screen w-full max-w-5xl items-center px-4 py-10">
       <Card className="w-full panel-surface">
         <CardHeader>
+          <div className="mb-2">
+            <Image src="/logo.png" alt="ClyCites" width={752} height={927} className="h-16 w-auto" priority />
+          </div>
           <CardTitle>Create ClyCites Account</CardTitle>
           <CardDescription>Register as a sole operator or an organization and continue with onboarding.</CardDescription>
           <Progress value={progressValue} className="mt-2" />

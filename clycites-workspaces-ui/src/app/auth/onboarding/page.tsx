@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { useMutation } from "@tanstack/react-query";
 import { securityService } from "@/lib/api";
 import { useMockSession } from "@/lib/auth/mock-session";
@@ -105,6 +106,9 @@ export default function OnboardingPage() {
     <div className="mx-auto flex min-h-screen w-full max-w-5xl items-center px-4 py-10">
       <Card className="w-full panel-surface">
         <CardHeader>
+          <div className="mb-2">
+            <Image src="/logo.png" alt="ClyCites" width={752} height={927} className="h-16 w-auto" priority />
+          </div>
           <CardTitle>Complete Your Onboarding</CardTitle>
           <CardDescription>Configure profile context, workspace focus, and baseline security settings.</CardDescription>
           <Progress value={progress} className="mt-2" />

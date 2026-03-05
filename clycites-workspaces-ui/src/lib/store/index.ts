@@ -394,7 +394,7 @@ function syncAdminEntitySideEffects<K extends EntityKey>(state: DatabaseState, e
       state.users.push({
         id: record.id,
         name: data.name ?? record.title,
-        email: data.email ?? `${record.id}@clycites.io`,
+        email: data.email ?? `${record.id}@clycites.com`,
         password: "change-me",
         orgId: data.orgId ?? state.organizations[0]?.id ?? "org-1",
         roles,

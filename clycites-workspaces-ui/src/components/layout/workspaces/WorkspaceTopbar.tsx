@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { motion, useReducedMotion } from "framer-motion";
 import { Menu, Moon, Search, Sun, UserCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -63,8 +64,15 @@ export function WorkspaceTopbar({
             <Menu className="h-4 w-4" />
           </Button>
 
-          <Link href="/app" className="font-display text-lg font-semibold tracking-tight text-foreground">
-            ClyCites
+          <Link href="/app" className="flex items-center">
+            <Image
+              src="/logo.png"
+              alt="ClyCites"
+              width={752}
+              height={927}
+              className="h-9 w-auto"
+              priority
+            />
           </Link>
 
           <WorkspaceSwitcher workspaceId={workspaceId} />

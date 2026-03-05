@@ -58,7 +58,7 @@ function valueForField(fieldType: string, key: string, itemIndex: number): unkno
     case "tags":
       return "sample,seed";
     default:
-      if (key.toLowerCase().includes("email")) return `user${itemIndex + 1}@clycites.io`;
+      if (key.toLowerCase().includes("email")) return `user${itemIndex + 1}@clycites.com`;
       if (key.toLowerCase().includes("phone")) return `+25670000${itemIndex + 10}`;
       return `${key.split(".").pop() ?? "value"}-${itemIndex + 1}`;
   }
@@ -115,7 +115,7 @@ function createUsers(): UserAccount[] {
     {
       id: "usr-super",
       name: "ClyCites Super Admin",
-      email: "superadmin@clycites.io",
+      email: "superadmin@clycites.com",
       password: "super123",
       orgId: "org-1",
       roles: ["super_admin"],
@@ -126,7 +126,7 @@ function createUsers(): UserAccount[] {
     {
       id: "usr-ops",
       name: "Operations Admin",
-      email: "ops@clycites.io",
+      email: "ops@clycites.com",
       password: "ops12345",
       orgId: "org-1",
       roles: ["org_admin"],
@@ -137,7 +137,7 @@ function createUsers(): UserAccount[] {
     {
       id: "usr-farmer",
       name: "Farmer Jane",
-      email: "farmer@clycites.io",
+      email: "farmer@clycites.com",
       password: "farmer123",
       orgId: "org-1",
       roles: ["farmer_agent"],
@@ -148,7 +148,7 @@ function createUsers(): UserAccount[] {
     {
       id: "usr-expert",
       name: "Expert Alex",
-      email: "expert@clycites.io",
+      email: "expert@clycites.com",
       password: "expert123",
       orgId: "org-1",
       roles: ["expert_officer", "weather_analyst", "price_analyst"],

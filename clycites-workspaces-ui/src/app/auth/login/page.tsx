@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { FormEvent, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Lock, ShieldCheck, Sprout } from "lucide-react";
+import Image from "next/image";
+import { Lock, ShieldCheck } from "lucide-react";
 import { authService, securityService } from "@/lib/api";
 import { useMockSession } from "@/lib/auth/mock-session";
 import { Button } from "@/components/ui/button";
@@ -18,8 +19,8 @@ export default function MockLoginPage() {
   const router = useRouter();
   const { login, logout, isLoading } = useMockSession();
   const [email, setEmail] = useState(() => {
-    if (typeof window === "undefined") return "ops@clycites.io";
-    return new URLSearchParams(window.location.search).get("email") ?? "ops@clycites.io";
+    if (typeof window === "undefined") return "ops@clycites.com";
+    return new URLSearchParams(window.location.search).get("email") ?? "ops@clycites.com";
   });
   const [password, setPassword] = useState("ops12345");
   const [mfaCode, setMfaCode] = useState("");
@@ -81,9 +82,14 @@ export default function MockLoginPage() {
     <div className="mx-auto flex min-h-screen w-full max-w-6xl items-center px-4 py-10">
       <div className="grid w-full gap-8 lg:grid-cols-[1.1fr_0.9fr]">
         <div className="hidden flex-col justify-center rounded-3xl border border-border/70 bg-card/70 p-10 lg:flex">
-          <div className="inline-flex h-12 w-12 items-center justify-center rounded-xl border border-primary/30 bg-primary/10 text-primary">
-            <Sprout className="h-6 w-6" />
-          </div>
+          <Image
+            src="/logo.png"
+            alt="ClyCites"
+            width={100}
+            height={100}
+            className="justify-center self-center"
+            priority
+          />
           <h1 className="mt-6 text-4xl font-semibold leading-tight">ClyCites Secure Workspace Access</h1>
           <p className="mt-3 text-muted-foreground">
             Access value-chain and intelligence workspaces with role-based controls, onboarding, and built-in security posture checks.
@@ -115,6 +121,14 @@ export default function MockLoginPage() {
 
         <Card className="panel-surface">
           <CardHeader>
+            <Image
+              src="/logo.png"
+              alt="ClyCites"
+              width={752}
+              height={927}
+              className="mb-2 h-14 w-auto lg:hidden"
+              priority
+            />
             <div className="flex items-center justify-between gap-3">
               <div>
                 <CardTitle>Sign in</CardTitle>

@@ -1183,10 +1183,10 @@ export const ROLE_DEFINITIONS: Record<RoleId, RoleDefinition> = {
 };
 
 export const CREDENTIAL_HINTS = [
-  { email: "superadmin@clycites.io", password: "super123", role: "super_admin" },
-  { email: "ops@clycites.io", password: "ops12345", role: "org_admin" },
-  { email: "farmer@clycites.io", password: "farmer123", role: "farmer_agent" },
-  { email: "expert@clycites.io", password: "expert123", role: "expert_officer" },
+  { email: "superadmin@clycites.com", password: "super123", role: "super_admin" },
+  { email: "ops@clycites.com", password: "ops12345", role: "org_admin" },
+  { email: "farmer@clycites.com", password: "farmer123", role: "farmer_agent" },
+  { email: "expert@clycites.com", password: "expert123", role: "expert_officer" },
 ];
 
 export const SEARCHABLE_ENTITIES: EntityKey[] = ["listings", "advisories", "weatherAlerts", "orders", "shipments", "marketSignals"];
