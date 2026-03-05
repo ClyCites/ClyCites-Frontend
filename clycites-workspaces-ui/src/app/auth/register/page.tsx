@@ -17,6 +17,14 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { toast } from "@/components/ui/use-toast";
 
 const defaultModules = ["farmer", "marketplace", "logistics", "finance", "weather", "prices"] as const;
@@ -24,6 +32,13 @@ const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const E164_PATTERN = /^\+?[1-9]\d{1,14}$/;
 
 type FieldErrors = Partial<Record<"fullName" | "email" | "password" | "confirmPassword" | "phone" | "country" | "region", string>>;
+interface PendingRegistrationContext {
+  email: string;
+  password: string;
+  accountType: RegistrationAccountType;
+  region: string;
+  enabledModules: WorkspaceId[];
+}
 
 function normalizeEmail(value: string): string {
   return value.trim().toLowerCase();
@@ -53,6 +68,11 @@ export default function RegisterPage() {
   const [step, setStep] = useState(1);
   const [errors, setErrors] = useState<FieldErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [pendingRegistration, setPendingRegistration] = useState<PendingRegistrationContext | null>(null);
+  const [otpOpen, setOtpOpen] = useState(false);
+  const [otpCode, setOtpCode] = useState("");
+  const [isOtpVerifying, setIsOtpVerifying] = useState(false);
+  const [isOtpResending, setIsOtpResending] = useState(false);
 
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
@@ -246,31 +266,21 @@ export default function RegisterPage() {
             };
 
       await authService.register(payload);
-      const session = await login(validation.normalizedEmail, password);
-
-      const primaryWorkspace =
-        accountType === "organization"
-          ? ((enabledModules[0] as WorkspaceId | undefined) ?? "farmer")
-          : "farmer";
-
-      await securityService.saveOnboarding(session.user.id, {
+      setPendingRegistration({
+        email: validation.normalizedEmail,
+        password,
         accountType,
-        preferredLanguage: "English",
         region: normalizedRegion,
-        primaryWorkspace,
-        goals:
-          accountType === "organization"
-            ? ["Track marketplace performance", "Strengthen financial controls"]
-            : ["Improve production planning", "Monitor weather risk"],
-        notificationChannels: {
-          email: true,
-          sms: false,
-          inApp: true,
-        },
+        enabledModules: accountType === "organization" ? (enabledModules as WorkspaceId[]) : ["farmer"],
       });
+      setOtpCode("");
+      setOtpOpen(true);
 
-      toast({ title: "Registration complete", description: "Your workspace is ready.", variant: "success" });
-      router.replace("/app");
+      toast({
+        title: "Verify your email",
+        description: `An OTP has been sent to ${validation.normalizedEmail}.`,
+        variant: "default",
+      });
     } catch (error) {
       toast({
         title: "Registration failed",
@@ -279,6 +289,98 @@ export default function RegisterPage() {
       });
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const completePostVerificationFlow = async (context: PendingRegistrationContext) => {
+    const session = await login(context.email, context.password);
+
+    const primaryWorkspace =
+      context.accountType === "organization"
+        ? (context.enabledModules[0] ?? "farmer")
+        : "farmer";
+
+    await securityService.saveOnboarding(session.user.id, {
+      accountType: context.accountType,
+      preferredLanguage: "English",
+      region: context.region,
+      primaryWorkspace,
+      goals:
+        context.accountType === "organization"
+          ? ["Track marketplace performance", "Strengthen financial controls"]
+          : ["Improve production planning", "Monitor weather risk"],
+      notificationChannels: {
+        email: true,
+        sms: false,
+        inApp: true,
+      },
+    });
+  };
+
+  const handleVerifyRegistrationOtp = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!pendingRegistration) {
+      toast({
+        title: "Registration context missing",
+        description: "Please submit registration again.",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (!otpCode.trim()) {
+      toast({
+        title: "OTP required",
+        description: "Enter the verification code.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsOtpVerifying(true);
+    try {
+      await authService.verifyOtp(pendingRegistration.email, otpCode.trim(), "verification");
+      await completePostVerificationFlow(pendingRegistration);
+      setOtpOpen(false);
+      setPendingRegistration(null);
+      toast({ title: "Registration complete", description: "Your workspace is ready.", variant: "success" });
+      router.replace("/app");
+    } catch (error) {
+      toast({
+        title: "OTP verification failed",
+        description: error instanceof Error ? error.message : "Unable to verify OTP.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsOtpVerifying(false);
+    }
+  };
+
+  const handleResendRegistrationOtp = async () => {
+    if (!pendingRegistration) {
+      toast({
+        title: "Registration context missing",
+        description: "Please submit registration again.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsOtpResending(true);
+    try {
+      await authService.resendOtp(pendingRegistration.email, "verification");
+      toast({
+        title: "OTP resent",
+        description: "A new verification code has been sent.",
+        variant: "success",
+      });
+    } catch (error) {
+      toast({
+        title: "Resend failed",
+        description: error instanceof Error ? error.message : "Unable to resend OTP.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsOtpResending(false);
     }
   };
 
@@ -463,6 +565,41 @@ export default function RegisterPage() {
           </form>
         </CardContent>
       </Card>
+
+      <Dialog open={otpOpen} onOpenChange={(open) => (!isOtpVerifying ? setOtpOpen(open) : undefined)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Verify Email Address</DialogTitle>
+            <DialogDescription>
+              Enter the OTP sent to <span className="font-medium text-foreground">{pendingRegistration?.email ?? email}</span>{" "}
+              to finish account setup.
+            </DialogDescription>
+          </DialogHeader>
+
+          <form className="space-y-3" onSubmit={handleVerifyRegistrationOtp}>
+            <div className="space-y-1.5">
+              <Label htmlFor="registration-otp">OTP code</Label>
+              <Input
+                id="registration-otp"
+                value={otpCode}
+                onChange={(event) => setOtpCode(event.target.value)}
+                inputMode="numeric"
+                placeholder="Enter 6-digit code"
+                required
+              />
+            </div>
+
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={handleResendRegistrationOtp} loading={isOtpResending}>
+                Resend OTP
+              </Button>
+              <Button type="submit" loading={isOtpVerifying}>
+                Verify and Continue
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
