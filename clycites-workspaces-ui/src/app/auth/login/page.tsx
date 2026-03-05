@@ -162,7 +162,14 @@ export default function LoginPage() {
       <div className="mx-auto flex min-h-screen w-full max-w-6xl items-center px-4 py-10">
         <div className="grid w-full gap-8 lg:grid-cols-[1.1fr_0.9fr]">
           <div className="hidden flex-col justify-center rounded-3xl border border-border/70 bg-card/70 p-10 lg:flex">
-            <Image src="/logo.png" alt="ClyCites" width={752} height={927} className="h-20 w-auto" priority />
+            <Image
+              src="/logo.png"
+              alt="ClyCites"
+              width={100}
+              height={100}
+              className="justify-center self-center"
+              priority
+            />
             <h1 className="mt-6 text-4xl font-semibold leading-tight">ClyCites Secure Workspace Access</h1>
             <p className="mt-3 text-muted-foreground">
               Sign in to access your workspaces, role-based tools, and operational dashboards.
