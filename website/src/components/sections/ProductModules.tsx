@@ -23,8 +23,6 @@ const modules = [
     title: "e-Market",
     desc: "Connect directly with buyers, list produce, negotiate prices, and get paid faster through our digital marketplace — designed for African markets.",
     badge: "Marketplace",
-    color: "text-green-600",
-    bg: "bg-green-50",
     href: "/product#e-market",
   },
   {
@@ -32,8 +30,6 @@ const modules = [
     title: "AI Pest & Disease Detection",
     desc: "Upload farm images and get instant AI-powered diagnosis of crop diseases and pests, with actionable treatment recommendations from agronomists.",
     badge: "AI-Powered",
-    color: "text-red-600",
-    bg: "bg-red-50",
     href: "/product#ai-detection",
   },
   {
@@ -41,8 +37,6 @@ const modules = [
     title: "Weather Intelligence",
     desc: "Hyperlocal weather forecasts, planting advisories, and extreme weather alerts tailored for each farm's GPS location.",
     badge: "Real-time",
-    color: "text-blue-600",
-    bg: "bg-blue-50",
     href: "/product#weather",
   },
   {
@@ -50,8 +44,6 @@ const modules = [
     title: "Expert Advisory Portal",
     desc: "Access certified agronomists, veterinarians, and extension officers for direct consultations, advisory notes, and training resources.",
     badge: "Expert Network",
-    color: "text-purple-600",
-    bg: "bg-purple-50",
     href: "/product#advisory",
   },
   {
@@ -59,8 +51,6 @@ const modules = [
     title: "Analytics & Dashboards",
     desc: "Comprehensive farm performance dashboards, yield tracking, input cost analysis, and market price intelligence for data-driven decisions.",
     badge: "Analytics",
-    color: "text-orange-600",
-    bg: "bg-orange-50",
     href: "/product#analytics",
   },
   {
@@ -68,15 +58,13 @@ const modules = [
     title: "Cooperative Management",
     desc: "Manage member farmers, aggregate produce, track contributions, handle payments, and run cooperative operations from one central dashboard.",
     badge: "Cooperative",
-    color: "text-teal-600",
-    bg: "bg-teal-50",
     href: "/solutions/organizations",
   },
 ];
 
 export default function ProductModules() {
   return (
-    <section className="py-24 bg-muted/30">
+    <section className="py-24">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
         <Reveal className="text-center mb-16">
           <Badge variant="outline" className="mb-4">Product Modules</Badge>
@@ -98,10 +86,10 @@ export default function ProductModules() {
                   whileHover={{ y: -4, boxShadow: "0 20px 40px -12px rgba(0,0,0,0.12)" }}
                   transition={{ duration: 0.2 }}
                 >
-                  <Card className="h-full group cursor-pointer border-border/60 hover:border-primary/30 transition-colors">
+                  <Card className="h-full cursor-pointer border-border/60 transition-colors hover:border-primary/30">
                     <CardContent className="p-6">
-                      <div className={`w-12 h-12 rounded-2xl ${mod.bg} flex items-center justify-center mb-4`}>
-                        <Icon className={`w-6 h-6 ${mod.color}`} />
+                      <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/12">
+                        <Icon className="h-6 w-6 text-primary" />
                       </div>
                       <Badge variant="outline" className="text-xs mb-3">
                         {mod.badge}

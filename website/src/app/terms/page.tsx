@@ -27,7 +27,7 @@ export default function TermsPage() {
 
               <div>
                 <h2 className="text-2xl font-bold text-foreground mb-3">1. Acceptance of Terms</h2>
-                <p>By accessing or using ClyCites ("the Service"), you agree to be bound by these Terms of Service and our Privacy Policy. If you do not agree to these terms, please do not use the Service.</p>
+                <p>By accessing or using ClyCites services, you agree to be bound by these Terms of Service and our Privacy Policy. If you do not agree to these terms, please do not use the service.</p>
               </div>
 
               <div>

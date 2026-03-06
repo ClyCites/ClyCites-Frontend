@@ -15,10 +15,10 @@ import {
 } from "@/lib/motion";
 
 const highlights = [
-  "AI Pest & Disease Detection",
-  "Real-time Weather Alerts",
-  "e-Market Access",
-  "Expert Advisory",
+  "Workspace-ready architecture",
+  "Mobile-first workflows",
+  "Operational analytics",
+  "Secure collaboration",
 ];
 
 export default function HeroSection() {
@@ -50,7 +50,7 @@ export default function HeroSection() {
             className="mb-6"
           >
             <Badge variant="success" className="text-xs px-4 py-1.5 rounded-full">
-              🌱 Trusted by 10,000+ farmers across Africa
+              Built to match ClyCites Workspaces
             </Badge>
           </motion.div>
 
@@ -61,9 +61,8 @@ export default function HeroSection() {
             animate="visible"
             className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight leading-[1.08] mb-6"
           >
-            Digital agriculture infrastructure{" "}
-            <span className="text-primary">for farmers</span>{" "}
-            and markets
+            One platform from field operations{" "}
+            <span className="text-primary">to workspace execution</span>
           </motion.h1>
 
           {/* Subtext */}
@@ -73,7 +72,7 @@ export default function HeroSection() {
             animate="visible"
             className="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto mb-8 leading-relaxed"
           >
-            ClyCites combines AI-powered pest detection, weather intelligence, e-market access, expert advisory, and farm analytics — in one platform built for Africa.
+            ClyCites connects the public website and the internal workspace experience with a single product language for farming, markets, logistics, and finance.
           </motion.p>
 
           {/* Highlights */}
@@ -123,30 +122,29 @@ export default function HeroSection() {
             transition={{ delay: 0.7, duration: 0.5 }}
             className="mt-8 text-xs text-muted-foreground"
           >
-            No credit card required · Free setup · GDPR compliant
+            Guided onboarding · Cross-workspace consistency · Secure by design
           </motion.p>
         </div>
 
-        {/* Stats */}
         <motion.div
           variants={staggerContainer}
           initial="hidden"
           animate="visible"
-          className="mt-20 grid grid-cols-2 md:grid-cols-4 gap-8 max-w-3xl mx-auto"
+          className="mt-20 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4"
         >
           {[
-            { value: "10K+", label: "Active Farmers" },
-            { value: "500+", label: "Cooperatives" },
-            { value: "15+", label: "Countries" },
-            { value: "98%", label: "Satisfaction Rate" },
-          ].map((stat) => (
+            { title: "Farmer workflows", description: "From onboarding to advisories and tasks." },
+            { title: "Market operations", description: "Listings, orders, and negotiation flows." },
+            { title: "Enterprise controls", description: "Audit, permissions, and governance tooling." },
+            { title: "Data intelligence", description: "Dashboards for planning and monitoring." },
+          ].map((item) => (
             <motion.div
-              key={stat.label}
+              key={item.title}
               variants={fadeInUp}
-              className="text-center"
+              className="panel-surface rounded-2xl p-4 text-left"
             >
-              <p className="text-3xl font-bold text-primary">{stat.value}</p>
-              <p className="text-sm text-muted-foreground mt-1">{stat.label}</p>
+              <p className="font-semibold text-foreground">{item.title}</p>
+              <p className="mt-1 text-sm text-muted-foreground">{item.description}</p>
             </motion.div>
           ))}
         </motion.div>

@@ -1,16 +1,22 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Manrope, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
+import { createDesignSystemCss } from "@/styles/design-system";
 
-const inter = Inter({
-  variable: "--font-inter",
+const bodyFont = Manrope({
   subsets: ["latin"],
-  display: "swap",
+  variable: "--font-body",
+});
+
+const displayFont = Space_Grotesk({
+  subsets: ["latin"],
+  variable: "--font-display",
 });
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://clycites.com";
+const designSystemCss = createDesignSystemCss();
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
@@ -77,7 +83,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${inter.variable} antialiased`}>
+      <head>
+        <meta name="color-scheme" content="light dark" />
+        <style id="clycites-design-system">{designSystemCss}</style>
+      </head>
+      <body
+        className={`${bodyFont.variable} ${displayFont.variable} font-body antialiased text-foreground`}
+      >
         <Navbar />
         <main className="min-h-screen">{children}</main>
         <Footer />

@@ -1,10 +1,8 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import { UserPlus, BrainCircuit, TrendingUp, ArrowRight, CheckCircle2 } from "lucide-react";
+import { UserPlus, BrainCircuit, TrendingUp, CheckCircle2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import CTASection from "@/components/sections/CTASection";
-import { Reveal, StaggerWrapper, StaggerItem } from "@/lib/motion";
+import { Reveal } from "@/lib/motion";
 
 export const metadata: Metadata = {
   title: "How It Works — ClyCites",
@@ -116,7 +114,7 @@ export default function HowItWorksPage() {
                   </div>
                   <div className={`${i % 2 !== 0 ? "lg:order-1" : ""} rounded-3xl ${colors.bg} border ${colors.border} p-8`}>
                     <blockquote className="text-foreground/70 italic text-base leading-relaxed mb-4">
-                      "{s.quote}"
+                      &ldquo;{s.quote}&rdquo;
                     </blockquote>
                     <cite className="text-sm font-medium not-italic text-primary">— {s.quoteAuthor}</cite>
                   </div>

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ShoppingBag, ArrowRight, Search, ShieldCheck, Truck, BarChart3, RefreshCw, Star } from "lucide-react";
+import { ShoppingBag, ArrowRight, Search, ShieldCheck, Truck, BarChart3, RefreshCw } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";

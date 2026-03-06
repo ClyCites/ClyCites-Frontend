@@ -6,7 +6,6 @@ import {
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import CTASection from "@/components/sections/CTASection";
 import { Reveal, StaggerWrapper, StaggerItem } from "@/lib/motion";
 

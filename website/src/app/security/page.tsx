@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Reveal } from "@/lib/motion";
@@ -66,7 +65,7 @@ export default function SecurityPage() {
               Your data is safe with ClyCites
             </h1>
             <p className="text-xl text-muted-foreground mb-6">
-              We treat security as a core feature, not an afterthought. Here's how we protect your farm data and transactions.
+              We treat security as a core feature, not an afterthought. Here is how we protect your farm data and transactions.
             </p>
             <p className="text-sm text-muted-foreground">
               Security questions? Email{" "}

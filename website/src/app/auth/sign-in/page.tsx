@@ -67,8 +67,8 @@ export default function SignInPage() {
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label htmlFor="password">Password</Label>
-                <Link href="#" className="text-xs text-primary hover:underline">
-                  Forgot password?
+                <Link href="/contact" className="text-xs text-primary hover:underline">
+                  Need sign-in help?
                 </Link>
               </div>
               <div className="relative">
@@ -102,7 +102,7 @@ export default function SignInPage() {
           </form>
 
           <div className="mt-6 text-center text-sm text-muted-foreground">
-            Don't have an account?{" "}
+            Don&apos;t have an account?{" "}
             <Link href="/auth/sign-up" className="text-primary font-medium hover:underline">
               Sign up free
             </Link>

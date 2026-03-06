@@ -1,6 +1,6 @@
 import React from "react";
 import Link from "next/link";
-import { Leaf, Twitter, Linkedin, Facebook, Youtube, Mail, Phone, MapPin } from "lucide-react";
+import { Leaf, Mail, MapPin } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 const footerLinks = {
@@ -29,39 +29,27 @@ const footerLinks = {
   ],
 };
 
-const socials = [
-  { icon: Twitter, href: "#", label: "Twitter" },
-  { icon: Linkedin, href: "#", label: "LinkedIn" },
-  { icon: Facebook, href: "#", label: "Facebook" },
-  { icon: Youtube, href: "#", label: "YouTube" },
-];
-
 export default function Footer() {
   return (
-    <footer className="bg-foreground text-background/80">
+    <footer className="border-t border-border/60 bg-card/65 text-foreground">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl pt-16 pb-8">
-        {/* Top grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-10 mb-12">
-          {/* Brand */}
           <div className="lg:col-span-2">
             <Link href="/" className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 rounded-xl bg-primary flex items-center justify-center">
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary shadow-[0_12px_20px_-14px_hsl(var(--primary)/0.95)]">
                 <Leaf className="w-4 h-4 text-white" />
               </div>
-              <span className="font-bold text-xl text-background">
+              <span className="font-display text-xl font-semibold">
                 Cly<span className="text-primary">Cites</span>
               </span>
             </Link>
-            <p className="text-sm text-background/60 leading-relaxed mb-5 max-w-xs">
-              Digital agriculture infrastructure for farmers and markets. Empowering Africa's farming communities with AI, analytics, and e-commerce.
+            <p className="mb-5 max-w-xs text-sm leading-relaxed text-muted-foreground">
+              Unified digital infrastructure for farmers, cooperatives, and markets across the ClyCites ecosystem.
             </p>
-            <Badge variant="success" className="mb-4">🌍 Africa-First Platform</Badge>
-            <div className="flex flex-col gap-2 text-xs text-background/50">
-              <a href="mailto:hello@clycites.com" className="flex items-center gap-2 hover:text-primary transition-colors">
+            <Badge variant="outline" className="mb-4">Platform + Workspaces</Badge>
+            <div className="flex flex-col gap-2 text-xs text-muted-foreground">
+              <a href="mailto:hello@clycites.com" className="flex items-center gap-2 transition-colors hover:text-primary">
                 <Mail className="w-3.5 h-3.5" /> hello@clycites.com
-              </a>
-              <a href="tel:+256000000000" className="flex items-center gap-2 hover:text-primary transition-colors">
-                <Phone className="w-3.5 h-3.5" /> +256 000 000 000
               </a>
               <span className="flex items-center gap-2">
                 <MapPin className="w-3.5 h-3.5" /> Kampala, Uganda
@@ -69,10 +57,9 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* Links */}
           {Object.entries(footerLinks).map(([section, links]) => (
             <div key={section}>
-              <h4 className="text-xs font-semibold uppercase tracking-wider text-background/40 mb-4">
+              <h4 className="mb-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground/80">
                 {section}
               </h4>
               <ul className="space-y-2.5">
@@ -80,7 +67,7 @@ export default function Footer() {
                   <li key={link.href}>
                     <Link
                       href={link.href}
-                      className="text-sm text-background/60 hover:text-primary transition-colors"
+                      className="text-sm text-muted-foreground transition-colors hover:text-primary"
                     >
                       {link.label}
                     </Link>
@@ -91,25 +78,20 @@ export default function Footer() {
           ))}
         </div>
 
-        {/* Bottom bar */}
-        <div className="border-t border-background/10 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-xs text-background/40">
-            © {new Date().getFullYear()} ClyCites. All rights reserved. Built for African farmers.
+        <div className="flex flex-col items-center justify-between gap-4 border-t border-border/60 pt-8 sm:flex-row">
+          <p className="text-xs text-muted-foreground">
+            © {new Date().getFullYear()} ClyCites. All rights reserved.
           </p>
-          <div className="flex items-center gap-3">
-            {socials.map((s) => {
-              const Icon = s.icon;
-              return (
-                <a
-                  key={s.label}
-                  href={s.href}
-                  aria-label={s.label}
-                  className="w-8 h-8 rounded-lg bg-background/10 flex items-center justify-center hover:bg-primary transition-colors"
-                >
-                  <Icon className="w-3.5 h-3.5 text-background/70" />
-                </a>
-              );
-            })}
+          <div className="flex items-center gap-4 text-xs text-muted-foreground">
+            <Link href="/privacy" className="hover:text-primary transition-colors">
+              Privacy
+            </Link>
+            <Link href="/terms" className="hover:text-primary transition-colors">
+              Terms
+            </Link>
+            <Link href="/security" className="hover:text-primary transition-colors">
+              Security
+            </Link>
           </div>
         </div>
       </div>

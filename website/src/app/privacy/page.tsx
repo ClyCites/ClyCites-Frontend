@@ -27,7 +27,7 @@ export default function PrivacyPage() {
             <div className="space-y-10 text-foreground/80 leading-relaxed">
               <div>
                 <h2 className="text-2xl font-bold text-foreground mb-3">1. Introduction</h2>
-                <p>ClyCites ("we", "our", "us") is committed to protecting the privacy and security of our users' personal and farm data. This Privacy Policy explains how we collect, use, store, share, and protect information in connection with our services.</p>
+                <p>ClyCites is committed to protecting the privacy and security of user personal and farm data. This Privacy Policy explains how we collect, use, store, share, and protect information in connection with our services.</p>
                 <p className="mt-3">By using ClyCites, you agree to the practices described in this policy. If you do not agree, please do not use our services.</p>
               </div>
 

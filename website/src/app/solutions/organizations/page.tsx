@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import {
-  Building2, CheckCircle2, ArrowRight, Users, BarChart3,
+  Building2, ArrowRight, Users, BarChart3,
   DollarSign, ShoppingCart, FileText, Bell
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";

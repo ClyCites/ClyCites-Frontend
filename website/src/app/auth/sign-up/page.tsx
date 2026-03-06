@@ -2,10 +2,10 @@
 
 import React from "react";
 import Link from "next/link";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Leaf, Eye, EyeOff, ArrowRight, CheckCircle2 } from "lucide-react";
+import { Leaf, Eye, EyeOff, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -38,7 +38,7 @@ export default function SignUpPage() {
   const {
     register,
     handleSubmit,
-    watch,
+    control,
     setValue,
     formState: { errors, isSubmitting },
   } = useForm<SignUpValues>({
@@ -46,7 +46,7 @@ export default function SignUpPage() {
     defaultValues: { accountType: "farmer" },
   });
 
-  const selectedType = watch("accountType");
+  const selectedType = useWatch({ control, name: "accountType" });
 
   const onSubmit = async (data: SignUpValues) => {
     await new Promise((r) => setTimeout(r, 800));

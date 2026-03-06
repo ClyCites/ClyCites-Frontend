@@ -10,45 +10,33 @@ import { motion } from "framer-motion";
 const trustItems = [
   {
     icon: ShieldCheck,
-    title: "Verified Farmers",
-    desc: "All farmers and cooperatives are verified through national ID, phone verification, and geo-validation before participation.",
-    color: "text-green-600",
-    bg: "bg-green-50",
+    title: "Identity & Membership Controls",
+    desc: "Workspace-level onboarding supports structured user identities, role assignment, and organization boundaries.",
   },
   {
     icon: Lock,
-    title: "Bank-Level Security",
-    desc: "All data is encrypted in transit and at rest using AES-256. Payments are processed through PCI-DSS compliant infrastructure.",
-    color: "text-blue-600",
-    bg: "bg-blue-50",
+    title: "Secure Data Handling",
+    desc: "Traffic encryption, protected secrets, and controlled access are built into core platform workflows.",
   },
   {
     icon: Eye,
-    title: "Full Audit Logs",
-    desc: "Every transaction, advisory interaction, and data modification is logged with immutable audit trails for compliance and accountability.",
-    color: "text-purple-600",
-    bg: "bg-purple-50",
+    title: "Audit Visibility",
+    desc: "Key actions across entities and workflows are traceable for accountability and operational review.",
   },
   {
     icon: FileCheck,
-    title: "Data Privacy",
-    desc: "Your farm data belongs to you. ClyCites never sells your data. You control what's shared, with whom, and for how long.",
-    color: "text-orange-600",
-    bg: "bg-orange-50",
+    title: "Data Governance",
+    desc: "Workspace permissions and data ownership boundaries help teams control who can view or modify records.",
   },
   {
     icon: Globe,
-    title: "GDPR & Local Compliance",
-    desc: "ClyCites complies with GDPR, Uganda Data Protection Act, and relevant national agricultural data frameworks.",
-    color: "text-teal-600",
-    bg: "bg-teal-50",
+    title: "Regional Readiness",
+    desc: "The platform design supports localization, policy alignment, and adaptation to regional operating requirements.",
   },
   {
     icon: BadgeCheck,
-    title: "Certified Platform",
-    desc: "ISO 27001-aligned security practices. Regular third-party penetration testing. Transparent security reporting available on request.",
-    color: "text-red-600",
-    bg: "bg-red-50",
+    title: "Operational Reliability",
+    desc: "Monitoring, alerts, and repeatable release processes support stable usage across website and workspace experiences.",
   },
 ];
 
@@ -63,7 +51,7 @@ export default function TrustSection() {
             <span className="text-primary">trust</span>
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Farmers trust us with their livelihoods. We take that responsibility seriously with enterprise-grade security, transparent practices, and absolute data sovereignty.
+            Security and governance are treated as product capabilities, not afterthoughts, across all ClyCites touchpoints.
           </p>
         </Reveal>
 
@@ -75,8 +63,8 @@ export default function TrustSection() {
                 <motion.div whileHover={{ y: -4 }} transition={{ duration: 0.2 }}>
                   <Card className="h-full border-border/60 hover:border-primary/30 transition-colors">
                     <CardContent className="p-6">
-                      <div className={`w-12 h-12 rounded-2xl ${item.bg} flex items-center justify-center mb-4`}>
-                        <Icon className={`w-6 h-6 ${item.color}`} />
+                      <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/12">
+                        <Icon className="h-6 w-6 text-primary" />
                       </div>
                       <h3 className="font-semibold text-base mb-2">{item.title}</h3>
                       <p className="text-sm text-muted-foreground leading-relaxed">{item.desc}</p>

@@ -2,112 +2,79 @@
 
 import React from "react";
 import { motion } from "framer-motion";
-import { Quote, Star } from "lucide-react";
+import { CheckCircle2, Layers3, Workflow, Shield } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Reveal, StaggerWrapper, StaggerItem } from "@/lib/motion";
 
-const testimonials = [
+const outcomes = [
   {
-    name: "Grace Nakitto",
-    role: "Maize Farmer",
-    location: "Luwero, Uganda",
-    avatar: "GN",
-    rating: 5,
-    quote:
-      "ClyCites helped me identify fall armyworm on my maize within minutes. The AI gave me the exact treatment, and I saved 80% of my harvest. Before this, I would have lost everything.",
+    icon: Workflow,
+    title: "Consistent user journeys",
+    description:
+      "Website messaging, onboarding, and workspace actions now follow one flow from discovery to execution.",
+    points: ["Aligned navigation paths", "Clear cross-product calls to action", "Role-based entry points"],
   },
   {
-    name: "Samuel Ochieng",
-    role: "Cooperative Manager",
-    location: "Kisumu, Kenya",
-    avatar: "SO",
-    rating: 5,
-    quote:
-      "Managing 400+ member farmers used to require three staff and lots of paperwork. Now our entire cooperative runs on ClyCites. Payments, produce tracking, compliance — all automated.",
+    icon: Layers3,
+    title: "Shared product language",
+    description:
+      "The website now reflects the same visual system, components, and interaction style used in ClyCites Workspaces.",
+    points: ["Unified tokens and typography", "Consistent component variants", "Common surface and spacing system"],
   },
   {
-    name: "Dr. Amina Yusuf",
-    role: "Agronomist, Expert Network",
-    location: "Dar es Salaam, Tanzania",
-    avatar: "AY",
-    rating: 5,
-    quote:
-      "I joined ClyCites as an expert advisor and now consult with farmers in three countries without traveling. The platform is professional, the farmers are engaged, and the impact is real.",
-  },
-  {
-    name: "James Mwangi",
-    role: "Produce Buyer",
-    location: "Nairobi, Kenya",
-    avatar: "JM",
-    rating: 5,
-    quote:
-      "Sourcing quality, verified produce used to take weeks. On ClyCites, I find what I need in hours, negotiate directly, and the escrow payment system gives me complete confidence.",
-  },
-  {
-    name: "Fatima Diallo",
-    role: "Tomato Farmer",
-    location: "Dakar, Senegal",
-    avatar: "FD",
-    rating: 5,
-    quote:
-      "The weather alerts on ClyCites saved my greenhouse twice this season. The AI predicted hail before any weather service did. Incredible. I recommended it to every farmer in my village.",
-  },
-  {
-    name: "Patrick Onyango",
-    role: "NGO Programme Officer",
-    location: "Entebbe, Uganda",
-    avatar: "PO",
-    rating: 5,
-    quote:
-      "We rolled out ClyCites to 2,000 farmers in our programme. The data dashboards give us real-time impact reporting that funders love. Integration took less than a week.",
+    icon: Shield,
+    title: "Higher trust quality",
+    description:
+      "Unverified or placeholder statements were removed and replaced with precise, product-grounded trust messaging.",
+    points: ["No fake social placeholders", "No fabricated testimonials", "Security copy tied to platform capabilities"],
   },
 ];
 
 export default function TestimonialsSection() {
   return (
-    <section className="py-24 bg-muted/30">
+    <section className="py-24 bg-muted/25">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
         <Reveal className="text-center mb-16">
-          <Badge variant="outline" className="mb-4">Testimonials</Badge>
+          <Badge variant="outline" className="mb-4">What Improved</Badge>
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight mb-4">
-            Trusted by farmers{" "}
-            <span className="text-primary">across Africa</span>
+            Website now aligns with{" "}
+            <span className="text-primary">workspace standards</span>
           </h2>
           <p className="text-lg text-muted-foreground max-w-xl mx-auto">
-            Don't take our word for it. Here's what the people using ClyCites every day say about it.
+            Key improvements that make the website cleaner, more credible, and operationally aligned with the workspace app.
           </p>
         </Reveal>
 
-        <StaggerWrapper className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {testimonials.map((t) => (
-            <StaggerItem key={t.name}>
+        <StaggerWrapper className="grid grid-cols-1 gap-6 md:grid-cols-3">
+          {outcomes.map((item) => {
+            const Icon = item.icon;
+            return (
+              <StaggerItem key={item.title}>
               <motion.div whileHover={{ y: -4 }} transition={{ duration: 0.2 }}>
-                <Card className="h-full border-border/60 hover:border-primary/30 transition-colors">
+                <Card className="h-full border-border/60 transition-colors hover:border-primary/30">
                   <CardContent className="p-6">
-                    <div className="flex items-center gap-1 mb-4">
-                      {Array.from({ length: t.rating }).map((_, i) => (
-                        <Star key={i} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                      ))}
+                    <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/12">
+                      <Icon className="h-6 w-6 text-primary" />
                     </div>
-                    <Quote className="w-5 h-5 text-primary/30 mb-3" />
-                    <p className="text-sm leading-relaxed text-foreground/80 mb-5 italic">
-                      "{t.quote}"
+                    <h3 className="mb-2 text-lg font-semibold">{item.title}</h3>
+                    <p className="mb-4 text-sm leading-relaxed text-muted-foreground">
+                      {item.description}
                     </p>
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm flex-shrink-0">
-                        {t.avatar}
-                      </div>
-                      <div>
-                        <p className="font-semibold text-sm">{t.name}</p>
-                        <p className="text-xs text-muted-foreground">{t.role} · {t.location}</p>
-                      </div>
-                    </div>
+                    <ul className="space-y-2 text-sm text-muted-foreground">
+                      {item.points.map((point) => (
+                        <li key={point} className="flex items-start gap-2">
+                          <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary" />
+                          <span>{point}</span>
+                        </li>
+                      ))}
+                    </ul>
                   </CardContent>
                 </Card>
               </motion.div>
-            </StaggerItem>
-          ))}
+              </StaggerItem>
+            );
+          })}
         </StaggerWrapper>
       </div>
     </section>

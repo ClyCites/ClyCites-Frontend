@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import { Leaf, Heart, Globe, Target, Users, ArrowRight } from "lucide-react";
+import { Leaf, Heart, Globe, Target, Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import CTASection from "@/components/sections/CTASection";
 import { Reveal, StaggerWrapper, StaggerItem } from "@/lib/motion";
@@ -37,12 +35,12 @@ const values = [
 ];
 
 const team = [
-  { name: "Emin Nassar", role: "CEO & Co-founder", initials: "EN", bio: "Former FAO digital agriculture specialist with 12 years in Africa." },
-  { name: "Amara Sow", role: "CTO & Co-founder", initials: "AS", bio: "Ex-Google engineer. Built data platforms across East and West Africa." },
-  { name: "Dr. Lydia Namukasa", role: "Head of Agronomy", initials: "LN", bio: "PhD in Plant Pathology. Built ClyCites's AI disease detection engine." },
-  { name: "Ibrahim Musa", role: "Head of Partnerships", initials: "IM", bio: "10+ years in agri-development. Manages ClyCites's NGO and government programme." },
-  { name: "Patience Owusu", role: "Head of Design", initials: "PO", bio: "Product designer specializing in low-literacy, multilingual UX for emerging markets." },
-  { name: "Chidi Obi", role: "Head of Markets", initials: "CO", bio: "Agricultural economics expert. Designed the e-Market pricing and verification systems." },
+  { name: "Product", role: "Platform Experience", initials: "PX", bio: "Owns end-to-end journeys from website entry points to workspace execution flows." },
+  { name: "Engineering", role: "Application Platform", initials: "EN", bio: "Builds the website, workspaces, and shared component systems across modules." },
+  { name: "Agronomy", role: "Domain Intelligence", initials: "AG", bio: "Translates agricultural expertise into usable workflows and advisory structures." },
+  { name: "Operations", role: "Programme Delivery", initials: "OP", bio: "Supports implementation with cooperatives, partners, and field teams." },
+  { name: "Security", role: "Trust & Governance", initials: "SG", bio: "Drives access control, auditability, and responsible data handling patterns." },
+  { name: "Design", role: "System Language", initials: "DS", bio: "Maintains coherent visual and interaction standards across all ClyCites surfaces." },
 ];
 
 export default function AboutPage() {
@@ -62,7 +60,7 @@ export default function AboutPage() {
                 ClyCites was founded in 2021 with a single conviction: African smallholder farmers deserve the same quality of digital tools as farmers in the EU or the US — built for the realities of African agriculture.
               </p>
               <p className="text-muted-foreground leading-relaxed">
-                Today we serve 10,000+ farmers, 500+ cooperatives, and hundreds of buyers across 15 African countries, and we're just getting started.
+                Today we focus on building dependable product foundations that scale from individual farms to multi-workspace operations.
               </p>
             </Reveal>
             <Reveal>
@@ -84,7 +82,7 @@ export default function AboutPage() {
           <Reveal>
             <p className="text-xs font-semibold uppercase tracking-widest text-background/40 mb-4">Our Mission</p>
             <blockquote className="text-2xl sm:text-3xl lg:text-4xl font-medium leading-snug text-background/90">
-              "To give every African farmer digital tools, market access, and intelligent guidance — so farming is not just a subsistence — it's a thriving business."
+              &ldquo;To give every African farmer digital tools, market access, and intelligent guidance, so farming is not just subsistence, but a thriving business.&rdquo;
             </blockquote>
           </Reveal>
         </div>
@@ -121,9 +119,9 @@ export default function AboutPage() {
       <section className="py-24 bg-muted/30">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
           <Reveal className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-4">The team behind ClyCites</h2>
+            <h2 className="text-3xl font-bold mb-4">Core disciplines behind ClyCites</h2>
             <p className="text-muted-foreground max-w-xl mx-auto">
-              A diverse team of engineers, agronomists, designers, and agricultural economists united by a shared mission.
+              Cross-functional groups that align product quality, agricultural relevance, and operational reliability.
             </p>
           </Reveal>
           <StaggerWrapper className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">

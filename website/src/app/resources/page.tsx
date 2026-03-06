@@ -1,9 +1,7 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { ArrowRight, BookOpen, TrendingUp, Leaf, BarChart3 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Reveal, StaggerWrapper, StaggerItem } from "@/lib/motion";
 
 export const metadata: Metadata = {
@@ -116,7 +114,6 @@ export default function ResourcesPage() {
           {/* Featured */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-12">
             {articles.filter((a) => a.featured).map((a) => {
-              const Icon = a.icon;
               return (
                 <Reveal key={a.title}>
                   <Card className="h-full hover:border-primary/30 transition-colors cursor-pointer group">
@@ -143,7 +140,6 @@ export default function ResourcesPage() {
           {/* Rest */}
           <StaggerWrapper className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {articles.filter((a) => !a.featured).map((a) => {
-              const Icon = a.icon;
               return (
                 <StaggerItem key={a.title}>
                   <Card className="h-full hover:border-primary/30 transition-colors cursor-pointer group">

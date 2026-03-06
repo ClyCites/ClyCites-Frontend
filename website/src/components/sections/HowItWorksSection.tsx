@@ -12,30 +12,24 @@ const steps = [
     icon: UserPlus,
     title: "Capture farm data",
     desc: "Sign up, create your farm profile, add your fields, crops, and location. ClyCites automatically enriches your profile with weather data and soil benchmarks for your region.",
-    color: "text-green-600",
-    bg: "bg-green-50",
   },
   {
     step: "02",
     icon: BrainCircuit,
     title: "Get AI + expert guidance",
     desc: "Receive instant AI alerts for pests and diseases from crop photos, hyperlocal weather forecasts, and personalized recommendations from certified agronomists.",
-    color: "text-blue-600",
-    bg: "bg-blue-50",
   },
   {
     step: "03",
     icon: TrendingUp,
     title: "Sell smarter via e-Market",
     desc: "List your produce on the ClyCites marketplace, connect with verified buyers, get fair prices, track orders, and receive secure payments — directly to your account.",
-    color: "text-orange-600",
-    bg: "bg-orange-50",
   },
 ];
 
 export default function HowItWorksSection() {
   return (
-    <section className="py-24 bg-muted/30">
+    <section className="py-24 bg-muted/25">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
         <Reveal className="text-center mb-16">
           <Badge variant="outline" className="mb-4">How It Works</Badge>
@@ -63,8 +57,8 @@ export default function HowItWorksSection() {
                 >
                   {/* Step number */}
                   <div className="relative inline-flex items-center justify-center mb-6">
-                    <div className={`w-20 h-20 rounded-3xl ${step.bg} flex items-center justify-center`}>
-                      <Icon className={`w-10 h-10 ${step.color}`} />
+                    <div className="flex h-20 w-20 items-center justify-center rounded-3xl border border-primary/20 bg-primary/10">
+                      <Icon className="h-10 w-10 text-primary" />
                     </div>
                     <span className="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-primary text-primary-foreground text-xs font-bold flex items-center justify-center">
                       {i + 1}

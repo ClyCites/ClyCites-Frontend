@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Mail, Phone, MapPin, CheckCircle2, Send } from "lucide-react";
+import { Mail, MapPin, CheckCircle2, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -82,7 +82,7 @@ export default function ContactPageClient() {
           <Reveal>
             <Badge variant="outline" className="mb-4">Contact Us</Badge>
             <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-4">
-              Let's start a conversation
+              Let&apos;s start a conversation
             </h1>
             <p className="text-lg text-muted-foreground">
               Request a demo, ask a question, or discuss a partnership. Our team responds within 1 business day.
@@ -211,7 +211,6 @@ export default function ContactPageClient() {
                     <div className="space-y-4">
                       {[
                         { icon: Mail, label: "Email", value: "hello@clycites.com" },
-                        { icon: Phone, label: "Phone", value: "+256 000 000 000" },
                         { icon: MapPin, label: "Location", value: "Kampala, Uganda" },
                       ].map(({ icon: Icon, label, value }) => (
                         <div key={label} className="flex items-start gap-3">
