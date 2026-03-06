@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useState } from "react";
+import { FormEvent, useState, Suspense } from "react";
+import { LoadingSkeletons } from "@/components/common/LoadingSkeletons";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { authService } from "@/lib/api";
@@ -13,7 +14,7 @@ import { toast } from "@/components/ui/use-toast";
 
 type ResetStep = "request" | "reset";
 
-export default function ForgotPasswordPage() {
+function ForgotPasswordPage() {
   const router = useRouter();
   const [step, setStep] = useState<ResetStep>("request");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -220,5 +221,13 @@ export default function ForgotPasswordPage() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+export default function ForgotPasswordPageWithSuspense() {
+  return (
+    <Suspense fallback={<LoadingSkeletons />}>
+      <ForgotPasswordPage />
+    </Suspense>
   );
 }

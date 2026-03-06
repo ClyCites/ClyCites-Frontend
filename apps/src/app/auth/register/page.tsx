@@ -1,6 +1,7 @@
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useMemo, useState, Suspense } from "react";
+import { LoadingSkeletons } from "@/components/common/LoadingSkeletons";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
@@ -60,7 +61,7 @@ function normalizePhone(value: string, country: string): string {
   return normalized;
 }
 
-export default function RegisterPage() {
+function RegisterPage() {
   const router = useRouter();
   const { login } = useMockSession();
 
@@ -601,5 +602,13 @@ export default function RegisterPage() {
         </DialogContent>
       </Dialog>
     </div>
+  );
+}
+
+export default function RegisterPageWithSuspence() {
+  return (
+      <Suspense fallback={<LoadingSkeletons />}>
+        <RegisterPage />
+      </Suspense>
   );
 }

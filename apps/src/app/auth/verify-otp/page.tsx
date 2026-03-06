@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useState } from "react";
+import { FormEvent, useState, Suspense } from "react";
+import { LoadingSkeletons } from "@/components/common/LoadingSkeletons";
 import { useSearchParams } from "next/navigation";
 import { authService } from "@/lib/api";
 import type { OtpPurpose } from "@/lib/auth/types";
@@ -18,7 +19,7 @@ const PURPOSE_OPTIONS: Array<{ value: OtpPurpose; label: string }> = [
   { value: "password_reset", label: "Password reset" },
 ];
 
-export default function VerifyOtpPage() {
+function VerifyOtpPage() {
   const searchParams = useSearchParams();
   const seededEmail = searchParams.get("email") ?? "";
 
@@ -151,5 +152,13 @@ export default function VerifyOtpPage() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+export default function VerifyOtpPageWithSuspense() {
+  return (
+    <Suspense fallback={<LoadingSkeletons />}>
+      <VerifyOtpPage />
+    </Suspense>
   );
 }

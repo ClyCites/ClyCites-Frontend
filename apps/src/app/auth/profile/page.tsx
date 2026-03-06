@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState, Suspense } from "react";
+import { LoadingSkeletons } from "@/components/common/LoadingSkeletons";
 import { useRouter } from "next/navigation";
 import { useMockSession } from "@/lib/auth/mock-session";
 import { authService } from "@/lib/api";
@@ -24,7 +25,7 @@ function splitName(name: string): { firstName: string; lastName: string } {
   };
 }
 
-export default function AuthProfilePage() {
+function AuthProfilePage() {
   const router = useRouter();
   const { session, isLoading, isAuthenticated, refresh, logout } = useMockSession();
 
@@ -343,5 +344,13 @@ export default function AuthProfilePage() {
         </Link>
       </div>
     </div>
+  );
+}
+
+export default function AuthProfilePageWithSuspense() {
+  return (
+    <Suspense fallback={<LoadingSkeletons />}>
+      <AuthProfilePage />
+    </Suspense>
   );
 }

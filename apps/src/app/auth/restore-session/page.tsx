@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
+import { LoadingSkeletons } from "@/components/common/LoadingSkeletons";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -10,7 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/use-toast";
 
-export default function RestoreSessionPage() {
+function RestoreSessionPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const nextPath = searchParams.get("next") || "/app";
@@ -118,5 +119,13 @@ export default function RestoreSessionPage() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+export default function RestoreSessionPageWithSuspense() {
+  return (
+    <Suspense fallback={<LoadingSkeletons />}>
+      <RestoreSessionPage />
+    </Suspense>
   );
 }
