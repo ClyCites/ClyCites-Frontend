@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
+import { LoadingSkeletons } from "@/components/common/LoadingSkeletons";
 import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { useMutation } from "@tanstack/react-query";
@@ -27,7 +28,7 @@ const GOALS = [
   "Strengthen financial controls",
 ];
 
-export default function OnboardingPage() {
+function OnboardingPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const nextPath = searchParams.get("next") || "/app";
@@ -240,5 +241,13 @@ export default function OnboardingPage() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+export default function OnboardingPageWithSuspense() {
+  return (
+    <Suspense fallback={<LoadingSkeletons />}>
+      <OnboardingPage />
+    </Suspense>
   );
 }

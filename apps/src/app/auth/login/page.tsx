@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { Suspense } from "react";
+import { LoadingSkeletons } from "@/components/common/LoadingSkeletons";
 import { FormEvent, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
@@ -40,7 +42,7 @@ function isMfaChallenge(error: unknown): boolean {
   );
 }
 
-export default function LoginPage() {
+function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const nextPath = searchParams.get("next") || "/app";
@@ -305,5 +307,13 @@ export default function LoginPage() {
         </DialogContent>
       </Dialog>
     </>
+  );
+}
+export default function LoginPageWithSuspense() {
+
+  return (
+    <Suspense fallback={<LoadingSkeletons />}>
+      <LoginPage />
+    </Suspense>
   );
 }
