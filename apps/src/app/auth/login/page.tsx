@@ -202,7 +202,7 @@ function LoginPage() {
                 alt="ClyCites"
                 width={100}
                 height={100}
-                className="justify-center self-center"
+                className="justify-center self-center lg:hidden"
                 priority
               />
               <div className="flex items-center justify-between gap-3">
