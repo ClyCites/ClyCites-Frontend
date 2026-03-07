@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Home, Search } from "lucide-react";
+import { Home, PenSquare, PlusCircle, Search, Trash2, Waypoints } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { createElement, type ComponentType } from "react";
 import { cn } from "@/lib/utils";
 import type { WorkspaceId } from "@/lib/store/types";
 import { getWorkspaceItems, getWorkspaceLabel } from "@/lib/nav/workspace-nav";
-import { getEntityIcon, getWorkspaceIcon } from "@/components/layout/workspaces/workspace-icons";
+import type { ApiMethod } from "@/lib/api/endpoint-catalog";
+import { getWorkspaceIcon } from "@/components/layout/workspaces/workspace-icons";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -65,6 +66,22 @@ function SidebarLink({ href, label, icon: Icon, active, collapsed, onNavigate }:
   );
 }
 
+function endpointIcon(method: ApiMethod): ComponentType<{ className?: string }> {
+  switch (method) {
+    case "GET":
+      return Search;
+    case "POST":
+      return PlusCircle;
+    case "PUT":
+    case "PATCH":
+      return PenSquare;
+    case "DELETE":
+      return Trash2;
+    default:
+      return Waypoints;
+  }
+}
+
 function SidebarBody({
   workspaceId,
   pathname,
@@ -109,14 +126,14 @@ function SidebarBody({
         </div>
 
         <div className="space-y-2">
-          {!collapsed && <p className="px-2 text-[10px] uppercase tracking-[0.12em] text-muted-foreground">Data Modules</p>}
+          {!collapsed && <p className="px-2 text-[10px] uppercase tracking-[0.12em] text-muted-foreground">Endpoints</p>}
           <nav className="space-y-1">
             {items.map((item) => (
               <SidebarLink
-                key={item.href}
+                key={item.id}
                 href={item.href}
                 label={item.label}
-                icon={getEntityIcon(item.entityKey)}
+                icon={endpointIcon(item.method)}
                 active={pathname.startsWith(item.href)}
                 collapsed={collapsed}
                 onNavigate={onNavigate}
@@ -126,6 +143,14 @@ function SidebarBody({
         </div>
 
         <div className="mt-auto space-y-1 border-t border-border/55 pt-3">
+          <SidebarLink
+            href={`/app/${workspaceId}/endpoints`}
+            label="Endpoint Catalog"
+            icon={Waypoints}
+            active={pathname === `/app/${workspaceId}/endpoints`}
+            collapsed={collapsed}
+            onNavigate={onNavigate}
+          />
           <SidebarLink
             href="/app/search"
             label="Global Search"
