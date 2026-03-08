@@ -1,4 +1,4 @@
 import { API_ENDPOINT_CATALOG } from "@/lib/api/endpoint-catalog";
 import { createWorkspaceEndpointApi } from "./base";
 
-export const logisticsWorkspaceApi = createWorkspaceEndpointApi("logistics", API_ENDPOINT_CATALOG);
+export const logisticsWorkspaceApi = createWorkspaceEndpointApi("logistics", () => API_ENDPOINT_CATALOG);
