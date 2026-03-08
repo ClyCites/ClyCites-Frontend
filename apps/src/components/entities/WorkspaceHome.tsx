@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useMemo } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
-import { listWorkspaceEndpoints } from "@/lib/api/endpoint-catalog";
+import { listWorkspaceEndpoints } from "@/lib/api/workspaces";
 import { getWorkspaceDefinition } from "@/lib/store/catalog";
 import type { WorkspaceId } from "@/lib/store/types";
 import { useMockSession } from "@/lib/auth/mock-session";

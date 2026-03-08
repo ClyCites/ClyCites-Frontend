@@ -1,6 +1,6 @@
 import { AccessDenied } from "@/components/common/AccessDenied";
 import { WorkspaceEndpointPage } from "@/components/entities/WorkspaceEndpointPage";
-import { getWorkspaceEndpoint } from "@/lib/api/endpoint-catalog";
+import { getWorkspaceEndpoint } from "@/lib/api/workspaces";
 import { getWorkspaceDefinition } from "@/lib/store/catalog";
 import type { WorkspaceId } from "@/lib/store/types";
 

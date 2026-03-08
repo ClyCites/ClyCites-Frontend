@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { listWorkspaceEndpoints } from "@/lib/api/endpoint-catalog";
+import { listWorkspaceEndpoints } from "@/lib/api/workspaces";
 import type { WorkspaceId } from "@/lib/store/types";
 import { getWorkspaceLabel } from "@/lib/nav/workspace-nav";
 import { PageHeader } from "@/components/common/PageHeader";

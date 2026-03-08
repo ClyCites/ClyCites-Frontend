@@ -2,8 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { apiRequest } from "@/lib/api/real/http";
-import { getWorkspaceEndpoint } from "@/lib/api/endpoint-catalog";
+import { executeWorkspaceEndpoint, getWorkspaceEndpoint } from "@/lib/api/workspaces";
 import type { WorkspaceId } from "@/lib/store/types";
 import { getWorkspaceLabel } from "@/lib/nav/workspace-nav";
 import { useMockSession } from "@/lib/auth/mock-session";
@@ -24,16 +23,6 @@ function extractPathParams(path: string): string[] {
   const matches = path.match(/\{([a-zA-Z0-9_]+)\}/g);
   if (!matches) return [];
   return matches.map((item) => item.slice(1, -1));
-}
-
-function buildResolvedPath(template: string, values: Record<string, string>): string {
-  return template.replace(/\{([a-zA-Z0-9_]+)\}/g, (_match, key: string) => {
-    const value = values[key]?.trim();
-    if (!value) {
-      throw new Error(`Missing value for "${key}".`);
-    }
-    return encodeURIComponent(value);
-  });
 }
 
 export function WorkspaceEndpointPage({ workspaceId, endpointId }: WorkspaceEndpointPageProps) {
@@ -62,22 +51,10 @@ export function WorkspaceEndpointPage({ workspaceId, endpointId }: WorkspaceEndp
     setResponseBody("");
 
     try {
-      const path = buildResolvedPath(endpoint.path, paramValues);
-      const method = endpoint.method;
-      const acceptsBody = method === "POST" || method === "PUT" || method === "PATCH" || method === "DELETE";
-      const body =
-        acceptsBody && requestBody.trim().length > 0
-          ? JSON.stringify(JSON.parse(requestBody))
-          : undefined;
-
-      const response = await apiRequest<unknown>(
-        path,
-        {
-          method,
-          body,
-        },
-        { auth: true }
-      );
+      const response = await executeWorkspaceEndpoint(workspaceId, endpoint.id, {
+        pathParams: paramValues,
+        requestBody,
+      });
 
       setResponseBody(JSON.stringify(response, null, 2));
     } catch (error) {

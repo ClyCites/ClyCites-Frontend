@@ -1,5 +1,5 @@
-import { listWorkspaceEndpoints } from "@/lib/api/endpoint-catalog";
-import type { ApiMethod } from "@/lib/api/endpoint-catalog";
+import { listWorkspaceEndpoints } from "@/lib/api/workspaces";
+import type { ApiMethod } from "@/lib/api/workspaces";
 import { WORKSPACES } from "@/lib/store/catalog";
 import type { WorkspaceId } from "@/lib/store/types";
 

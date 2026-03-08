@@ -8,7 +8,7 @@ import { createElement, type ComponentType } from "react";
 import { cn } from "@/lib/utils";
 import type { WorkspaceId } from "@/lib/store/types";
 import { getWorkspaceItems, getWorkspaceLabel } from "@/lib/nav/workspace-nav";
-import type { ApiMethod } from "@/lib/api/endpoint-catalog";
+import type { ApiMethod } from "@/lib/api/workspaces";
 import { getWorkspaceIcon } from "@/components/layout/workspaces/workspace-icons";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
