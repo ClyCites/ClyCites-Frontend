@@ -33,16 +33,17 @@ function parseRequestBody(bodyText: string | undefined, method: ApiEndpointCatal
 
 export function createWorkspaceEndpointApi(
   workspaceId: WorkspaceId,
-  allEndpoints: ApiEndpointCatalogEntry[]
+  getAllEndpoints: () => ApiEndpointCatalogEntry[]
 ): WorkspaceEndpointApi {
-  const workspaceEndpoints = allEndpoints.filter((endpoint) => endpoint.workspace === workspaceId);
+  const getWorkspaceEndpoints = (): ApiEndpointCatalogEntry[] =>
+    getAllEndpoints().filter((endpoint) => endpoint.workspace === workspaceId);
 
   return {
     workspaceId,
-    listEndpoints: () => workspaceEndpoints,
-    getEndpoint: (endpointId) => workspaceEndpoints.find((endpoint) => endpoint.id === endpointId),
+    listEndpoints: () => getWorkspaceEndpoints(),
+    getEndpoint: (endpointId) => getWorkspaceEndpoints().find((endpoint) => endpoint.id === endpointId),
     executeEndpoint: async (endpointId, options) => {
-      const endpoint = workspaceEndpoints.find((candidate) => candidate.id === endpointId);
+      const endpoint = getWorkspaceEndpoints().find((candidate) => candidate.id === endpointId);
       if (!endpoint) {
         throw new Error(`Endpoint "${endpointId}" was not found in workspace "${workspaceId}".`);
       }
