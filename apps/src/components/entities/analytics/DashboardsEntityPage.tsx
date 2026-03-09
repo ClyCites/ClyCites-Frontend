@@ -8,9 +8,10 @@ export function DashboardsEntityPage() {
       entityKey="dashboards"
       features={{
         allowCreate: true,
-        allowEdit: false,
+        allowEdit: true,
         allowDelete: true,
         allowStatus: false,
+        enabledWorkflowActionIds: ["publish-dashboard", "archive-dashboard"],
         enabledToolbarActionIds: [],
       }}
     />

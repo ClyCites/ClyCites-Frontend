@@ -929,12 +929,33 @@ export const ENTITY_DEFINITIONS: Record<EntityKey, EntityDefinition> = {
         ],
       },
     ],
-    [],
+    [
+      {
+        id: "publish-chart",
+        label: "Publish",
+        description: "Publish chart for wider access.",
+      },
+      {
+        id: "archive-chart",
+        label: "Archive",
+        description: "Archive chart from active use.",
+      },
+      {
+        id: "export-chart",
+        label: "Export",
+        description: "Export chart data.",
+      },
+    ],
     [
       {
         id: "preview-chart",
         label: "Preview",
-        description: "Preview chart configuration placeholder.",
+        description: "Run chart preview query.",
+      },
+      {
+        id: "preview-chart-export",
+        label: "Export Preview",
+        description: "Export preview query result.",
       },
     ]
   ),
@@ -947,12 +968,38 @@ export const ENTITY_DEFINITIONS: Record<EntityKey, EntityDefinition> = {
       textField("data.chartIds", "Chart IDs"),
       textField("data.layout", "Layout JSON"),
     ],
-    [],
+    [
+      {
+        id: "publish-dashboard",
+        label: "Publish",
+        description: "Publish dashboard.",
+      },
+      {
+        id: "archive-dashboard",
+        label: "Archive",
+        description: "Archive dashboard.",
+      },
+      {
+        id: "add-chart-dashboard",
+        label: "Add Chart",
+        description: "Add chart to dashboard.",
+      },
+      {
+        id: "remove-chart-dashboard",
+        label: "Remove Chart",
+        description: "Remove chart from dashboard.",
+      },
+      {
+        id: "update-dashboard-sharing",
+        label: "Update Sharing",
+        description: "Update dashboard sharing configuration.",
+      },
+    ],
     [
       {
         id: "reorder-charts",
         label: "Reorder Charts",
-        description: "Reorder dashboard widgets placeholder.",
+        description: "Reorder dashboard widgets.",
       },
     ]
   ),
@@ -974,37 +1021,66 @@ export const ENTITY_DEFINITIONS: Record<EntityKey, EntityDefinition> = {
         ],
       },
     ],
-    [],
+    [
+      {
+        id: "generate-report",
+        label: "Generate",
+        description: "Generate analytics report.",
+      },
+      {
+        id: "export-report",
+        label: "Export",
+        description: "Export analytics report.",
+      },
+    ],
     [
       {
         id: "export-report",
         label: "Export",
-        description: "Mock report export flow.",
+        description: "Export analytics report.",
       },
     ]
   ),
-  templates: createEntityDefinition("templates", "Template", "Templates", ["draft", "published", "archived"], [
-    {
-      key: "data.basedOnType",
-      label: "Based On",
-      type: "select",
-      options: [
-        { label: "Chart", value: "chart" },
-        { label: "Dashboard", value: "dashboard" },
-      ],
-    },
-    textField("data.basedOnId", "Based On ID"),
-    {
-      key: "data.shareScope",
-      label: "Share Scope",
-      type: "select",
-      options: [
-        { label: "Private", value: "private" },
-        { label: "Org", value: "org" },
-        { label: "Public", value: "public" },
-      ],
-    },
-  ]),
+  templates: createEntityDefinition(
+    "templates",
+    "Template",
+    "Templates",
+    ["draft", "published", "archived"],
+    [
+      {
+        key: "data.basedOnType",
+        label: "Based On",
+        type: "select",
+        options: [
+          { label: "Chart", value: "chart" },
+          { label: "Dashboard", value: "dashboard" },
+        ],
+      },
+      textField("data.basedOnId", "Based On ID"),
+      {
+        key: "data.shareScope",
+        label: "Share Scope",
+        type: "select",
+        options: [
+          { label: "Private", value: "private" },
+          { label: "Org", value: "org" },
+          { label: "Public", value: "public" },
+        ],
+      },
+    ],
+    [
+      {
+        id: "publish-template",
+        label: "Publish",
+        description: "Publish dashboard template.",
+      },
+      {
+        id: "archive-template",
+        label: "Archive",
+        description: "Archive dashboard template.",
+      },
+    ]
+  ),
   users: createEntityDefinition(
     "users",
     "User",

@@ -3310,11 +3310,64 @@ const ENTITY_API_CONFIG: Partial<Record<EntityKey, EntityApiConfig>> = {
       tags: payload.tags,
       shareScope: normalizeShareScope(payload.data?.shareScope ?? "owner_only"),
     }),
+    actionRequest: (actionId, _actorId, targetId) => {
+      if (actionId === "preview-chart") {
+        return {
+          path: "/api/v1/analytics/charts/preview",
+          method: "POST",
+          body: {
+            chartType: "line",
+            datasetId: "platform_health",
+          },
+          message: "Chart preview generated.",
+        };
+      }
+      if (actionId === "preview-chart-export") {
+        return {
+          path: "/api/v1/analytics/charts/preview/export",
+          method: "POST",
+          body: {
+            format: "csv",
+          },
+          message: "Preview export started.",
+        };
+      }
+      if (!targetId) return null;
+      if (actionId === "publish-chart") {
+        return {
+          path: `/api/v1/analytics/charts/${encodeURIComponent(targetId)}/publish`,
+          method: "POST",
+          body: {},
+          message: "Chart published.",
+        };
+      }
+      if (actionId === "archive-chart") {
+        return {
+          path: `/api/v1/analytics/charts/${encodeURIComponent(targetId)}/archive`,
+          method: "POST",
+          body: {},
+          message: "Chart archived.",
+        };
+      }
+      if (actionId === "export-chart") {
+        return {
+          path: `/api/v1/analytics/charts/${encodeURIComponent(targetId)}/export`,
+          method: "POST",
+          body: {
+            format: "csv",
+          },
+          message: "Chart export triggered.",
+        };
+      }
+      return null;
+    },
   },
   dashboards: {
     listPath: "/api/v1/analytics/dashboards",
     getPath: (id) => `/api/v1/analytics/dashboards/${encodeURIComponent(id)}`,
     createPath: "/api/v1/analytics/dashboards",
+    updatePath: (id) => `/api/v1/analytics/dashboards/${encodeURIComponent(id)}`,
+    updateMethod: "PATCH",
     deletePath: (id) => `/api/v1/analytics/dashboards/${encodeURIComponent(id)}`,
     mapCreateBody: (payload) => ({
       name: payload.title,
@@ -3323,6 +3376,69 @@ const ENTITY_API_CONFIG: Partial<Record<EntityKey, EntityApiConfig>> = {
       tags: payload.tags ?? [],
       isDefault: false,
     }),
+    mapUpdateBody: (_id, payload) => ({
+      name: payload.title,
+      description: payload.subtitle,
+      layout: asRecord(payload.data?.layout),
+      tags: payload.tags,
+    }),
+    actionRequest: (actionId, _actorId, targetId) => {
+      if (!targetId) return null;
+      if (actionId === "publish-dashboard") {
+        return {
+          path: `/api/v1/analytics/dashboards/${encodeURIComponent(targetId)}/publish`,
+          method: "POST",
+          body: {},
+          message: "Dashboard published.",
+        };
+      }
+      if (actionId === "archive-dashboard") {
+        return {
+          path: `/api/v1/analytics/dashboards/${encodeURIComponent(targetId)}/archive`,
+          method: "POST",
+          body: {},
+          message: "Dashboard archived.",
+        };
+      }
+      if (actionId === "add-chart-dashboard") {
+        return {
+          path: `/api/v1/analytics/dashboards/${encodeURIComponent(targetId)}/charts`,
+          method: "POST",
+          body: {
+            chartId: "chart_placeholder",
+          },
+          message: "Chart added to dashboard.",
+        };
+      }
+      if (actionId === "reorder-charts") {
+        return {
+          path: `/api/v1/analytics/dashboards/${encodeURIComponent(targetId)}/charts/reorder`,
+          method: "PATCH",
+          body: {
+            chartOrder: [],
+          },
+          message: "Dashboard chart order updated.",
+        };
+      }
+      if (actionId === "remove-chart-dashboard") {
+        return {
+          path: `/api/v1/analytics/dashboards/${encodeURIComponent(targetId)}/charts/${encodeURIComponent("chart_placeholder")}`,
+          method: "DELETE",
+          message: "Chart removed from dashboard.",
+        };
+      }
+      if (actionId === "update-dashboard-sharing") {
+        return {
+          path: `/api/v1/analytics/dashboards/${encodeURIComponent(targetId)}/sharing`,
+          method: "PATCH",
+          body: {
+            shareScope: "org_members",
+          },
+          message: "Dashboard sharing updated.",
+        };
+      }
+      return null;
+    },
   },
   reports: {
     listPath: "/api/v1/analytics/reports",
@@ -3355,12 +3471,60 @@ const ENTITY_API_CONFIG: Partial<Record<EntityKey, EntityApiConfig>> = {
         workspace: "analytics",
       },
     }),
+    actionRequest: (actionId, _actorId, targetId) => {
+      if (!targetId) return null;
+      if (actionId === "generate-report") {
+        return {
+          path: `/api/v1/analytics/reports/${encodeURIComponent(targetId)}/generate`,
+          method: "POST",
+          body: {},
+          message: "Report generation started.",
+        };
+      }
+      if (actionId === "export-report") {
+        return {
+          path: `/api/v1/analytics/reports/${encodeURIComponent(targetId)}/export`,
+          method: "POST",
+          body: {
+            format: "pdf",
+          },
+          message: "Report export started.",
+        };
+      }
+      return null;
+    },
   },
   datasets: {
     listPath: "/api/v1/analytics/datasets",
+    getPath: (id) => `/api/v1/analytics/datasets/${encodeURIComponent(id)}`,
+    createPath: "/api/v1/analytics/datasets",
+    updatePath: (id) => `/api/v1/analytics/datasets/${encodeURIComponent(id)}`,
+    updateMethod: "PATCH",
+    deletePath: (id) => `/api/v1/analytics/datasets/${encodeURIComponent(id)}`,
+    mapCreateBody: (payload) => ({
+      name: payload.title,
+      description: payload.subtitle,
+      source: typeof payload.data.source === "string" ? payload.data.source : "custom",
+      schemaVersion: typeof payload.data.schemaVersion === "string" ? payload.data.schemaVersion : "1.0.0",
+      query: asRecord(payload.data.query),
+      metadata: asRecord(payload.data.metadata),
+    }),
+    mapUpdateBody: (_id, payload) => ({
+      name: payload.title,
+      description: payload.subtitle,
+      source: typeof payload.data?.source === "string" ? payload.data.source : undefined,
+      schemaVersion: typeof payload.data?.schemaVersion === "string" ? payload.data.schemaVersion : undefined,
+      query: asRecord(payload.data?.query),
+      metadata: asRecord(payload.data?.metadata),
+    }),
   },
   templates: {
     listPath: "/api/v1/analytics/dashboards/templates",
+    getPath: (id) => `/api/v1/analytics/dashboards/templates/${encodeURIComponent(id)}`,
+    createPath: "/api/v1/analytics/dashboards/templates",
+    updatePath: (id) => `/api/v1/analytics/dashboards/templates/${encodeURIComponent(id)}`,
+    updateMethod: "PATCH",
+    deletePath: (id) => `/api/v1/analytics/dashboards/templates/${encodeURIComponent(id)}`,
     listQuery: (params) => ({
       page: undefined,
       limit: undefined,
@@ -3368,6 +3532,40 @@ const ENTITY_API_CONFIG: Partial<Record<EntityKey, EntityApiConfig>> = {
       status: undefined,
       category: params.filters?.text ?? params.filters?.tags?.[0],
     }),
+    mapCreateBody: (payload) => ({
+      name: payload.title,
+      description: payload.subtitle,
+      basedOnType: typeof payload.data.basedOnType === "string" ? payload.data.basedOnType : "dashboard",
+      basedOnId: typeof payload.data.basedOnId === "string" ? payload.data.basedOnId : undefined,
+      shareScope: normalizeShareScope(payload.data.shareScope ?? "owner_only"),
+    }),
+    mapUpdateBody: (_id, payload) => ({
+      name: payload.title,
+      description: payload.subtitle,
+      basedOnType: typeof payload.data?.basedOnType === "string" ? payload.data.basedOnType : undefined,
+      basedOnId: typeof payload.data?.basedOnId === "string" ? payload.data.basedOnId : undefined,
+      shareScope: normalizeShareScope(payload.data?.shareScope ?? "owner_only"),
+    }),
+    actionRequest: (actionId, _actorId, targetId) => {
+      if (!targetId) return null;
+      if (actionId === "publish-template") {
+        return {
+          path: `/api/v1/analytics/dashboards/templates/${encodeURIComponent(targetId)}/publish`,
+          method: "POST",
+          body: {},
+          message: "Template published.",
+        };
+      }
+      if (actionId === "archive-template") {
+        return {
+          path: `/api/v1/analytics/dashboards/templates/${encodeURIComponent(targetId)}/archive`,
+          method: "POST",
+          body: {},
+          message: "Template archived.",
+        };
+      }
+      return null;
+    },
   },
   roles: {
     listPath: "/api/v1/admin/roles",

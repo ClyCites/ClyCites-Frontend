@@ -11,7 +11,8 @@ export function ChartsEntityPage() {
         allowEdit: true,
         allowDelete: true,
         allowStatus: false,
-        enabledToolbarActionIds: [],
+        enabledWorkflowActionIds: ["publish-chart", "archive-chart", "export-chart"],
+        enabledToolbarActionIds: ["preview-chart", "preview-chart-export"],
       }}
     />
   );
