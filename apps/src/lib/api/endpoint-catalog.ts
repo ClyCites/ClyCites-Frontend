@@ -161,7 +161,7 @@ export const API_ENDPOINT_CATALOG: ApiEndpointCatalogEntry[] = [
     summary: "Get farm by ID",
     workspace: "farmer",
     entityKey: "farms",
-    uiImplemented: false,
+    uiImplemented: true,
   },
   {
     id: "farmer-farm-update",
@@ -179,7 +179,7 @@ export const API_ENDPOINT_CATALOG: ApiEndpointCatalogEntry[] = [
     summary: "Soft delete farm",
     workspace: "farmer",
     entityKey: "farms",
-    uiImplemented: false,
+    uiImplemented: true,
   },
   {
     id: "farmer-plot-list",
@@ -188,7 +188,7 @@ export const API_ENDPOINT_CATALOG: ApiEndpointCatalogEntry[] = [
     summary: "List plots for farmer",
     workspace: "farmer",
     entityKey: "plots",
-    uiImplemented: false,
+    uiImplemented: true,
   },
   {
     id: "farmer-plot-create",
@@ -197,7 +197,7 @@ export const API_ENDPOINT_CATALOG: ApiEndpointCatalogEntry[] = [
     summary: "Create plot for farmer",
     workspace: "farmer",
     entityKey: "plots",
-    uiImplemented: false,
+    uiImplemented: true,
   },
   {
     id: "farmer-plot-get",
@@ -206,7 +206,7 @@ export const API_ENDPOINT_CATALOG: ApiEndpointCatalogEntry[] = [
     summary: "Get plot by ID",
     workspace: "farmer",
     entityKey: "plots",
-    uiImplemented: false,
+    uiImplemented: true,
   },
   {
     id: "farmer-plot-update",
@@ -215,7 +215,7 @@ export const API_ENDPOINT_CATALOG: ApiEndpointCatalogEntry[] = [
     summary: "Update plot",
     workspace: "farmer",
     entityKey: "plots",
-    uiImplemented: false,
+    uiImplemented: true,
   },
   {
     id: "farmer-plot-delete",
@@ -224,7 +224,7 @@ export const API_ENDPOINT_CATALOG: ApiEndpointCatalogEntry[] = [
     summary: "Soft delete plot",
     workspace: "farmer",
     entityKey: "plots",
-    uiImplemented: false,
+    uiImplemented: true,
   },
   {
     id: "farmer-production-crop-list",
@@ -278,7 +278,7 @@ export const API_ENDPOINT_CATALOG: ApiEndpointCatalogEntry[] = [
     summary: "List growth stages for a farmer",
     workspace: "farmer",
     entityKey: "growthStages",
-    uiImplemented: false,
+    uiImplemented: true,
   },
   {
     id: "farmer-growth-stage-create",
@@ -287,7 +287,7 @@ export const API_ENDPOINT_CATALOG: ApiEndpointCatalogEntry[] = [
     summary: "Create growth stage for a farmer",
     workspace: "farmer",
     entityKey: "growthStages",
-    uiImplemented: false,
+    uiImplemented: true,
   },
   {
     id: "farmer-growth-stage-get",
@@ -296,7 +296,7 @@ export const API_ENDPOINT_CATALOG: ApiEndpointCatalogEntry[] = [
     summary: "Get growth stage by ID",
     workspace: "farmer",
     entityKey: "growthStages",
-    uiImplemented: false,
+    uiImplemented: true,
   },
   {
     id: "farmer-growth-stage-update",
@@ -305,7 +305,7 @@ export const API_ENDPOINT_CATALOG: ApiEndpointCatalogEntry[] = [
     summary: "Update growth stage",
     workspace: "farmer",
     entityKey: "growthStages",
-    uiImplemented: false,
+    uiImplemented: true,
   },
   {
     id: "farmer-growth-stage-delete",
@@ -314,7 +314,7 @@ export const API_ENDPOINT_CATALOG: ApiEndpointCatalogEntry[] = [
     summary: "Soft delete growth stage",
     workspace: "farmer",
     entityKey: "growthStages",
-    uiImplemented: false,
+    uiImplemented: true,
   },
   {
     id: "farmer-yield-prediction-list",
@@ -323,7 +323,7 @@ export const API_ENDPOINT_CATALOG: ApiEndpointCatalogEntry[] = [
     summary: "List yield predictions for a farmer",
     workspace: "farmer",
     entityKey: "yieldPredictions",
-    uiImplemented: false,
+    uiImplemented: true,
   },
   {
     id: "farmer-yield-prediction-create",
@@ -332,7 +332,7 @@ export const API_ENDPOINT_CATALOG: ApiEndpointCatalogEntry[] = [
     summary: "Create yield prediction for a farmer",
     workspace: "farmer",
     entityKey: "yieldPredictions",
-    uiImplemented: false,
+    uiImplemented: true,
   },
   {
     id: "farmer-yield-prediction-get",
@@ -341,7 +341,7 @@ export const API_ENDPOINT_CATALOG: ApiEndpointCatalogEntry[] = [
     summary: "Get yield prediction by ID",
     workspace: "farmer",
     entityKey: "yieldPredictions",
-    uiImplemented: false,
+    uiImplemented: true,
   },
   {
     id: "farmer-yield-prediction-update",
@@ -350,7 +350,7 @@ export const API_ENDPOINT_CATALOG: ApiEndpointCatalogEntry[] = [
     summary: "Update yield prediction",
     workspace: "farmer",
     entityKey: "yieldPredictions",
-    uiImplemented: false,
+    uiImplemented: true,
   },
   {
     id: "farmer-yield-prediction-delete",
@@ -359,7 +359,7 @@ export const API_ENDPOINT_CATALOG: ApiEndpointCatalogEntry[] = [
     summary: "Soft delete yield prediction",
     workspace: "farmer",
     entityKey: "yieldPredictions",
-    uiImplemented: false,
+    uiImplemented: true,
   },
   {
     id: "farmer-yield-prediction-refresh",
@@ -368,7 +368,7 @@ export const API_ENDPOINT_CATALOG: ApiEndpointCatalogEntry[] = [
     summary: "Refresh yield prediction",
     workspace: "farmer",
     entityKey: "yieldPredictions",
-    uiImplemented: false,
+    uiImplemented: true,
   },
   {
     id: "farmer-livestock-production-record",
@@ -393,7 +393,7 @@ export const API_ENDPOINT_CATALOG: ApiEndpointCatalogEntry[] = [
     summary: "List farmer inputs",
     workspace: "farmer",
     entityKey: "inputs",
-    uiImplemented: false,
+    uiImplemented: true,
   },
   {
     id: "farmer-input-create",
@@ -402,7 +402,7 @@ export const API_ENDPOINT_CATALOG: ApiEndpointCatalogEntry[] = [
     summary: "Create farmer input record",
     workspace: "farmer",
     entityKey: "inputs",
-    uiImplemented: false,
+    uiImplemented: true,
   },
   {
     id: "farmer-input-get",
@@ -411,7 +411,7 @@ export const API_ENDPOINT_CATALOG: ApiEndpointCatalogEntry[] = [
     summary: "Get input by ID",
     workspace: "farmer",
     entityKey: "inputs",
-    uiImplemented: false,
+    uiImplemented: true,
   },
   {
     id: "farmer-input-update",
@@ -420,7 +420,7 @@ export const API_ENDPOINT_CATALOG: ApiEndpointCatalogEntry[] = [
     summary: "Update input",
     workspace: "farmer",
     entityKey: "inputs",
-    uiImplemented: false,
+    uiImplemented: true,
   },
   {
     id: "farmer-input-delete",
@@ -429,7 +429,7 @@ export const API_ENDPOINT_CATALOG: ApiEndpointCatalogEntry[] = [
     summary: "Soft delete input",
     workspace: "farmer",
     entityKey: "inputs",
-    uiImplemented: false,
+    uiImplemented: true,
   },
   {
     id: "farmer-membership-join-organization",
@@ -438,7 +438,7 @@ export const API_ENDPOINT_CATALOG: ApiEndpointCatalogEntry[] = [
     summary: "Join an organization/cooperative",
     workspace: "farmer",
     entityKey: "farmers",
-    uiImplemented: false,
+    uiImplemented: true,
   },
   {
     id: "farmer-membership-leave-organization",
@@ -447,7 +447,7 @@ export const API_ENDPOINT_CATALOG: ApiEndpointCatalogEntry[] = [
     summary: "Leave current organization",
     workspace: "farmer",
     entityKey: "farmers",
-    uiImplemented: false,
+    uiImplemented: true,
   },
   {
     id: "farmer-membership-eligibility",
@@ -456,7 +456,7 @@ export const API_ENDPOINT_CATALOG: ApiEndpointCatalogEntry[] = [
     summary: "Update service eligibility",
     workspace: "farmer",
     entityKey: "farmers",
-    uiImplemented: false,
+    uiImplemented: true,
   },
   {
     id: "farmer-stats",
@@ -465,7 +465,7 @@ export const API_ENDPOINT_CATALOG: ApiEndpointCatalogEntry[] = [
     summary: "Farmer module statistics",
     workspace: "farmer",
     entityKey: "farmers",
-    uiImplemented: false,
+    uiImplemented: true,
   },
   {
     id: "farmer-legacy-list",

@@ -91,7 +91,7 @@ export const WORKSPACES: WorkspaceDefinition[] = [
 ];
 
 export const WORKSPACE_ENTITY_MAP: Record<WorkspaceId, EntityKey[]> = {
-  farmer: ["farmers", "farms", "plots", "crops", "inputs", "tasks", "advisories", "weatherAlerts", "priceSignals"],
+  farmer: ["farmers", "farms", "plots", "crops", "growthStages", "yieldPredictions", "inputs", "tasks", "advisories", "weatherAlerts", "priceSignals"],
   production: ["cropCycles", "growthStages", "sensorReadings", "pestIncidents", "yieldPredictions"],
   aggregation: ["warehouses", "storageBins", "batches", "qualityGrades", "stockMovements", "spoilageReports"],
   marketplace: ["listings", "rfqs", "orders", "contracts", "negotiations", "reviews"],
@@ -166,19 +166,34 @@ export const ENTITY_DEFINITIONS: Record<EntityKey, EntityDefinition> = {
       },
       statusAction("verify-profile", "Verify", "Mark profile as verified.", "verified"),
       statusAction("reject-profile", "Reject", "Reject profile verification.", "rejected"),
+      {
+        id: "leave-organization",
+        label: "Leave Organization",
+        description: "Leave current cooperative or organization.",
+      },
+      {
+        id: "update-eligibility",
+        label: "Update Eligibility",
+        description: "Update service eligibility for this farmer.",
+      },
+      {
+        id: "view-farmer-stats",
+        label: "View Stats",
+        description: "Load farmer module statistics snapshot.",
+      },
     ]
   ),
   farms: createEntityDefinition("farms", "Farm", "Farms", ["active", "inactive"], [
-    textField("data.location", "Location"),
-    numberField("data.lat", "Latitude"),
-    numberField("data.lng", "Longitude"),
-    textField("data.plotIds", "Linked Plot IDs"),
+    textField("data.farmName", "Farm Name"),
+    numberField("data.totalSize", "Total Size"),
+    textField("data.sizeUnit", "Size Unit"),
+    textField("data.ownershipType", "Ownership Type"),
   ]),
   plots: createEntityDefinition(
     "plots",
     "Plot",
     "Plots",
-    ["active", "inactive"],
+    ["active", "fallow", "inactive"],
     [
       textField("data.farmId", "Farm ID"),
       numberField("data.areaAcres", "Area (acres)"),
@@ -195,18 +210,22 @@ export const ENTITY_DEFINITIONS: Record<EntityKey, EntityDefinition> = {
       },
     ]
   ),
-  crops: createEntityDefinition("crops", "Crop", "Crops", ["planned", "growing", "harvested", "archived"], [
-    textField("data.plotId", "Plot ID"),
-    textField("data.cropType", "Crop Type"),
-    textField("data.stage", "Growth Stage"),
-    dateField("data.plantingDate", "Planting Date"),
-    dateField("data.harvestDate", "Harvest Target"),
+  crops: createEntityDefinition("crops", "Crop", "Crops", ["planned", "in_progress", "harvested", "sold", "stored", "failed"], [
+    textField("data.farmId", "Farm ID"),
+    textField("data.cropName", "Crop Name"),
+    textField("data.cropCategory", "Crop Category"),
+    textField("data.season", "Season"),
+    numberField("data.year", "Year"),
+    numberField("data.areaPlanted", "Area Planted"),
+    numberField("data.estimatedYield", "Estimated Yield"),
   ]),
-  inputs: createEntityDefinition("inputs", "Input", "Inputs", ["in_stock", "low_stock", "out_of_stock"], [
-    textField("data.cropId", "Crop ID"),
-    textField("data.category", "Category"),
-    numberField("data.stock", "Stock"),
-    numberField("data.used", "Used"),
+  inputs: createEntityDefinition("inputs", "Input", "Inputs", ["planned", "applied", "consumed", "cancelled"], [
+    textField("data.farmId", "Farm ID"),
+    textField("data.plotId", "Plot ID"),
+    textField("data.inputName", "Input Name"),
+    textField("data.inputType", "Input Type"),
+    numberField("data.quantity", "Quantity"),
+    textField("data.unit", "Unit"),
   ]),
   tasks: createEntityDefinition("tasks", "Task", "Tasks", ["todo", "doing", "done"], [
     textField("data.assignedTo", "Assigned To"),
@@ -276,9 +295,10 @@ export const ENTITY_DEFINITIONS: Record<EntityKey, EntityDefinition> = {
     dateField("data.plantingTarget", "Planting Target"),
     dateField("data.harvestTarget", "Harvest Target"),
   ]),
-  growthStages: createEntityDefinition("growthStages", "Growth Stage", "Growth Stages", ["seed", "vegetative", "flowering", "maturity", "harvested"], [
+  growthStages: createEntityDefinition("growthStages", "Growth Stage", "Growth Stages", ["planned", "active", "completed"], [
     textField("data.cycleId", "Cycle ID"),
     textField("data.stage", "Stage"),
+    textField("data.status", "Status"),
     dateField("data.observedAt", "Observed At"),
   ]),
   sensorReadings: createEntityDefinition("sensorReadings", "Sensor Reading", "Sensor Readings", ["captured", "flagged", "verified"], [

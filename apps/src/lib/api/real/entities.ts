@@ -1347,57 +1347,107 @@ const ENTITY_API_CONFIG: Partial<Record<EntityKey, EntityApiConfig>> = {
           message: "Profile submitted for verification.",
         };
       }
+      if (actionId === "leave-organization" && targetId) {
+        return {
+          path: `/api/v1/farmers/${encodeURIComponent(targetId)}/membership/leave-organization`,
+          method: "POST",
+          body: {
+            exitReason: "voluntary",
+            exitNotes: "Requested from workspace UI",
+          },
+          message: "Organization leave request sent.",
+        };
+      }
+      if (actionId === "update-eligibility" && targetId) {
+        return {
+          path: `/api/v1/farmers/${encodeURIComponent(targetId)}/membership/eligibility`,
+          method: "PATCH",
+          body: {
+            eligibleForLoans: true,
+          },
+          message: "Eligibility updated.",
+        };
+      }
+      if (actionId === "view-farmer-stats") {
+        return {
+          path: "/api/v1/farmers/stats",
+          method: "GET",
+          message: "Farmer statistics loaded.",
+        };
+      }
       return null;
     },
   },
   farms: {
     listPath: "/api/v1/farmers/{farmerId}/farms",
+    getPath: (id) => `/api/v1/farmers/farms/${encodeURIComponent(id)}`,
     createPath: "/api/v1/farmers/{farmerId}/farms",
     updatePath: (id) => `/api/v1/farmers/farms/${encodeURIComponent(id)}`,
+    deletePath: (id) => `/api/v1/farmers/farms/${encodeURIComponent(id)}`,
     listQuery: (params) => ({
       page: params.pagination.page,
       limit: params.pagination.pageSize,
       search: params.filters?.text,
     }),
     mapCreateBody: (payload) => ({
-      name: payload.title,
+      farmName: payload.title,
+      totalSize: Number(payload.data.totalSize ?? payload.data.sizeInHectares ?? payload.data.areaAcres ?? 1),
+      sizeUnit: String(payload.data.sizeUnit ?? "acres"),
+      ownershipType: String(payload.data.ownershipType ?? "owned"),
       location: {
         region: String(payload.data.region ?? payload.data.location ?? "Central"),
         district: String(payload.data.district ?? "Unknown"),
         village: String(payload.data.village ?? ""),
       },
-      sizeInHectares: Number(payload.data.sizeInHectares ?? payload.data.areaAcres ?? 1),
-      farmType: String(payload.data.farmType ?? "mixed"),
-    }),
-    mapUpdateBody: (_id, payload) => ({
-      name: payload.title,
-      sizeInHectares: Number(payload.data?.sizeInHectares ?? payload.data?.areaAcres ?? 1),
-      farmType: typeof payload.data?.farmType === "string" ? payload.data.farmType : undefined,
-    }),
-  },
-  plots: {
-    listPath: "/api/v1/farmers/{farmerId}/farms",
-    createPath: "/api/v1/farmers/{farmerId}/farms",
-    updatePath: (id) => `/api/v1/farmers/farms/${encodeURIComponent(id)}`,
-    listQuery: (params) => ({
-      page: params.pagination.page,
-      limit: params.pagination.pageSize,
-      search: params.filters?.text,
-    }),
-    mapCreateBody: (payload) => ({
-      name: payload.title,
-      location: {
-        region: String(payload.data.region ?? payload.data.location ?? "Central"),
-        district: String(payload.data.district ?? "Unknown"),
-        village: String(payload.data.village ?? ""),
-      },
-      sizeInHectares: Number(payload.data.areaAcres ?? payload.data.sizeInHectares ?? 0.5),
-      farmType: "plot",
       notes: payload.subtitle,
     }),
     mapUpdateBody: (_id, payload) => ({
-      name: payload.title,
-      sizeInHectares: Number(payload.data?.areaAcres ?? payload.data?.sizeInHectares ?? 0.5),
+      farmName: payload.title,
+      totalSize:
+        typeof payload.data?.totalSize === "number"
+          ? payload.data.totalSize
+          : typeof payload.data?.sizeInHectares === "number"
+            ? payload.data.sizeInHectares
+            : typeof payload.data?.areaAcres === "number"
+              ? payload.data.areaAcres
+              : undefined,
+      ownershipType: typeof payload.data?.ownershipType === "string" ? payload.data.ownershipType : undefined,
+      operationalStatus: typeof payload.data?.status === "string" ? payload.data.status : undefined,
+      notes: payload.subtitle,
+    }),
+  },
+  plots: {
+    listPath: "/api/v1/farmers/{farmerId}/plots",
+    getPath: (id) => `/api/v1/farmers/plots/${encodeURIComponent(id)}`,
+    createPath: "/api/v1/farmers/{farmerId}/plots",
+    updatePath: (id) => `/api/v1/farmers/plots/${encodeURIComponent(id)}`,
+    deletePath: (id) => `/api/v1/farmers/plots/${encodeURIComponent(id)}`,
+    listQuery: (params) => ({
+      page: params.pagination.page,
+      limit: params.pagination.pageSize,
+      search: params.filters?.text,
+    }),
+    mapCreateBody: (payload) => ({
+      plotName: payload.title,
+      farmId: typeof payload.data.farmId === "string" ? payload.data.farmId : undefined,
+      area: Number(payload.data.area ?? payload.data.areaAcres ?? payload.data.sizeInHectares ?? 0.5),
+      areaUnit: String(payload.data.areaUnit ?? "acres"),
+      status: typeof payload.data.status === "string" ? payload.data.status : undefined,
+      notes: payload.subtitle,
+    }),
+    mapUpdateBody: (_id, payload) => ({
+      plotName: payload.title,
+      farmId: typeof payload.data?.farmId === "string" ? payload.data.farmId : undefined,
+      area:
+        typeof payload.data?.area === "number"
+          ? payload.data.area
+          : typeof payload.data?.areaAcres === "number"
+            ? payload.data.areaAcres
+            : typeof payload.data?.sizeInHectares === "number"
+              ? payload.data.sizeInHectares
+              : undefined,
+      areaUnit: typeof payload.data?.areaUnit === "string" ? payload.data.areaUnit : undefined,
+      status: typeof payload.data?.status === "string" ? payload.data.status : undefined,
       notes: payload.subtitle,
     }),
   },
@@ -1412,11 +1462,41 @@ const ENTITY_API_CONFIG: Partial<Record<EntityKey, EntityApiConfig>> = {
     mapUpdateBody: (_id, payload) => mapCropProductionUpdateBody(payload),
   },
   inputs: {
-    listPath: "/api/v1/farmers/{farmerId}/production",
+    listPath: "/api/v1/farmers/{farmerId}/inputs",
+    getPath: (id) => `/api/v1/farmers/inputs/${encodeURIComponent(id)}`,
+    createPath: "/api/v1/farmers/{farmerId}/inputs",
+    updatePath: (id) => `/api/v1/farmers/inputs/${encodeURIComponent(id)}`,
+    deletePath: (id) => `/api/v1/farmers/inputs/${encodeURIComponent(id)}`,
     listQuery: (params) => ({
-      type: "crop",
       page: params.pagination.page,
       limit: params.pagination.pageSize,
+      search: params.filters?.text,
+      status: params.filters?.status?.[0],
+    }),
+    mapCreateBody: (payload) => ({
+      farmId: typeof payload.data.farmId === "string" ? payload.data.farmId : undefined,
+      plotId: typeof payload.data.plotId === "string" ? payload.data.plotId : undefined,
+      inputName: payload.title,
+      inputType: String(payload.data.inputType ?? payload.data.category ?? "other"),
+      quantity: Number(payload.data.quantity ?? payload.data.stock ?? 0),
+      unit: String(payload.data.unit ?? "kg"),
+      status: payload.status ?? (typeof payload.data.status === "string" ? payload.data.status : "planned"),
+      notes: payload.subtitle,
+    }),
+    mapUpdateBody: (_id, payload) => ({
+      farmId: typeof payload.data?.farmId === "string" ? payload.data.farmId : undefined,
+      plotId: typeof payload.data?.plotId === "string" ? payload.data.plotId : undefined,
+      inputName: payload.title,
+      inputType: typeof payload.data?.inputType === "string" ? payload.data.inputType : undefined,
+      quantity:
+        typeof payload.data?.quantity === "number"
+          ? payload.data.quantity
+          : typeof payload.data?.stock === "number"
+            ? payload.data.stock
+            : undefined,
+      unit: typeof payload.data?.unit === "string" ? payload.data.unit : undefined,
+      status: typeof payload.data?.status === "string" ? payload.data.status : undefined,
+      notes: payload.subtitle,
     }),
   },
   tasks: {
@@ -1469,40 +1549,34 @@ const ENTITY_API_CONFIG: Partial<Record<EntityKey, EntityApiConfig>> = {
     mapUpdateBody: (_id, payload) => mapCropProductionUpdateBody(payload),
   },
   growthStages: {
-    listPath: "/api/v1/farmers/{farmerId}/production/crops",
-    listQuery: (params) => mapCropProductionListQuery(params),
-    mapListRows: (payload) =>
-      extractCollection(payload).map((item, index) => {
-        const row = asRecord(item) ?? {};
-        const stage = toGrowthStageStatus(row.stage ?? row.growthStage ?? row.currentStage ?? row.productionStatus ?? row.status);
-        const id = String(row.id ?? row._id ?? `growth-stage-${index + 1}`);
-        const cropName =
-          (typeof row.cropName === "string" && row.cropName.trim().length > 0 ? row.cropName.trim() : undefined) ??
-          (typeof row.name === "string" && row.name.trim().length > 0 ? row.name.trim() : undefined) ??
-          `Growth stage ${index + 1}`;
-        const season =
-          typeof row.season === "string" && row.season.trim().length > 0 ? String(row.season).trim() : undefined;
-        const year = parseYear(row.year);
-        const subtitle =
-          season && year
-            ? `${season} ${year}`
-            : season
-              ? season
-              : year
-                ? String(year)
-                : undefined;
-
-        return {
-          ...row,
-          id,
-          status: stage,
-          stage,
-          cycleId: String(row.cycleId ?? row.cropId ?? row.id ?? row._id ?? id),
-          observedAt: row.updatedAt ?? row.createdAt ?? new Date().toISOString(),
-          title: `${cropName} - ${stage}`,
-          subtitle,
-        };
-      }),
+    listPath: "/api/v1/farmers/{farmerId}/production/growth-stages",
+    getPath: (id) => `/api/v1/farmers/production/growth-stages/${encodeURIComponent(id)}`,
+    createPath: "/api/v1/farmers/{farmerId}/production/growth-stages",
+    updatePath: (id) => `/api/v1/farmers/production/growth-stages/${encodeURIComponent(id)}`,
+    deletePath: (id) => `/api/v1/farmers/production/growth-stages/${encodeURIComponent(id)}`,
+    listQuery: (params) => ({
+      page: params.pagination.page,
+      limit: params.pagination.pageSize,
+      cycleId: params.filters?.text,
+      stage: params.filters?.tags?.[0],
+      status: params.filters?.status?.[0],
+    }),
+    mapCreateBody: (payload) => ({
+      cycleId: String(payload.data.cycleId ?? payload.data.cropId ?? payload.title),
+      cropId: typeof payload.data.cropId === "string" ? payload.data.cropId : undefined,
+      stage: String(payload.data.stage ?? payload.data.growthStage ?? "vegetative"),
+      observedAt: typeof payload.data.observedAt === "string" ? payload.data.observedAt : undefined,
+      status: typeof payload.data.status === "string" ? payload.data.status : "active",
+      notes: payload.subtitle,
+    }),
+    mapUpdateBody: (_id, payload) => ({
+      cycleId: typeof payload.data?.cycleId === "string" ? payload.data.cycleId : undefined,
+      cropId: typeof payload.data?.cropId === "string" ? payload.data.cropId : undefined,
+      stage: typeof payload.data?.stage === "string" ? payload.data.stage : undefined,
+      observedAt: typeof payload.data?.observedAt === "string" ? payload.data.observedAt : undefined,
+      status: typeof payload.data?.status === "string" ? payload.data.status : undefined,
+      notes: payload.subtitle,
+    }),
   },
   sensorReadings: {
     listPath: "/api/v1/weather/profiles/{weatherProfileId}/conditions/history",
@@ -1547,50 +1621,42 @@ const ENTITY_API_CONFIG: Partial<Record<EntityKey, EntityApiConfig>> = {
     },
   },
   yieldPredictions: {
-    listPath: "/api/v1/farmers/{farmerId}/production/crops",
-    listQuery: (params) => mapCropProductionListQuery(params),
-    mapListRows: (payload) =>
-      extractCollection(payload).map((item, index) => {
-        const row = asRecord(item) ?? {};
-        const id = String(row.id ?? row._id ?? `yield-prediction-${index + 1}`);
-        const cropName =
-          (typeof row.cropName === "string" && row.cropName.trim().length > 0 ? row.cropName.trim() : undefined) ??
-          (typeof row.name === "string" && row.name.trim().length > 0 ? row.name.trim() : undefined) ??
-          `Prediction ${index + 1}`;
-        const predictedYield = Number(row.predictedYield ?? row.estimatedYield ?? row.actualYield ?? row.quantityHarvested ?? 0);
-        const confidence = Number(row.confidence ?? row.modelConfidence ?? 0.7);
-        const horizonDays = Number(row.horizonDays ?? 30);
-
-        return {
-          ...row,
-          id,
-          status: "generated",
-          title: `${cropName} yield outlook`,
-          cropId: String(row.cropId ?? row.id ?? row._id ?? id),
-          predictedYield: Number.isFinite(predictedYield) ? predictedYield : 0,
-          confidence: Number.isFinite(confidence) ? confidence : 0.7,
-          horizonDays: Number.isFinite(horizonDays) ? horizonDays : 30,
-        };
-      }),
-    createPath: "/api/v1/prices/predict",
+    listPath: "/api/v1/farmers/{farmerId}/production/yield-predictions",
+    getPath: (id) => `/api/v1/farmers/production/yield-predictions/${encodeURIComponent(id)}`,
+    createPath: "/api/v1/farmers/{farmerId}/production/yield-predictions",
+    updatePath: (id) => `/api/v1/farmers/production/yield-predictions/${encodeURIComponent(id)}`,
+    deletePath: (id) => `/api/v1/farmers/production/yield-predictions/${encodeURIComponent(id)}`,
+    listQuery: (params) => ({
+      page: params.pagination.page,
+      limit: params.pagination.pageSize,
+      cropId: params.filters?.text,
+      status: params.filters?.status?.[0],
+    }),
     mapCreateBody: (payload) => ({
-      productId: toMongoLikeId(payload.data.cropId ?? payload.data.productId ?? payload.title, payload.title),
-      marketId:
-        typeof payload.data.marketId === "string" && payload.data.marketId.length > 0
-          ? toMongoLikeId(payload.data.marketId, payload.data.marketId)
-          : undefined,
-      daysAhead: Number(payload.data.horizonDays ?? 30),
+      cropId: String(payload.data.cropId ?? payload.title),
+      predictedYield: Number(payload.data.predictedYield ?? 0),
+      confidence: Number(payload.data.confidence ?? 0.7),
+      horizonDays: Number(payload.data.horizonDays ?? 30),
+      modelVersion: String(payload.data.modelVersion ?? "v1.0"),
+      status: payload.status ?? (typeof payload.data.status === "string" ? payload.data.status : "generated"),
+      notes: payload.subtitle,
+    }),
+    mapUpdateBody: (_id, payload) => ({
+      cropId: typeof payload.data?.cropId === "string" ? payload.data.cropId : undefined,
+      predictedYield: typeof payload.data?.predictedYield === "number" ? payload.data.predictedYield : undefined,
+      confidence: typeof payload.data?.confidence === "number" ? payload.data.confidence : undefined,
+      horizonDays: typeof payload.data?.horizonDays === "number" ? payload.data.horizonDays : undefined,
+      modelVersion: typeof payload.data?.modelVersion === "string" ? payload.data.modelVersion : undefined,
+      status: typeof payload.data?.status === "string" ? payload.data.status : undefined,
+      notes: payload.subtitle,
     }),
     actionRequest: (actionId, _actorId, targetId) => {
       if (actionId !== "refresh-prediction") return null;
-      const seed = targetId ?? "default-product";
+      if (!targetId) return null;
       return {
-        path: "/api/v1/prices/predict",
+        path: `/api/v1/farmers/production/yield-predictions/${encodeURIComponent(targetId)}/refresh`,
         method: "POST",
-        body: {
-          productId: toMongoLikeId(seed, seed),
-          daysAhead: 30,
-        },
+        body: {},
         message: "Prediction refresh requested.",
       };
     },

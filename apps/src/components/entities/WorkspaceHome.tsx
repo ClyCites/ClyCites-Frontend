@@ -8,6 +8,7 @@ import { getWorkspaceDefinition, WORKSPACE_ENTITY_MAP, getEntityDefinition } fro
 import type { WorkspaceId } from "@/lib/store/types";
 import { useMockSession } from "@/lib/auth/mock-session";
 import { getEntityIcon, getWorkspaceIcon } from "@/components/layout/workspaces/workspace-icons";
+import { FarmerWorkspaceInsights } from "@/components/entities/farmer/FarmerWorkspaceInsights";
 import { AccessDenied } from "@/components/common/AccessDenied";
 import { PageHeader } from "@/components/common/PageHeader";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -62,6 +63,12 @@ export function WorkspaceHome({ workspaceId }: WorkspaceHomeProps) {
           </div>
         </div>
       </motion.section>
+
+      {workspaceId === "farmer" && (
+        <motion.section variants={fadeIn(Boolean(reducedMotion))}>
+          <FarmerWorkspaceInsights />
+        </motion.section>
+      )}
 
       <motion.section
         variants={staggerContainer(Boolean(reducedMotion), 0.04)}
