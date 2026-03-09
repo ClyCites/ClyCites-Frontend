@@ -1768,19 +1768,28 @@ const ENTITY_API_CONFIG: Partial<Record<EntityKey, EntityApiConfig>> = {
     }),
   },
   contracts: {
-    listPath: "/api/v1/disputes",
-    getPath: (id) => `/api/v1/disputes/${encodeURIComponent(id)}`,
-    createPath: "/api/v1/disputes",
+    listPath: "/api/v1/marketplace/contracts",
+    getPath: (id) => `/api/v1/marketplace/contracts/${encodeURIComponent(id)}`,
+    createPath: "/api/v1/marketplace/contracts",
+    updatePath: (id) => `/api/v1/marketplace/contracts/${encodeURIComponent(id)}`,
     listQuery: (params) => ({
       page: params.pagination.page,
       limit: params.pagination.pageSize,
       status: params.filters?.status?.[0],
+      search: params.filters?.text,
     }),
     mapCreateBody: (payload) => ({
-      orderId: String(payload.data.orderId ?? toMongoLikeId(payload.title, payload.title)),
-      type: String(payload.data.type ?? payload.data.category ?? "other"),
-      description: String(payload.data.description ?? payload.subtitle ?? payload.title),
-      evidence: toStringArray(payload.data.evidence),
+      title: payload.title,
+      buyerId: String(payload.data.partyA ?? payload.data.buyerId ?? ""),
+      sellerId: String(payload.data.partyB ?? payload.data.sellerId ?? ""),
+      listingId: typeof payload.data.listingId === "string" ? payload.data.listingId : undefined,
+      terms: typeof payload.data.milestones === "string" ? payload.data.milestones : payload.subtitle,
+      status: payload.status ?? "draft",
+    }),
+    mapUpdateBody: (_id, payload) => ({
+      title: payload.title,
+      terms: typeof payload.data?.milestones === "string" ? payload.data.milestones : payload.subtitle,
+      status: typeof payload.data?.status === "string" ? payload.data.status : undefined,
     }),
     actionRequest: (actionId, _actorId, targetId) => {
       if (!targetId) return null;
@@ -1898,14 +1907,257 @@ const ENTITY_API_CONFIG: Partial<Record<EntityKey, EntityApiConfig>> = {
       },
     }),
   },
+  routes: {
+    listPath: "/api/v1/logistics/routes",
+    getPath: (id) => `/api/v1/logistics/routes/${encodeURIComponent(id)}`,
+    createPath: "/api/v1/logistics/routes",
+    updatePath: (id) => `/api/v1/logistics/routes/${encodeURIComponent(id)}`,
+    deletePath: (id) => `/api/v1/logistics/routes/${encodeURIComponent(id)}`,
+    listQuery: (params) => ({
+      organizationId: params.filters?.tags?.[0],
+      status: params.filters?.status?.[0],
+      origin: params.filters?.text,
+    }),
+    mapCreateBody: (payload) => ({
+      organizationId: payload.data.organizationId,
+      origin: String(payload.data.origin ?? payload.title),
+      destination: String(payload.data.destination ?? ""),
+      distanceKm: Number(payload.data.distanceKm ?? 0),
+      waypoints: toStringArray(payload.data.waypoints),
+      status: payload.status ?? "draft",
+      notes: payload.subtitle,
+    }),
+    mapUpdateBody: (_id, payload) => ({
+      origin: typeof payload.data?.origin === "string" ? payload.data.origin : undefined,
+      destination: typeof payload.data?.destination === "string" ? payload.data.destination : undefined,
+      distanceKm: typeof payload.data?.distanceKm === "number" ? payload.data.distanceKm : undefined,
+      waypoints: toStringArray(payload.data?.waypoints),
+      status: typeof payload.data?.status === "string" ? payload.data.status : undefined,
+      notes: payload.subtitle,
+    }),
+  },
+  vehicles: {
+    listPath: "/api/v1/logistics/vehicles",
+    getPath: (id) => `/api/v1/logistics/vehicles/${encodeURIComponent(id)}`,
+    createPath: "/api/v1/logistics/vehicles",
+    updatePath: (id) => `/api/v1/logistics/vehicles/${encodeURIComponent(id)}`,
+    deletePath: (id) => `/api/v1/logistics/vehicles/${encodeURIComponent(id)}`,
+    listQuery: (params) => ({
+      organizationId: params.filters?.tags?.[0],
+      status: params.filters?.status?.[0],
+    }),
+    mapCreateBody: (payload) => ({
+      organizationId: payload.data.organizationId,
+      registration: String(payload.data.registration ?? payload.title),
+      type: String(payload.data.type ?? "truck"),
+      capacityKg: Number(payload.data.capacityKg ?? 0),
+      coldChainEnabled: typeof payload.data.coldChainEnabled === "boolean" ? payload.data.coldChainEnabled : false,
+      available: typeof payload.data.available === "boolean" ? payload.data.available : true,
+      status: payload.status ?? "available",
+      notes: payload.subtitle,
+    }),
+    mapUpdateBody: (_id, payload) => ({
+      registration: typeof payload.data?.registration === "string" ? payload.data.registration : undefined,
+      capacityKg: typeof payload.data?.capacityKg === "number" ? payload.data.capacityKg : undefined,
+      coldChainEnabled: typeof payload.data?.coldChainEnabled === "boolean" ? payload.data.coldChainEnabled : undefined,
+      available: typeof payload.data?.available === "boolean" ? payload.data.available : undefined,
+      status: typeof payload.data?.status === "string" ? payload.data.status : undefined,
+      notes: payload.subtitle,
+    }),
+  },
+  drivers: {
+    listPath: "/api/v1/logistics/drivers",
+    getPath: (id) => `/api/v1/logistics/drivers/${encodeURIComponent(id)}`,
+    createPath: "/api/v1/logistics/drivers",
+    updatePath: (id) => `/api/v1/logistics/drivers/${encodeURIComponent(id)}`,
+    deletePath: (id) => `/api/v1/logistics/drivers/${encodeURIComponent(id)}`,
+    listQuery: (params) => ({
+      organizationId: params.filters?.tags?.[0],
+      status: params.filters?.status?.[0],
+    }),
+    mapCreateBody: (payload) => ({
+      organizationId: payload.data.organizationId,
+      userId: typeof payload.data.userId === "string" ? payload.data.userId : undefined,
+      name: payload.title,
+      phone: String(payload.data.phone ?? ""),
+      licenseNumber: String(payload.data.licenseNumber ?? ""),
+      available: typeof payload.data.available === "boolean" ? payload.data.available : true,
+      status: payload.status ?? "available",
+    }),
+    mapUpdateBody: (_id, payload) => ({
+      name: payload.title,
+      phone: typeof payload.data?.phone === "string" ? payload.data.phone : undefined,
+      licenseNumber: typeof payload.data?.licenseNumber === "string" ? payload.data.licenseNumber : undefined,
+      available: typeof payload.data?.available === "boolean" ? payload.data.available : undefined,
+      status: typeof payload.data?.status === "string" ? payload.data.status : undefined,
+    }),
+  },
+  trackingEvents: {
+    listPath: "/api/v1/logistics/tracking-events",
+    getPath: (id) => `/api/v1/logistics/tracking-events/${encodeURIComponent(id)}`,
+    createPath: "/api/v1/logistics/tracking-events",
+    updatePath: (id) => `/api/v1/logistics/tracking-events/${encodeURIComponent(id)}`,
+    deletePath: (id) => `/api/v1/logistics/tracking-events/${encodeURIComponent(id)}`,
+    listQuery: (params) => ({
+      shipmentId: params.filters?.text,
+      status: params.filters?.status?.[0],
+    }),
+    mapCreateBody: (payload) => ({
+      shipmentId: String(payload.data.shipmentId ?? ""),
+      eventType: String(payload.data.eventType ?? payload.title),
+      location: String(payload.data.location ?? ""),
+      note: String(payload.data.note ?? payload.subtitle ?? ""),
+      status: payload.status ?? "created",
+    }),
+    mapUpdateBody: (_id, payload) => ({
+      location: typeof payload.data?.location === "string" ? payload.data.location : undefined,
+      note: typeof payload.data?.note === "string" ? payload.data.note : payload.subtitle,
+      eventType: typeof payload.data?.eventType === "string" ? payload.data.eventType : undefined,
+      status: typeof payload.data?.status === "string" ? payload.data.status : undefined,
+    }),
+  },
+  coldChainLogs: {
+    listPath: "/api/v1/logistics/cold-chain-logs",
+    getPath: (id) => `/api/v1/logistics/cold-chain-logs/${encodeURIComponent(id)}`,
+    createPath: "/api/v1/logistics/cold-chain-logs",
+    updatePath: (id) => `/api/v1/logistics/cold-chain-logs/${encodeURIComponent(id)}`,
+    deletePath: (id) => `/api/v1/logistics/cold-chain-logs/${encodeURIComponent(id)}`,
+    listQuery: (params) => ({
+      shipmentId: params.filters?.text,
+      status: params.filters?.status?.[0],
+    }),
+    mapCreateBody: (payload) => ({
+      shipmentId: String(payload.data.shipmentId ?? ""),
+      temperatureC: Number(payload.data.temperatureC ?? 0),
+      humidityPercent: typeof payload.data.humidityPercent === "number" ? payload.data.humidityPercent : undefined,
+      thresholdC: typeof payload.data.thresholdC === "number" ? payload.data.thresholdC : undefined,
+      status: payload.status ?? "normal",
+      notes: payload.subtitle,
+    }),
+    mapUpdateBody: (_id, payload) => ({
+      temperatureC: typeof payload.data?.temperatureC === "number" ? payload.data.temperatureC : undefined,
+      humidityPercent: typeof payload.data?.humidityPercent === "number" ? payload.data.humidityPercent : undefined,
+      status: typeof payload.data?.status === "string" ? payload.data.status : undefined,
+      notes: payload.subtitle,
+    }),
+    actionRequest: (actionId) => {
+      if (actionId === "flag-violations") {
+        return {
+          path: "/api/v1/logistics/cold-chain-logs/flag-violations",
+          method: "POST",
+          body: {},
+          message: "Cold chain violations flagged successfully.",
+        };
+      }
+      return null;
+    },
+  },
   spoilageReports: {
-    listPath: "/api/v1/pest-disease/outbreaks",
-    listMode: "collection",
-    listQuery: () => ({
-      page: undefined,
-      limit: undefined,
-      search: undefined,
-      status: undefined,
+    listPath: "/api/v1/aggregation/spoilage-reports",
+    getPath: (id) => `/api/v1/aggregation/spoilage-reports/${encodeURIComponent(id)}`,
+    createPath: "/api/v1/aggregation/spoilage-reports",
+    updatePath: (id) => `/api/v1/aggregation/spoilage-reports/${encodeURIComponent(id)}`,
+    deletePath: (id) => `/api/v1/aggregation/spoilage-reports/${encodeURIComponent(id)}`,
+    listQuery: (params) => ({
+      organizationId: params.filters?.tags?.[0],
+      batchId: params.filters?.text,
+      status: params.filters?.status?.[0],
+    }),
+    mapCreateBody: (payload) => ({
+      organizationId: payload.data.organizationId,
+      batchId: String(payload.data.batchId ?? payload.title),
+      quantity: Number(payload.data.quantity ?? 0),
+      unit: String(payload.data.unit ?? "kg"),
+      cause: String(payload.data.cause ?? payload.subtitle ?? "Unknown cause"),
+      status: payload.status ?? "reported",
+      notes: payload.subtitle,
+    }),
+    mapUpdateBody: (_id, payload) => ({
+      quantity: typeof payload.data?.quantity === "number" ? payload.data.quantity : undefined,
+      cause: typeof payload.data?.cause === "string" ? payload.data.cause : undefined,
+      status: typeof payload.data?.status === "string" ? payload.data.status : undefined,
+      notes: payload.subtitle,
+    }),
+  },
+  storageBins: {
+    listPath: "/api/v1/aggregation/bins",
+    getPath: (id) => `/api/v1/aggregation/bins/${encodeURIComponent(id)}`,
+    createPath: "/api/v1/aggregation/bins",
+    updatePath: (id) => `/api/v1/aggregation/bins/${encodeURIComponent(id)}`,
+    deletePath: (id) => `/api/v1/aggregation/bins/${encodeURIComponent(id)}`,
+    listQuery: (params) => ({
+      organizationId: params.filters?.tags?.[0],
+      warehouseId: params.filters?.text,
+      status: params.filters?.status?.[0],
+    }),
+    mapCreateBody: (payload) => ({
+      organizationId: payload.data.organizationId,
+      warehouseId: String(payload.data.warehouseId ?? ""),
+      label: payload.title,
+      capacity: typeof payload.data.capacity === "number" ? payload.data.capacity : undefined,
+      temperatureControl: typeof payload.data.temperatureControl === "boolean" ? payload.data.temperatureControl : undefined,
+    }),
+    mapUpdateBody: (_id, payload) => ({
+      label: payload.title,
+      capacity: typeof payload.data?.capacity === "number" ? payload.data.capacity : undefined,
+      status: typeof payload.data?.status === "string" ? payload.data.status : undefined,
+      temperatureControl: typeof payload.data?.temperatureControl === "boolean" ? payload.data.temperatureControl : undefined,
+    }),
+  },
+  batches: {
+    listPath: "/api/v1/aggregation/batches",
+    getPath: (id) => `/api/v1/aggregation/batches/${encodeURIComponent(id)}`,
+    createPath: "/api/v1/aggregation/batches",
+    updatePath: (id) => `/api/v1/aggregation/batches/${encodeURIComponent(id)}`,
+    deletePath: (id) => `/api/v1/aggregation/batches/${encodeURIComponent(id)}`,
+    listQuery: (params) => ({
+      organizationId: params.filters?.tags?.[0],
+      status: params.filters?.status?.[0],
+      commodity: params.filters?.text,
+    }),
+    mapCreateBody: (payload) => ({
+      organizationId: payload.data.organizationId,
+      commodity: String(payload.data.commodity ?? payload.title),
+      quantity: Number(payload.data.quantity ?? 0),
+      unit: String(payload.data.unit ?? "kg"),
+      grade: String(payload.data.grade ?? "standard"),
+      warehouseId: String(payload.data.warehouseId ?? ""),
+      binId: typeof payload.data.binId === "string" ? payload.data.binId : undefined,
+      receivedAt: typeof payload.data.receivedAt === "string" ? payload.data.receivedAt : new Date().toISOString(),
+      status: payload.status ?? "received",
+      notes: payload.subtitle,
+    }),
+    mapUpdateBody: (_id, payload) => ({
+      commodity: typeof payload.data?.commodity === "string" ? payload.data.commodity : undefined,
+      quantity: typeof payload.data?.quantity === "number" ? payload.data.quantity : undefined,
+      unit: typeof payload.data?.unit === "string" ? payload.data.unit : undefined,
+      grade: typeof payload.data?.grade === "string" ? payload.data.grade : undefined,
+      status: typeof payload.data?.status === "string" ? payload.data.status : undefined,
+      notes: payload.subtitle,
+    }),
+  },
+  qualityGrades: {
+    listPath: "/api/v1/aggregation/quality-grades",
+    getPath: (id) => `/api/v1/aggregation/quality-grades/${encodeURIComponent(id)}`,
+    createPath: "/api/v1/aggregation/quality-grades",
+    updatePath: (id) => `/api/v1/aggregation/quality-grades/${encodeURIComponent(id)}`,
+    deletePath: (id) => `/api/v1/aggregation/quality-grades/${encodeURIComponent(id)}`,
+    listQuery: (params) => ({
+      organizationId: params.filters?.tags?.[0],
+      batchId: params.filters?.text,
+      status: params.filters?.status?.[0],
+    }),
+    mapCreateBody: (payload) => ({
+      batchId: String(payload.data.batchId ?? ""),
+      grade: String(payload.data.grade ?? payload.title),
+      inspectedBy: typeof payload.data.inspectedBy === "string" ? payload.data.inspectedBy : undefined,
+      notes: String(payload.data.notes ?? payload.subtitle ?? ""),
+      status: payload.status ?? "draft",
+    }),
+    mapUpdateBody: (_id, payload) => ({
+      grade: typeof payload.data?.grade === "string" ? payload.data.grade : undefined,
+      status: typeof payload.data?.status === "string" ? payload.data.status : undefined,
+      notes: typeof payload.data?.notes === "string" ? payload.data.notes : payload.subtitle,
     }),
   },
   wallets: {
@@ -2160,7 +2412,7 @@ const ENTITY_API_CONFIG: Partial<Record<EntityKey, EntityApiConfig>> = {
     }),
   },
   stations: {
-    listPath: "/api/v1/weather/profiles/me",
+    listPath: "/api/v1/weather/profiles",
     getPath: (id) => `/api/v1/weather/profiles/${encodeURIComponent(id)}`,
     createPath: "/api/v1/weather/profiles",
     updatePath: (id) => `/api/v1/weather/profiles/${encodeURIComponent(id)}`,
@@ -2168,7 +2420,6 @@ const ENTITY_API_CONFIG: Partial<Record<EntityKey, EntityApiConfig>> = {
     listQuery: (params) => ({
       page: params.pagination.page,
       limit: params.pagination.pageSize,
-      search: undefined,
     }),
     mapCreateBody: (payload) => ({
       farmId: toMongoLikeId(payload.data.farmId ?? payload.title, payload.title),
@@ -2833,21 +3084,17 @@ const ENTITY_API_CONFIG: Partial<Record<EntityKey, EntityApiConfig>> = {
     }),
   },
   apiTokens: {
-    listPath: "/api/v1/auth/tokens",
-    getPath: (id) => `/api/v1/auth/tokens/${encodeURIComponent(id)}`,
-    createPath: "/api/v1/auth/tokens",
-    updatePath: (id) => `/api/v1/auth/tokens/${encodeURIComponent(id)}`,
-    deletePath: (id) => `/api/v1/auth/tokens/${encodeURIComponent(id)}/revoke`,
-    deleteMethod: "POST",
-    deleteBody: (id) => ({
-      reason: `Revoked from workspace UI (${id})`,
-    }),
+    listPath: "/api/v1/auth/super-admin/tokens",
+    getPath: (id) => `/api/v1/auth/super-admin/tokens/${encodeURIComponent(id)}`,
+    createPath: "/api/v1/auth/super-admin/tokens",
+    deletePath: (id) => `/api/v1/auth/super-admin/tokens/${encodeURIComponent(id)}`,
+    deleteMethod: "DELETE",
     listQuery: (params) => ({
       status: params.filters?.status?.[0],
-      tokenType: "personal",
+      page: params.pagination.page,
+      limit: params.pagination.pageSize,
     }),
     mapCreateBody: (payload) => ({
-      tokenType: "personal",
       name: payload.title,
       description: payload.subtitle,
       scopes: toStringArray(payload.data.scopes).length > 0 ? toStringArray(payload.data.scopes) : ["orders:read"],
@@ -2855,49 +3102,13 @@ const ENTITY_API_CONFIG: Partial<Record<EntityKey, EntityApiConfig>> = {
       expiresAt: payload.data.expiresAt,
       reason: "Created from workspace UI",
     }),
-    mapUpdateBody: (_id, payload) => ({
-      name: payload.title,
-      description: payload.subtitle,
-      scopes: toStringArray(payload.data?.scopes),
-      rateLimit: normalizeRateLimit(payload.data?.rateLimit),
-      expiresAt: payload.data?.expiresAt,
-    }),
     statusRequest: (id, status, note) => {
       if (status === "revoked") {
         return {
-          path: `/api/v1/auth/tokens/${encodeURIComponent(id)}/revoke`,
-          method: "POST",
+          path: `/api/v1/auth/super-admin/tokens/${encodeURIComponent(id)}`,
+          method: "DELETE",
           body: {
             reason: note ?? "Revoked from workspace workflow",
-          },
-        };
-      }
-      return null;
-    },
-    actionRequest: (actionId, _actorId, targetId) => {
-      if (!targetId) return null;
-      if (actionId === "rotate-token-secret") {
-        return {
-          path: `/api/v1/auth/tokens/${encodeURIComponent(targetId)}/rotate`,
-          method: "POST",
-          body: {
-            reason: "Rotated from workspace UI",
-          },
-          message: "Token secret rotated successfully.",
-        };
-      }
-      if (actionId === "view-token-usage") {
-        return {
-          path: `/api/v1/auth/tokens/${encodeURIComponent(targetId)}/usage?sinceDays=7`,
-          method: "GET",
-          messageFromResponse: (payload) => {
-            const data = asRecord(unwrapApiData<unknown>(payload)) ?? {};
-            const summary = asRecord(data.summary);
-            const total = Number(summary?.totalRequests ?? data.totalRequests ?? NaN);
-            if (Number.isFinite(total)) {
-              return `Token usage loaded (${Math.max(0, Math.trunc(total))} requests in 7 days).`;
-            }
-            return "Token usage loaded.";
           },
         };
       }
@@ -2929,20 +3140,60 @@ const ENTITY_API_CONFIG: Partial<Record<EntityKey, EntityApiConfig>> = {
     }),
   },
   users: {
-    listPath: "/api/v1/organizations/{orgId}/members",
-    createPath: "/api/v1/organizations/{orgId}/members/invite",
-    updatePath: (id) => `/api/v1/organizations/{orgId}/members/${encodeURIComponent(id)}/role`,
-    deletePath: (id) => `/api/v1/organizations/{orgId}/members/${encodeURIComponent(id)}`,
+    listPath: "/api/v1/users/admin",
+    getPath: (id) => `/api/v1/users/admin/${encodeURIComponent(id)}`,
+    updatePath: (id) => `/api/v1/users/admin/${encodeURIComponent(id)}`,
+    deletePath: (id) => `/api/v1/users/admin/${encodeURIComponent(id)}`,
     updateMethod: "PATCH",
-    listQuery: () => ({}),
-    mapCreateBody: (payload) => ({
-      email: String(payload.data.email ?? payload.subtitle ?? ""),
-      role: toOrgMembershipRole(Array.isArray(payload.data.roles) ? payload.data.roles[0] : payload.data.roles),
-      message: "Invited from ClyCites workspace admin panel",
+    listQuery: (params) => ({
+      search: params.filters?.text,
+      status: params.filters?.status?.[0],
+      page: params.pagination.page,
+      limit: params.pagination.pageSize,
     }),
     mapUpdateBody: (_id, payload) => ({
-      role: toOrgMembershipRole(Array.isArray(payload.data?.roles) ? payload.data?.roles[0] : payload.data?.roles),
+      name: payload.title,
+      email: typeof payload.data?.email === "string" ? payload.data.email : undefined,
+      status: typeof payload.data?.status === "string" ? payload.data.status : undefined,
+      role: typeof payload.data?.role === "string" ? payload.data.role : undefined,
     }),
+    statusRequest: (id, status) => ({
+      path: `/api/v1/users/admin/${encodeURIComponent(id)}/status`,
+      method: "PATCH",
+      body: {
+        status,
+      },
+    }),
+    actionRequest: (actionId, _actorId, targetId) => {
+      if (!targetId) return null;
+      if (actionId === "unlock-user") {
+        return {
+          path: `/api/v1/users/admin/${encodeURIComponent(targetId)}/unlock`,
+          method: "POST",
+          body: {},
+          message: "User account unlocked.",
+        };
+      }
+      if (actionId === "restore-user") {
+        return {
+          path: `/api/v1/users/admin/${encodeURIComponent(targetId)}/restore`,
+          method: "POST",
+          body: {},
+          message: "User restored successfully.",
+        };
+      }
+      if (actionId === "impersonate-user") {
+        return {
+          path: "/api/v1/auth/super-admin/impersonation",
+          method: "POST",
+          body: {
+            userId: targetId,
+          },
+          message: "Impersonation session started.",
+        };
+      }
+      return null;
+    },
   },
   moduleToggles: {
     listPath: "/api/v1/admin/system/feature-flags",

@@ -1005,12 +1005,30 @@ export const ENTITY_DEFINITIONS: Record<EntityKey, EntityDefinition> = {
       ],
     },
   ]),
-  users: createEntityDefinition("users", "User", "Users", ["active", "disabled"], [
-    textField("data.name", "Name"),
-    textField("data.email", "Email"),
-    textField("data.orgId", "Org ID"),
-    textField("data.roles", "Roles"),
-  ]),
+  users: createEntityDefinition(
+    "users",
+    "User",
+    "Users",
+    ["active", "disabled"],
+    [textField("data.name", "Name"), textField("data.email", "Email"), textField("data.role", "Role")],
+    [
+      {
+        id: "unlock-user",
+        label: "Unlock User",
+        description: "Unlock a blocked user account.",
+      },
+      {
+        id: "restore-user",
+        label: "Restore User",
+        description: "Restore a soft-deleted user.",
+      },
+      {
+        id: "impersonate-user",
+        label: "Impersonate User",
+        description: "Start a super-admin impersonation session.",
+      },
+    ]
+  ),
   orgs: createEntityDefinition("orgs", "Organization", "Organizations", ["active", "disabled"], [
     textField("data.name", "Name"),
     textField("data.enabledModules", "Enabled Workspaces"),
@@ -1037,16 +1055,6 @@ export const ENTITY_DEFINITIONS: Record<EntityKey, EntityDefinition> = {
     ],
     [
       statusAction("revoke-token", "Revoke", "Revoke token permanently.", "revoked"),
-      {
-        id: "rotate-token-secret",
-        label: "Rotate Secret",
-        description: "Rotate API token secret and invalidate old secret.",
-      },
-      {
-        id: "view-token-usage",
-        label: "View Usage",
-        description: "Fetch token usage snapshot from API.",
-      },
     ],
     [
       {

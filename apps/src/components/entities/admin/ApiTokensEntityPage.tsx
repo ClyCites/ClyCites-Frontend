@@ -8,10 +8,10 @@ export function ApiTokensEntityPage() {
       entityKey="apiTokens"
       features={{
         allowCreate: true,
-        allowEdit: true,
+        allowEdit: false,
         allowDelete: true,
         allowStatus: true,
-        enabledWorkflowActionIds: ["revoke-token", "rotate-token-secret", "view-token-usage"],
+        enabledWorkflowActionIds: ["revoke-token"],
         enabledToolbarActionIds: [],
       }}
     />
