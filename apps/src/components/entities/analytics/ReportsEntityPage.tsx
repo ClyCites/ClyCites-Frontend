@@ -11,7 +11,8 @@ export function ReportsEntityPage() {
         allowEdit: true,
         allowDelete: true,
         allowStatus: false,
-        enabledToolbarActionIds: [],
+        enabledWorkflowActionIds: ["generate-report", "export-report"],
+        enabledToolbarActionIds: ["export-report"],
       }}
     />
   );

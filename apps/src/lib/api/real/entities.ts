@@ -1347,57 +1347,107 @@ const ENTITY_API_CONFIG: Partial<Record<EntityKey, EntityApiConfig>> = {
           message: "Profile submitted for verification.",
         };
       }
+      if (actionId === "leave-organization" && targetId) {
+        return {
+          path: `/api/v1/farmers/${encodeURIComponent(targetId)}/membership/leave-organization`,
+          method: "POST",
+          body: {
+            exitReason: "voluntary",
+            exitNotes: "Requested from workspace UI",
+          },
+          message: "Organization leave request sent.",
+        };
+      }
+      if (actionId === "update-eligibility" && targetId) {
+        return {
+          path: `/api/v1/farmers/${encodeURIComponent(targetId)}/membership/eligibility`,
+          method: "PATCH",
+          body: {
+            eligibleForLoans: true,
+          },
+          message: "Eligibility updated.",
+        };
+      }
+      if (actionId === "view-farmer-stats") {
+        return {
+          path: "/api/v1/farmers/stats",
+          method: "GET",
+          message: "Farmer statistics loaded.",
+        };
+      }
       return null;
     },
   },
   farms: {
     listPath: "/api/v1/farmers/{farmerId}/farms",
+    getPath: (id) => `/api/v1/farmers/farms/${encodeURIComponent(id)}`,
     createPath: "/api/v1/farmers/{farmerId}/farms",
     updatePath: (id) => `/api/v1/farmers/farms/${encodeURIComponent(id)}`,
+    deletePath: (id) => `/api/v1/farmers/farms/${encodeURIComponent(id)}`,
     listQuery: (params) => ({
       page: params.pagination.page,
       limit: params.pagination.pageSize,
       search: params.filters?.text,
     }),
     mapCreateBody: (payload) => ({
-      name: payload.title,
+      farmName: payload.title,
+      totalSize: Number(payload.data.totalSize ?? payload.data.sizeInHectares ?? payload.data.areaAcres ?? 1),
+      sizeUnit: String(payload.data.sizeUnit ?? "acres"),
+      ownershipType: String(payload.data.ownershipType ?? "owned"),
       location: {
         region: String(payload.data.region ?? payload.data.location ?? "Central"),
         district: String(payload.data.district ?? "Unknown"),
         village: String(payload.data.village ?? ""),
       },
-      sizeInHectares: Number(payload.data.sizeInHectares ?? payload.data.areaAcres ?? 1),
-      farmType: String(payload.data.farmType ?? "mixed"),
-    }),
-    mapUpdateBody: (_id, payload) => ({
-      name: payload.title,
-      sizeInHectares: Number(payload.data?.sizeInHectares ?? payload.data?.areaAcres ?? 1),
-      farmType: typeof payload.data?.farmType === "string" ? payload.data.farmType : undefined,
-    }),
-  },
-  plots: {
-    listPath: "/api/v1/farmers/{farmerId}/farms",
-    createPath: "/api/v1/farmers/{farmerId}/farms",
-    updatePath: (id) => `/api/v1/farmers/farms/${encodeURIComponent(id)}`,
-    listQuery: (params) => ({
-      page: params.pagination.page,
-      limit: params.pagination.pageSize,
-      search: params.filters?.text,
-    }),
-    mapCreateBody: (payload) => ({
-      name: payload.title,
-      location: {
-        region: String(payload.data.region ?? payload.data.location ?? "Central"),
-        district: String(payload.data.district ?? "Unknown"),
-        village: String(payload.data.village ?? ""),
-      },
-      sizeInHectares: Number(payload.data.areaAcres ?? payload.data.sizeInHectares ?? 0.5),
-      farmType: "plot",
       notes: payload.subtitle,
     }),
     mapUpdateBody: (_id, payload) => ({
-      name: payload.title,
-      sizeInHectares: Number(payload.data?.areaAcres ?? payload.data?.sizeInHectares ?? 0.5),
+      farmName: payload.title,
+      totalSize:
+        typeof payload.data?.totalSize === "number"
+          ? payload.data.totalSize
+          : typeof payload.data?.sizeInHectares === "number"
+            ? payload.data.sizeInHectares
+            : typeof payload.data?.areaAcres === "number"
+              ? payload.data.areaAcres
+              : undefined,
+      ownershipType: typeof payload.data?.ownershipType === "string" ? payload.data.ownershipType : undefined,
+      operationalStatus: typeof payload.data?.status === "string" ? payload.data.status : undefined,
+      notes: payload.subtitle,
+    }),
+  },
+  plots: {
+    listPath: "/api/v1/farmers/{farmerId}/plots",
+    getPath: (id) => `/api/v1/farmers/plots/${encodeURIComponent(id)}`,
+    createPath: "/api/v1/farmers/{farmerId}/plots",
+    updatePath: (id) => `/api/v1/farmers/plots/${encodeURIComponent(id)}`,
+    deletePath: (id) => `/api/v1/farmers/plots/${encodeURIComponent(id)}`,
+    listQuery: (params) => ({
+      page: params.pagination.page,
+      limit: params.pagination.pageSize,
+      search: params.filters?.text,
+    }),
+    mapCreateBody: (payload) => ({
+      plotName: payload.title,
+      farmId: typeof payload.data.farmId === "string" ? payload.data.farmId : undefined,
+      area: Number(payload.data.area ?? payload.data.areaAcres ?? payload.data.sizeInHectares ?? 0.5),
+      areaUnit: String(payload.data.areaUnit ?? "acres"),
+      status: typeof payload.data.status === "string" ? payload.data.status : undefined,
+      notes: payload.subtitle,
+    }),
+    mapUpdateBody: (_id, payload) => ({
+      plotName: payload.title,
+      farmId: typeof payload.data?.farmId === "string" ? payload.data.farmId : undefined,
+      area:
+        typeof payload.data?.area === "number"
+          ? payload.data.area
+          : typeof payload.data?.areaAcres === "number"
+            ? payload.data.areaAcres
+            : typeof payload.data?.sizeInHectares === "number"
+              ? payload.data.sizeInHectares
+              : undefined,
+      areaUnit: typeof payload.data?.areaUnit === "string" ? payload.data.areaUnit : undefined,
+      status: typeof payload.data?.status === "string" ? payload.data.status : undefined,
       notes: payload.subtitle,
     }),
   },
@@ -1412,11 +1462,41 @@ const ENTITY_API_CONFIG: Partial<Record<EntityKey, EntityApiConfig>> = {
     mapUpdateBody: (_id, payload) => mapCropProductionUpdateBody(payload),
   },
   inputs: {
-    listPath: "/api/v1/farmers/{farmerId}/production",
+    listPath: "/api/v1/farmers/{farmerId}/inputs",
+    getPath: (id) => `/api/v1/farmers/inputs/${encodeURIComponent(id)}`,
+    createPath: "/api/v1/farmers/{farmerId}/inputs",
+    updatePath: (id) => `/api/v1/farmers/inputs/${encodeURIComponent(id)}`,
+    deletePath: (id) => `/api/v1/farmers/inputs/${encodeURIComponent(id)}`,
     listQuery: (params) => ({
-      type: "crop",
       page: params.pagination.page,
       limit: params.pagination.pageSize,
+      search: params.filters?.text,
+      status: params.filters?.status?.[0],
+    }),
+    mapCreateBody: (payload) => ({
+      farmId: typeof payload.data.farmId === "string" ? payload.data.farmId : undefined,
+      plotId: typeof payload.data.plotId === "string" ? payload.data.plotId : undefined,
+      inputName: payload.title,
+      inputType: String(payload.data.inputType ?? payload.data.category ?? "other"),
+      quantity: Number(payload.data.quantity ?? payload.data.stock ?? 0),
+      unit: String(payload.data.unit ?? "kg"),
+      status: payload.status ?? (typeof payload.data.status === "string" ? payload.data.status : "planned"),
+      notes: payload.subtitle,
+    }),
+    mapUpdateBody: (_id, payload) => ({
+      farmId: typeof payload.data?.farmId === "string" ? payload.data.farmId : undefined,
+      plotId: typeof payload.data?.plotId === "string" ? payload.data.plotId : undefined,
+      inputName: payload.title,
+      inputType: typeof payload.data?.inputType === "string" ? payload.data.inputType : undefined,
+      quantity:
+        typeof payload.data?.quantity === "number"
+          ? payload.data.quantity
+          : typeof payload.data?.stock === "number"
+            ? payload.data.stock
+            : undefined,
+      unit: typeof payload.data?.unit === "string" ? payload.data.unit : undefined,
+      status: typeof payload.data?.status === "string" ? payload.data.status : undefined,
+      notes: payload.subtitle,
     }),
   },
   tasks: {
@@ -1469,40 +1549,34 @@ const ENTITY_API_CONFIG: Partial<Record<EntityKey, EntityApiConfig>> = {
     mapUpdateBody: (_id, payload) => mapCropProductionUpdateBody(payload),
   },
   growthStages: {
-    listPath: "/api/v1/farmers/{farmerId}/production/crops",
-    listQuery: (params) => mapCropProductionListQuery(params),
-    mapListRows: (payload) =>
-      extractCollection(payload).map((item, index) => {
-        const row = asRecord(item) ?? {};
-        const stage = toGrowthStageStatus(row.stage ?? row.growthStage ?? row.currentStage ?? row.productionStatus ?? row.status);
-        const id = String(row.id ?? row._id ?? `growth-stage-${index + 1}`);
-        const cropName =
-          (typeof row.cropName === "string" && row.cropName.trim().length > 0 ? row.cropName.trim() : undefined) ??
-          (typeof row.name === "string" && row.name.trim().length > 0 ? row.name.trim() : undefined) ??
-          `Growth stage ${index + 1}`;
-        const season =
-          typeof row.season === "string" && row.season.trim().length > 0 ? String(row.season).trim() : undefined;
-        const year = parseYear(row.year);
-        const subtitle =
-          season && year
-            ? `${season} ${year}`
-            : season
-              ? season
-              : year
-                ? String(year)
-                : undefined;
-
-        return {
-          ...row,
-          id,
-          status: stage,
-          stage,
-          cycleId: String(row.cycleId ?? row.cropId ?? row.id ?? row._id ?? id),
-          observedAt: row.updatedAt ?? row.createdAt ?? new Date().toISOString(),
-          title: `${cropName} - ${stage}`,
-          subtitle,
-        };
-      }),
+    listPath: "/api/v1/farmers/{farmerId}/production/growth-stages",
+    getPath: (id) => `/api/v1/farmers/production/growth-stages/${encodeURIComponent(id)}`,
+    createPath: "/api/v1/farmers/{farmerId}/production/growth-stages",
+    updatePath: (id) => `/api/v1/farmers/production/growth-stages/${encodeURIComponent(id)}`,
+    deletePath: (id) => `/api/v1/farmers/production/growth-stages/${encodeURIComponent(id)}`,
+    listQuery: (params) => ({
+      page: params.pagination.page,
+      limit: params.pagination.pageSize,
+      cycleId: params.filters?.text,
+      stage: params.filters?.tags?.[0],
+      status: params.filters?.status?.[0],
+    }),
+    mapCreateBody: (payload) => ({
+      cycleId: String(payload.data.cycleId ?? payload.data.cropId ?? payload.title),
+      cropId: typeof payload.data.cropId === "string" ? payload.data.cropId : undefined,
+      stage: String(payload.data.stage ?? payload.data.growthStage ?? "vegetative"),
+      observedAt: typeof payload.data.observedAt === "string" ? payload.data.observedAt : undefined,
+      status: typeof payload.data.status === "string" ? payload.data.status : "active",
+      notes: payload.subtitle,
+    }),
+    mapUpdateBody: (_id, payload) => ({
+      cycleId: typeof payload.data?.cycleId === "string" ? payload.data.cycleId : undefined,
+      cropId: typeof payload.data?.cropId === "string" ? payload.data.cropId : undefined,
+      stage: typeof payload.data?.stage === "string" ? payload.data.stage : undefined,
+      observedAt: typeof payload.data?.observedAt === "string" ? payload.data.observedAt : undefined,
+      status: typeof payload.data?.status === "string" ? payload.data.status : undefined,
+      notes: payload.subtitle,
+    }),
   },
   sensorReadings: {
     listPath: "/api/v1/weather/profiles/{weatherProfileId}/conditions/history",
@@ -1547,50 +1621,42 @@ const ENTITY_API_CONFIG: Partial<Record<EntityKey, EntityApiConfig>> = {
     },
   },
   yieldPredictions: {
-    listPath: "/api/v1/farmers/{farmerId}/production/crops",
-    listQuery: (params) => mapCropProductionListQuery(params),
-    mapListRows: (payload) =>
-      extractCollection(payload).map((item, index) => {
-        const row = asRecord(item) ?? {};
-        const id = String(row.id ?? row._id ?? `yield-prediction-${index + 1}`);
-        const cropName =
-          (typeof row.cropName === "string" && row.cropName.trim().length > 0 ? row.cropName.trim() : undefined) ??
-          (typeof row.name === "string" && row.name.trim().length > 0 ? row.name.trim() : undefined) ??
-          `Prediction ${index + 1}`;
-        const predictedYield = Number(row.predictedYield ?? row.estimatedYield ?? row.actualYield ?? row.quantityHarvested ?? 0);
-        const confidence = Number(row.confidence ?? row.modelConfidence ?? 0.7);
-        const horizonDays = Number(row.horizonDays ?? 30);
-
-        return {
-          ...row,
-          id,
-          status: "generated",
-          title: `${cropName} yield outlook`,
-          cropId: String(row.cropId ?? row.id ?? row._id ?? id),
-          predictedYield: Number.isFinite(predictedYield) ? predictedYield : 0,
-          confidence: Number.isFinite(confidence) ? confidence : 0.7,
-          horizonDays: Number.isFinite(horizonDays) ? horizonDays : 30,
-        };
-      }),
-    createPath: "/api/v1/prices/predict",
+    listPath: "/api/v1/farmers/{farmerId}/production/yield-predictions",
+    getPath: (id) => `/api/v1/farmers/production/yield-predictions/${encodeURIComponent(id)}`,
+    createPath: "/api/v1/farmers/{farmerId}/production/yield-predictions",
+    updatePath: (id) => `/api/v1/farmers/production/yield-predictions/${encodeURIComponent(id)}`,
+    deletePath: (id) => `/api/v1/farmers/production/yield-predictions/${encodeURIComponent(id)}`,
+    listQuery: (params) => ({
+      page: params.pagination.page,
+      limit: params.pagination.pageSize,
+      cropId: params.filters?.text,
+      status: params.filters?.status?.[0],
+    }),
     mapCreateBody: (payload) => ({
-      productId: toMongoLikeId(payload.data.cropId ?? payload.data.productId ?? payload.title, payload.title),
-      marketId:
-        typeof payload.data.marketId === "string" && payload.data.marketId.length > 0
-          ? toMongoLikeId(payload.data.marketId, payload.data.marketId)
-          : undefined,
-      daysAhead: Number(payload.data.horizonDays ?? 30),
+      cropId: String(payload.data.cropId ?? payload.title),
+      predictedYield: Number(payload.data.predictedYield ?? 0),
+      confidence: Number(payload.data.confidence ?? 0.7),
+      horizonDays: Number(payload.data.horizonDays ?? 30),
+      modelVersion: String(payload.data.modelVersion ?? "v1.0"),
+      status: payload.status ?? (typeof payload.data.status === "string" ? payload.data.status : "generated"),
+      notes: payload.subtitle,
+    }),
+    mapUpdateBody: (_id, payload) => ({
+      cropId: typeof payload.data?.cropId === "string" ? payload.data.cropId : undefined,
+      predictedYield: typeof payload.data?.predictedYield === "number" ? payload.data.predictedYield : undefined,
+      confidence: typeof payload.data?.confidence === "number" ? payload.data.confidence : undefined,
+      horizonDays: typeof payload.data?.horizonDays === "number" ? payload.data.horizonDays : undefined,
+      modelVersion: typeof payload.data?.modelVersion === "string" ? payload.data.modelVersion : undefined,
+      status: typeof payload.data?.status === "string" ? payload.data.status : undefined,
+      notes: payload.subtitle,
     }),
     actionRequest: (actionId, _actorId, targetId) => {
       if (actionId !== "refresh-prediction") return null;
-      const seed = targetId ?? "default-product";
+      if (!targetId) return null;
       return {
-        path: "/api/v1/prices/predict",
+        path: `/api/v1/farmers/production/yield-predictions/${encodeURIComponent(targetId)}/refresh`,
         method: "POST",
-        body: {
-          productId: toMongoLikeId(seed, seed),
-          daysAhead: 30,
-        },
+        body: {},
         message: "Prediction refresh requested.",
       };
     },
@@ -1768,19 +1834,28 @@ const ENTITY_API_CONFIG: Partial<Record<EntityKey, EntityApiConfig>> = {
     }),
   },
   contracts: {
-    listPath: "/api/v1/disputes",
-    getPath: (id) => `/api/v1/disputes/${encodeURIComponent(id)}`,
-    createPath: "/api/v1/disputes",
+    listPath: "/api/v1/marketplace/contracts",
+    getPath: (id) => `/api/v1/marketplace/contracts/${encodeURIComponent(id)}`,
+    createPath: "/api/v1/marketplace/contracts",
+    updatePath: (id) => `/api/v1/marketplace/contracts/${encodeURIComponent(id)}`,
     listQuery: (params) => ({
       page: params.pagination.page,
       limit: params.pagination.pageSize,
       status: params.filters?.status?.[0],
+      search: params.filters?.text,
     }),
     mapCreateBody: (payload) => ({
-      orderId: String(payload.data.orderId ?? toMongoLikeId(payload.title, payload.title)),
-      type: String(payload.data.type ?? payload.data.category ?? "other"),
-      description: String(payload.data.description ?? payload.subtitle ?? payload.title),
-      evidence: toStringArray(payload.data.evidence),
+      title: payload.title,
+      buyerId: String(payload.data.partyA ?? payload.data.buyerId ?? ""),
+      sellerId: String(payload.data.partyB ?? payload.data.sellerId ?? ""),
+      listingId: typeof payload.data.listingId === "string" ? payload.data.listingId : undefined,
+      terms: typeof payload.data.milestones === "string" ? payload.data.milestones : payload.subtitle,
+      status: payload.status ?? "draft",
+    }),
+    mapUpdateBody: (_id, payload) => ({
+      title: payload.title,
+      terms: typeof payload.data?.milestones === "string" ? payload.data.milestones : payload.subtitle,
+      status: typeof payload.data?.status === "string" ? payload.data.status : undefined,
     }),
     actionRequest: (actionId, _actorId, targetId) => {
       if (!targetId) return null;
@@ -1898,14 +1973,257 @@ const ENTITY_API_CONFIG: Partial<Record<EntityKey, EntityApiConfig>> = {
       },
     }),
   },
+  routes: {
+    listPath: "/api/v1/logistics/routes",
+    getPath: (id) => `/api/v1/logistics/routes/${encodeURIComponent(id)}`,
+    createPath: "/api/v1/logistics/routes",
+    updatePath: (id) => `/api/v1/logistics/routes/${encodeURIComponent(id)}`,
+    deletePath: (id) => `/api/v1/logistics/routes/${encodeURIComponent(id)}`,
+    listQuery: (params) => ({
+      organizationId: params.filters?.tags?.[0],
+      status: params.filters?.status?.[0],
+      origin: params.filters?.text,
+    }),
+    mapCreateBody: (payload) => ({
+      organizationId: payload.data.organizationId,
+      origin: String(payload.data.origin ?? payload.title),
+      destination: String(payload.data.destination ?? ""),
+      distanceKm: Number(payload.data.distanceKm ?? 0),
+      waypoints: toStringArray(payload.data.waypoints),
+      status: payload.status ?? "draft",
+      notes: payload.subtitle,
+    }),
+    mapUpdateBody: (_id, payload) => ({
+      origin: typeof payload.data?.origin === "string" ? payload.data.origin : undefined,
+      destination: typeof payload.data?.destination === "string" ? payload.data.destination : undefined,
+      distanceKm: typeof payload.data?.distanceKm === "number" ? payload.data.distanceKm : undefined,
+      waypoints: toStringArray(payload.data?.waypoints),
+      status: typeof payload.data?.status === "string" ? payload.data.status : undefined,
+      notes: payload.subtitle,
+    }),
+  },
+  vehicles: {
+    listPath: "/api/v1/logistics/vehicles",
+    getPath: (id) => `/api/v1/logistics/vehicles/${encodeURIComponent(id)}`,
+    createPath: "/api/v1/logistics/vehicles",
+    updatePath: (id) => `/api/v1/logistics/vehicles/${encodeURIComponent(id)}`,
+    deletePath: (id) => `/api/v1/logistics/vehicles/${encodeURIComponent(id)}`,
+    listQuery: (params) => ({
+      organizationId: params.filters?.tags?.[0],
+      status: params.filters?.status?.[0],
+    }),
+    mapCreateBody: (payload) => ({
+      organizationId: payload.data.organizationId,
+      registration: String(payload.data.registration ?? payload.title),
+      type: String(payload.data.type ?? "truck"),
+      capacityKg: Number(payload.data.capacityKg ?? 0),
+      coldChainEnabled: typeof payload.data.coldChainEnabled === "boolean" ? payload.data.coldChainEnabled : false,
+      available: typeof payload.data.available === "boolean" ? payload.data.available : true,
+      status: payload.status ?? "available",
+      notes: payload.subtitle,
+    }),
+    mapUpdateBody: (_id, payload) => ({
+      registration: typeof payload.data?.registration === "string" ? payload.data.registration : undefined,
+      capacityKg: typeof payload.data?.capacityKg === "number" ? payload.data.capacityKg : undefined,
+      coldChainEnabled: typeof payload.data?.coldChainEnabled === "boolean" ? payload.data.coldChainEnabled : undefined,
+      available: typeof payload.data?.available === "boolean" ? payload.data.available : undefined,
+      status: typeof payload.data?.status === "string" ? payload.data.status : undefined,
+      notes: payload.subtitle,
+    }),
+  },
+  drivers: {
+    listPath: "/api/v1/logistics/drivers",
+    getPath: (id) => `/api/v1/logistics/drivers/${encodeURIComponent(id)}`,
+    createPath: "/api/v1/logistics/drivers",
+    updatePath: (id) => `/api/v1/logistics/drivers/${encodeURIComponent(id)}`,
+    deletePath: (id) => `/api/v1/logistics/drivers/${encodeURIComponent(id)}`,
+    listQuery: (params) => ({
+      organizationId: params.filters?.tags?.[0],
+      status: params.filters?.status?.[0],
+    }),
+    mapCreateBody: (payload) => ({
+      organizationId: payload.data.organizationId,
+      userId: typeof payload.data.userId === "string" ? payload.data.userId : undefined,
+      name: payload.title,
+      phone: String(payload.data.phone ?? ""),
+      licenseNumber: String(payload.data.licenseNumber ?? ""),
+      available: typeof payload.data.available === "boolean" ? payload.data.available : true,
+      status: payload.status ?? "available",
+    }),
+    mapUpdateBody: (_id, payload) => ({
+      name: payload.title,
+      phone: typeof payload.data?.phone === "string" ? payload.data.phone : undefined,
+      licenseNumber: typeof payload.data?.licenseNumber === "string" ? payload.data.licenseNumber : undefined,
+      available: typeof payload.data?.available === "boolean" ? payload.data.available : undefined,
+      status: typeof payload.data?.status === "string" ? payload.data.status : undefined,
+    }),
+  },
+  trackingEvents: {
+    listPath: "/api/v1/logistics/tracking-events",
+    getPath: (id) => `/api/v1/logistics/tracking-events/${encodeURIComponent(id)}`,
+    createPath: "/api/v1/logistics/tracking-events",
+    updatePath: (id) => `/api/v1/logistics/tracking-events/${encodeURIComponent(id)}`,
+    deletePath: (id) => `/api/v1/logistics/tracking-events/${encodeURIComponent(id)}`,
+    listQuery: (params) => ({
+      shipmentId: params.filters?.text,
+      status: params.filters?.status?.[0],
+    }),
+    mapCreateBody: (payload) => ({
+      shipmentId: String(payload.data.shipmentId ?? ""),
+      eventType: String(payload.data.eventType ?? payload.title),
+      location: String(payload.data.location ?? ""),
+      note: String(payload.data.note ?? payload.subtitle ?? ""),
+      status: payload.status ?? "created",
+    }),
+    mapUpdateBody: (_id, payload) => ({
+      location: typeof payload.data?.location === "string" ? payload.data.location : undefined,
+      note: typeof payload.data?.note === "string" ? payload.data.note : payload.subtitle,
+      eventType: typeof payload.data?.eventType === "string" ? payload.data.eventType : undefined,
+      status: typeof payload.data?.status === "string" ? payload.data.status : undefined,
+    }),
+  },
+  coldChainLogs: {
+    listPath: "/api/v1/logistics/cold-chain-logs",
+    getPath: (id) => `/api/v1/logistics/cold-chain-logs/${encodeURIComponent(id)}`,
+    createPath: "/api/v1/logistics/cold-chain-logs",
+    updatePath: (id) => `/api/v1/logistics/cold-chain-logs/${encodeURIComponent(id)}`,
+    deletePath: (id) => `/api/v1/logistics/cold-chain-logs/${encodeURIComponent(id)}`,
+    listQuery: (params) => ({
+      shipmentId: params.filters?.text,
+      status: params.filters?.status?.[0],
+    }),
+    mapCreateBody: (payload) => ({
+      shipmentId: String(payload.data.shipmentId ?? ""),
+      temperatureC: Number(payload.data.temperatureC ?? 0),
+      humidityPercent: typeof payload.data.humidityPercent === "number" ? payload.data.humidityPercent : undefined,
+      thresholdC: typeof payload.data.thresholdC === "number" ? payload.data.thresholdC : undefined,
+      status: payload.status ?? "normal",
+      notes: payload.subtitle,
+    }),
+    mapUpdateBody: (_id, payload) => ({
+      temperatureC: typeof payload.data?.temperatureC === "number" ? payload.data.temperatureC : undefined,
+      humidityPercent: typeof payload.data?.humidityPercent === "number" ? payload.data.humidityPercent : undefined,
+      status: typeof payload.data?.status === "string" ? payload.data.status : undefined,
+      notes: payload.subtitle,
+    }),
+    actionRequest: (actionId) => {
+      if (actionId === "flag-violations") {
+        return {
+          path: "/api/v1/logistics/cold-chain-logs/flag-violations",
+          method: "POST",
+          body: {},
+          message: "Cold chain violations flagged successfully.",
+        };
+      }
+      return null;
+    },
+  },
   spoilageReports: {
-    listPath: "/api/v1/pest-disease/outbreaks",
-    listMode: "collection",
-    listQuery: () => ({
-      page: undefined,
-      limit: undefined,
-      search: undefined,
-      status: undefined,
+    listPath: "/api/v1/aggregation/spoilage-reports",
+    getPath: (id) => `/api/v1/aggregation/spoilage-reports/${encodeURIComponent(id)}`,
+    createPath: "/api/v1/aggregation/spoilage-reports",
+    updatePath: (id) => `/api/v1/aggregation/spoilage-reports/${encodeURIComponent(id)}`,
+    deletePath: (id) => `/api/v1/aggregation/spoilage-reports/${encodeURIComponent(id)}`,
+    listQuery: (params) => ({
+      organizationId: params.filters?.tags?.[0],
+      batchId: params.filters?.text,
+      status: params.filters?.status?.[0],
+    }),
+    mapCreateBody: (payload) => ({
+      organizationId: payload.data.organizationId,
+      batchId: String(payload.data.batchId ?? payload.title),
+      quantity: Number(payload.data.quantity ?? 0),
+      unit: String(payload.data.unit ?? "kg"),
+      cause: String(payload.data.cause ?? payload.subtitle ?? "Unknown cause"),
+      status: payload.status ?? "reported",
+      notes: payload.subtitle,
+    }),
+    mapUpdateBody: (_id, payload) => ({
+      quantity: typeof payload.data?.quantity === "number" ? payload.data.quantity : undefined,
+      cause: typeof payload.data?.cause === "string" ? payload.data.cause : undefined,
+      status: typeof payload.data?.status === "string" ? payload.data.status : undefined,
+      notes: payload.subtitle,
+    }),
+  },
+  storageBins: {
+    listPath: "/api/v1/aggregation/bins",
+    getPath: (id) => `/api/v1/aggregation/bins/${encodeURIComponent(id)}`,
+    createPath: "/api/v1/aggregation/bins",
+    updatePath: (id) => `/api/v1/aggregation/bins/${encodeURIComponent(id)}`,
+    deletePath: (id) => `/api/v1/aggregation/bins/${encodeURIComponent(id)}`,
+    listQuery: (params) => ({
+      organizationId: params.filters?.tags?.[0],
+      warehouseId: params.filters?.text,
+      status: params.filters?.status?.[0],
+    }),
+    mapCreateBody: (payload) => ({
+      organizationId: payload.data.organizationId,
+      warehouseId: String(payload.data.warehouseId ?? ""),
+      label: payload.title,
+      capacity: typeof payload.data.capacity === "number" ? payload.data.capacity : undefined,
+      temperatureControl: typeof payload.data.temperatureControl === "boolean" ? payload.data.temperatureControl : undefined,
+    }),
+    mapUpdateBody: (_id, payload) => ({
+      label: payload.title,
+      capacity: typeof payload.data?.capacity === "number" ? payload.data.capacity : undefined,
+      status: typeof payload.data?.status === "string" ? payload.data.status : undefined,
+      temperatureControl: typeof payload.data?.temperatureControl === "boolean" ? payload.data.temperatureControl : undefined,
+    }),
+  },
+  batches: {
+    listPath: "/api/v1/aggregation/batches",
+    getPath: (id) => `/api/v1/aggregation/batches/${encodeURIComponent(id)}`,
+    createPath: "/api/v1/aggregation/batches",
+    updatePath: (id) => `/api/v1/aggregation/batches/${encodeURIComponent(id)}`,
+    deletePath: (id) => `/api/v1/aggregation/batches/${encodeURIComponent(id)}`,
+    listQuery: (params) => ({
+      organizationId: params.filters?.tags?.[0],
+      status: params.filters?.status?.[0],
+      commodity: params.filters?.text,
+    }),
+    mapCreateBody: (payload) => ({
+      organizationId: payload.data.organizationId,
+      commodity: String(payload.data.commodity ?? payload.title),
+      quantity: Number(payload.data.quantity ?? 0),
+      unit: String(payload.data.unit ?? "kg"),
+      grade: String(payload.data.grade ?? "standard"),
+      warehouseId: String(payload.data.warehouseId ?? ""),
+      binId: typeof payload.data.binId === "string" ? payload.data.binId : undefined,
+      receivedAt: typeof payload.data.receivedAt === "string" ? payload.data.receivedAt : new Date().toISOString(),
+      status: payload.status ?? "received",
+      notes: payload.subtitle,
+    }),
+    mapUpdateBody: (_id, payload) => ({
+      commodity: typeof payload.data?.commodity === "string" ? payload.data.commodity : undefined,
+      quantity: typeof payload.data?.quantity === "number" ? payload.data.quantity : undefined,
+      unit: typeof payload.data?.unit === "string" ? payload.data.unit : undefined,
+      grade: typeof payload.data?.grade === "string" ? payload.data.grade : undefined,
+      status: typeof payload.data?.status === "string" ? payload.data.status : undefined,
+      notes: payload.subtitle,
+    }),
+  },
+  qualityGrades: {
+    listPath: "/api/v1/aggregation/quality-grades",
+    getPath: (id) => `/api/v1/aggregation/quality-grades/${encodeURIComponent(id)}`,
+    createPath: "/api/v1/aggregation/quality-grades",
+    updatePath: (id) => `/api/v1/aggregation/quality-grades/${encodeURIComponent(id)}`,
+    deletePath: (id) => `/api/v1/aggregation/quality-grades/${encodeURIComponent(id)}`,
+    listQuery: (params) => ({
+      organizationId: params.filters?.tags?.[0],
+      batchId: params.filters?.text,
+      status: params.filters?.status?.[0],
+    }),
+    mapCreateBody: (payload) => ({
+      batchId: String(payload.data.batchId ?? ""),
+      grade: String(payload.data.grade ?? payload.title),
+      inspectedBy: typeof payload.data.inspectedBy === "string" ? payload.data.inspectedBy : undefined,
+      notes: String(payload.data.notes ?? payload.subtitle ?? ""),
+      status: payload.status ?? "draft",
+    }),
+    mapUpdateBody: (_id, payload) => ({
+      grade: typeof payload.data?.grade === "string" ? payload.data.grade : undefined,
+      status: typeof payload.data?.status === "string" ? payload.data.status : undefined,
+      notes: typeof payload.data?.notes === "string" ? payload.data.notes : payload.subtitle,
     }),
   },
   wallets: {
@@ -2160,7 +2478,7 @@ const ENTITY_API_CONFIG: Partial<Record<EntityKey, EntityApiConfig>> = {
     }),
   },
   stations: {
-    listPath: "/api/v1/weather/profiles/me",
+    listPath: "/api/v1/weather/profiles",
     getPath: (id) => `/api/v1/weather/profiles/${encodeURIComponent(id)}`,
     createPath: "/api/v1/weather/profiles",
     updatePath: (id) => `/api/v1/weather/profiles/${encodeURIComponent(id)}`,
@@ -2168,7 +2486,6 @@ const ENTITY_API_CONFIG: Partial<Record<EntityKey, EntityApiConfig>> = {
     listQuery: (params) => ({
       page: params.pagination.page,
       limit: params.pagination.pageSize,
-      search: undefined,
     }),
     mapCreateBody: (payload) => ({
       farmId: toMongoLikeId(payload.data.farmId ?? payload.title, payload.title),
@@ -2833,21 +3150,17 @@ const ENTITY_API_CONFIG: Partial<Record<EntityKey, EntityApiConfig>> = {
     }),
   },
   apiTokens: {
-    listPath: "/api/v1/auth/tokens",
-    getPath: (id) => `/api/v1/auth/tokens/${encodeURIComponent(id)}`,
-    createPath: "/api/v1/auth/tokens",
-    updatePath: (id) => `/api/v1/auth/tokens/${encodeURIComponent(id)}`,
-    deletePath: (id) => `/api/v1/auth/tokens/${encodeURIComponent(id)}/revoke`,
-    deleteMethod: "POST",
-    deleteBody: (id) => ({
-      reason: `Revoked from workspace UI (${id})`,
-    }),
+    listPath: "/api/v1/auth/super-admin/tokens",
+    getPath: (id) => `/api/v1/auth/super-admin/tokens/${encodeURIComponent(id)}`,
+    createPath: "/api/v1/auth/super-admin/tokens",
+    deletePath: (id) => `/api/v1/auth/super-admin/tokens/${encodeURIComponent(id)}`,
+    deleteMethod: "DELETE",
     listQuery: (params) => ({
       status: params.filters?.status?.[0],
-      tokenType: "personal",
+      page: params.pagination.page,
+      limit: params.pagination.pageSize,
     }),
     mapCreateBody: (payload) => ({
-      tokenType: "personal",
       name: payload.title,
       description: payload.subtitle,
       scopes: toStringArray(payload.data.scopes).length > 0 ? toStringArray(payload.data.scopes) : ["orders:read"],
@@ -2855,49 +3168,13 @@ const ENTITY_API_CONFIG: Partial<Record<EntityKey, EntityApiConfig>> = {
       expiresAt: payload.data.expiresAt,
       reason: "Created from workspace UI",
     }),
-    mapUpdateBody: (_id, payload) => ({
-      name: payload.title,
-      description: payload.subtitle,
-      scopes: toStringArray(payload.data?.scopes),
-      rateLimit: normalizeRateLimit(payload.data?.rateLimit),
-      expiresAt: payload.data?.expiresAt,
-    }),
     statusRequest: (id, status, note) => {
       if (status === "revoked") {
         return {
-          path: `/api/v1/auth/tokens/${encodeURIComponent(id)}/revoke`,
-          method: "POST",
+          path: `/api/v1/auth/super-admin/tokens/${encodeURIComponent(id)}`,
+          method: "DELETE",
           body: {
             reason: note ?? "Revoked from workspace workflow",
-          },
-        };
-      }
-      return null;
-    },
-    actionRequest: (actionId, _actorId, targetId) => {
-      if (!targetId) return null;
-      if (actionId === "rotate-token-secret") {
-        return {
-          path: `/api/v1/auth/tokens/${encodeURIComponent(targetId)}/rotate`,
-          method: "POST",
-          body: {
-            reason: "Rotated from workspace UI",
-          },
-          message: "Token secret rotated successfully.",
-        };
-      }
-      if (actionId === "view-token-usage") {
-        return {
-          path: `/api/v1/auth/tokens/${encodeURIComponent(targetId)}/usage?sinceDays=7`,
-          method: "GET",
-          messageFromResponse: (payload) => {
-            const data = asRecord(unwrapApiData<unknown>(payload)) ?? {};
-            const summary = asRecord(data.summary);
-            const total = Number(summary?.totalRequests ?? data.totalRequests ?? NaN);
-            if (Number.isFinite(total)) {
-              return `Token usage loaded (${Math.max(0, Math.trunc(total))} requests in 7 days).`;
-            }
-            return "Token usage loaded.";
           },
         };
       }
@@ -2929,20 +3206,60 @@ const ENTITY_API_CONFIG: Partial<Record<EntityKey, EntityApiConfig>> = {
     }),
   },
   users: {
-    listPath: "/api/v1/organizations/{orgId}/members",
-    createPath: "/api/v1/organizations/{orgId}/members/invite",
-    updatePath: (id) => `/api/v1/organizations/{orgId}/members/${encodeURIComponent(id)}/role`,
-    deletePath: (id) => `/api/v1/organizations/{orgId}/members/${encodeURIComponent(id)}`,
+    listPath: "/api/v1/users/admin",
+    getPath: (id) => `/api/v1/users/admin/${encodeURIComponent(id)}`,
+    updatePath: (id) => `/api/v1/users/admin/${encodeURIComponent(id)}`,
+    deletePath: (id) => `/api/v1/users/admin/${encodeURIComponent(id)}`,
     updateMethod: "PATCH",
-    listQuery: () => ({}),
-    mapCreateBody: (payload) => ({
-      email: String(payload.data.email ?? payload.subtitle ?? ""),
-      role: toOrgMembershipRole(Array.isArray(payload.data.roles) ? payload.data.roles[0] : payload.data.roles),
-      message: "Invited from ClyCites workspace admin panel",
+    listQuery: (params) => ({
+      search: params.filters?.text,
+      status: params.filters?.status?.[0],
+      page: params.pagination.page,
+      limit: params.pagination.pageSize,
     }),
     mapUpdateBody: (_id, payload) => ({
-      role: toOrgMembershipRole(Array.isArray(payload.data?.roles) ? payload.data?.roles[0] : payload.data?.roles),
+      name: payload.title,
+      email: typeof payload.data?.email === "string" ? payload.data.email : undefined,
+      status: typeof payload.data?.status === "string" ? payload.data.status : undefined,
+      role: typeof payload.data?.role === "string" ? payload.data.role : undefined,
     }),
+    statusRequest: (id, status) => ({
+      path: `/api/v1/users/admin/${encodeURIComponent(id)}/status`,
+      method: "PATCH",
+      body: {
+        status,
+      },
+    }),
+    actionRequest: (actionId, _actorId, targetId) => {
+      if (!targetId) return null;
+      if (actionId === "unlock-user") {
+        return {
+          path: `/api/v1/users/admin/${encodeURIComponent(targetId)}/unlock`,
+          method: "POST",
+          body: {},
+          message: "User account unlocked.",
+        };
+      }
+      if (actionId === "restore-user") {
+        return {
+          path: `/api/v1/users/admin/${encodeURIComponent(targetId)}/restore`,
+          method: "POST",
+          body: {},
+          message: "User restored successfully.",
+        };
+      }
+      if (actionId === "impersonate-user") {
+        return {
+          path: "/api/v1/auth/super-admin/impersonation",
+          method: "POST",
+          body: {
+            userId: targetId,
+          },
+          message: "Impersonation session started.",
+        };
+      }
+      return null;
+    },
   },
   moduleToggles: {
     listPath: "/api/v1/admin/system/feature-flags",
@@ -3059,11 +3376,64 @@ const ENTITY_API_CONFIG: Partial<Record<EntityKey, EntityApiConfig>> = {
       tags: payload.tags,
       shareScope: normalizeShareScope(payload.data?.shareScope ?? "owner_only"),
     }),
+    actionRequest: (actionId, _actorId, targetId) => {
+      if (actionId === "preview-chart") {
+        return {
+          path: "/api/v1/analytics/charts/preview",
+          method: "POST",
+          body: {
+            chartType: "line",
+            datasetId: "platform_health",
+          },
+          message: "Chart preview generated.",
+        };
+      }
+      if (actionId === "preview-chart-export") {
+        return {
+          path: "/api/v1/analytics/charts/preview/export",
+          method: "POST",
+          body: {
+            format: "csv",
+          },
+          message: "Preview export started.",
+        };
+      }
+      if (!targetId) return null;
+      if (actionId === "publish-chart") {
+        return {
+          path: `/api/v1/analytics/charts/${encodeURIComponent(targetId)}/publish`,
+          method: "POST",
+          body: {},
+          message: "Chart published.",
+        };
+      }
+      if (actionId === "archive-chart") {
+        return {
+          path: `/api/v1/analytics/charts/${encodeURIComponent(targetId)}/archive`,
+          method: "POST",
+          body: {},
+          message: "Chart archived.",
+        };
+      }
+      if (actionId === "export-chart") {
+        return {
+          path: `/api/v1/analytics/charts/${encodeURIComponent(targetId)}/export`,
+          method: "POST",
+          body: {
+            format: "csv",
+          },
+          message: "Chart export triggered.",
+        };
+      }
+      return null;
+    },
   },
   dashboards: {
     listPath: "/api/v1/analytics/dashboards",
     getPath: (id) => `/api/v1/analytics/dashboards/${encodeURIComponent(id)}`,
     createPath: "/api/v1/analytics/dashboards",
+    updatePath: (id) => `/api/v1/analytics/dashboards/${encodeURIComponent(id)}`,
+    updateMethod: "PATCH",
     deletePath: (id) => `/api/v1/analytics/dashboards/${encodeURIComponent(id)}`,
     mapCreateBody: (payload) => ({
       name: payload.title,
@@ -3072,6 +3442,69 @@ const ENTITY_API_CONFIG: Partial<Record<EntityKey, EntityApiConfig>> = {
       tags: payload.tags ?? [],
       isDefault: false,
     }),
+    mapUpdateBody: (_id, payload) => ({
+      name: payload.title,
+      description: payload.subtitle,
+      layout: asRecord(payload.data?.layout),
+      tags: payload.tags,
+    }),
+    actionRequest: (actionId, _actorId, targetId) => {
+      if (!targetId) return null;
+      if (actionId === "publish-dashboard") {
+        return {
+          path: `/api/v1/analytics/dashboards/${encodeURIComponent(targetId)}/publish`,
+          method: "POST",
+          body: {},
+          message: "Dashboard published.",
+        };
+      }
+      if (actionId === "archive-dashboard") {
+        return {
+          path: `/api/v1/analytics/dashboards/${encodeURIComponent(targetId)}/archive`,
+          method: "POST",
+          body: {},
+          message: "Dashboard archived.",
+        };
+      }
+      if (actionId === "add-chart-dashboard") {
+        return {
+          path: `/api/v1/analytics/dashboards/${encodeURIComponent(targetId)}/charts`,
+          method: "POST",
+          body: {
+            chartId: "chart_placeholder",
+          },
+          message: "Chart added to dashboard.",
+        };
+      }
+      if (actionId === "reorder-charts") {
+        return {
+          path: `/api/v1/analytics/dashboards/${encodeURIComponent(targetId)}/charts/reorder`,
+          method: "PATCH",
+          body: {
+            chartOrder: [],
+          },
+          message: "Dashboard chart order updated.",
+        };
+      }
+      if (actionId === "remove-chart-dashboard") {
+        return {
+          path: `/api/v1/analytics/dashboards/${encodeURIComponent(targetId)}/charts/${encodeURIComponent("chart_placeholder")}`,
+          method: "DELETE",
+          message: "Chart removed from dashboard.",
+        };
+      }
+      if (actionId === "update-dashboard-sharing") {
+        return {
+          path: `/api/v1/analytics/dashboards/${encodeURIComponent(targetId)}/sharing`,
+          method: "PATCH",
+          body: {
+            shareScope: "org_members",
+          },
+          message: "Dashboard sharing updated.",
+        };
+      }
+      return null;
+    },
   },
   reports: {
     listPath: "/api/v1/analytics/reports",
@@ -3104,12 +3537,60 @@ const ENTITY_API_CONFIG: Partial<Record<EntityKey, EntityApiConfig>> = {
         workspace: "analytics",
       },
     }),
+    actionRequest: (actionId, _actorId, targetId) => {
+      if (!targetId) return null;
+      if (actionId === "generate-report") {
+        return {
+          path: `/api/v1/analytics/reports/${encodeURIComponent(targetId)}/generate`,
+          method: "POST",
+          body: {},
+          message: "Report generation started.",
+        };
+      }
+      if (actionId === "export-report") {
+        return {
+          path: `/api/v1/analytics/reports/${encodeURIComponent(targetId)}/export`,
+          method: "POST",
+          body: {
+            format: "pdf",
+          },
+          message: "Report export started.",
+        };
+      }
+      return null;
+    },
   },
   datasets: {
     listPath: "/api/v1/analytics/datasets",
+    getPath: (id) => `/api/v1/analytics/datasets/${encodeURIComponent(id)}`,
+    createPath: "/api/v1/analytics/datasets",
+    updatePath: (id) => `/api/v1/analytics/datasets/${encodeURIComponent(id)}`,
+    updateMethod: "PATCH",
+    deletePath: (id) => `/api/v1/analytics/datasets/${encodeURIComponent(id)}`,
+    mapCreateBody: (payload) => ({
+      name: payload.title,
+      description: payload.subtitle,
+      source: typeof payload.data.source === "string" ? payload.data.source : "custom",
+      schemaVersion: typeof payload.data.schemaVersion === "string" ? payload.data.schemaVersion : "1.0.0",
+      query: asRecord(payload.data.query),
+      metadata: asRecord(payload.data.metadata),
+    }),
+    mapUpdateBody: (_id, payload) => ({
+      name: payload.title,
+      description: payload.subtitle,
+      source: typeof payload.data?.source === "string" ? payload.data.source : undefined,
+      schemaVersion: typeof payload.data?.schemaVersion === "string" ? payload.data.schemaVersion : undefined,
+      query: asRecord(payload.data?.query),
+      metadata: asRecord(payload.data?.metadata),
+    }),
   },
   templates: {
     listPath: "/api/v1/analytics/dashboards/templates",
+    getPath: (id) => `/api/v1/analytics/dashboards/templates/${encodeURIComponent(id)}`,
+    createPath: "/api/v1/analytics/dashboards/templates",
+    updatePath: (id) => `/api/v1/analytics/dashboards/templates/${encodeURIComponent(id)}`,
+    updateMethod: "PATCH",
+    deletePath: (id) => `/api/v1/analytics/dashboards/templates/${encodeURIComponent(id)}`,
     listQuery: (params) => ({
       page: undefined,
       limit: undefined,
@@ -3117,6 +3598,40 @@ const ENTITY_API_CONFIG: Partial<Record<EntityKey, EntityApiConfig>> = {
       status: undefined,
       category: params.filters?.text ?? params.filters?.tags?.[0],
     }),
+    mapCreateBody: (payload) => ({
+      name: payload.title,
+      description: payload.subtitle,
+      basedOnType: typeof payload.data.basedOnType === "string" ? payload.data.basedOnType : "dashboard",
+      basedOnId: typeof payload.data.basedOnId === "string" ? payload.data.basedOnId : undefined,
+      shareScope: normalizeShareScope(payload.data.shareScope ?? "owner_only"),
+    }),
+    mapUpdateBody: (_id, payload) => ({
+      name: payload.title,
+      description: payload.subtitle,
+      basedOnType: typeof payload.data?.basedOnType === "string" ? payload.data.basedOnType : undefined,
+      basedOnId: typeof payload.data?.basedOnId === "string" ? payload.data.basedOnId : undefined,
+      shareScope: normalizeShareScope(payload.data?.shareScope ?? "owner_only"),
+    }),
+    actionRequest: (actionId, _actorId, targetId) => {
+      if (!targetId) return null;
+      if (actionId === "publish-template") {
+        return {
+          path: `/api/v1/analytics/dashboards/templates/${encodeURIComponent(targetId)}/publish`,
+          method: "POST",
+          body: {},
+          message: "Template published.",
+        };
+      }
+      if (actionId === "archive-template") {
+        return {
+          path: `/api/v1/analytics/dashboards/templates/${encodeURIComponent(targetId)}/archive`,
+          method: "POST",
+          body: {},
+          message: "Template archived.",
+        };
+      }
+      return null;
+    },
   },
   roles: {
     listPath: "/api/v1/admin/roles",

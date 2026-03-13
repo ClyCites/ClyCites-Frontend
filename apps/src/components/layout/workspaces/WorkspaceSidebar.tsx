@@ -2,13 +2,13 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Home, Search } from "lucide-react";
+import { Home, Search, Waypoints } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { createElement, type ComponentType } from "react";
 import { cn } from "@/lib/utils";
 import type { WorkspaceId } from "@/lib/store/types";
 import { getWorkspaceItems, getWorkspaceLabel } from "@/lib/nav/workspace-nav";
-import { getEntityIcon, getWorkspaceIcon } from "@/components/layout/workspaces/workspace-icons";
+import { getWorkspaceIcon, getEntityIcon } from "@/components/layout/workspaces/workspace-icons";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -100,7 +100,7 @@ function SidebarBody({
           {!collapsed && <p className="px-2 text-[10px] uppercase tracking-[0.12em] text-muted-foreground">Overview</p>}
           <SidebarLink
             href={`/app/${workspaceId}`}
-            label="Overview"
+            label="Dashboard"
             icon={Home}
             active={pathname === `/app/${workspaceId}`}
             collapsed={collapsed}
@@ -109,11 +109,11 @@ function SidebarBody({
         </div>
 
         <div className="space-y-2">
-          {!collapsed && <p className="px-2 text-[10px] uppercase tracking-[0.12em] text-muted-foreground">Data Modules</p>}
+          {!collapsed && <p className="px-2 text-[10px] uppercase tracking-[0.12em] text-muted-foreground">Manage</p>}
           <nav className="space-y-1">
             {items.map((item) => (
               <SidebarLink
-                key={item.href}
+                key={item.id}
                 href={item.href}
                 label={item.label}
                 icon={getEntityIcon(item.entityKey)}
@@ -126,6 +126,14 @@ function SidebarBody({
         </div>
 
         <div className="mt-auto space-y-1 border-t border-border/55 pt-3">
+          <SidebarLink
+            href={`/app/${workspaceId}/endpoints`}
+            label="API Explorer"
+            icon={Waypoints}
+            active={pathname === `/app/${workspaceId}/endpoints`}
+            collapsed={collapsed}
+            onNavigate={onNavigate}
+          />
           <SidebarLink
             href="/app/search"
             label="Global Search"

@@ -7,10 +7,11 @@ export function UsersEntityPage() {
     <AdminEntityPage
       entityKey="users"
       features={{
-        allowCreate: true,
+        allowCreate: false,
         allowEdit: true,
         allowDelete: true,
-        allowStatus: false,
+        allowStatus: true,
+        enabledWorkflowActionIds: ["unlock-user", "restore-user", "impersonate-user"],
         enabledToolbarActionIds: [],
       }}
     />

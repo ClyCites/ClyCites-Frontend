@@ -1,17 +1,20 @@
-import { WORKSPACE_ENTITY_MAP, WORKSPACES, getEntityDefinition } from "@/lib/store/catalog";
+import { WORKSPACES, WORKSPACE_ENTITY_MAP, getEntityDefinition } from "@/lib/store/catalog";
 import type { EntityKey, WorkspaceId } from "@/lib/store/types";
 
 export interface WorkspaceNavItem {
+  id: string;
   label: string;
   href: string;
   entityKey: EntityKey;
 }
 
 export function getWorkspaceItems(workspaceId: WorkspaceId): WorkspaceNavItem[] {
-  return WORKSPACE_ENTITY_MAP[workspaceId].map((entityKey) => {
-    const definition = getEntityDefinition(entityKey);
+  const entities = WORKSPACE_ENTITY_MAP[workspaceId] ?? [];
+  return entities.map((entityKey) => {
+    const def = getEntityDefinition(entityKey);
     return {
-      label: definition?.pluralLabel ?? entityKey,
+      id: entityKey,
+      label: def?.pluralLabel ?? entityKey,
       href: `/app/${workspaceId}/${entityKey}`,
       entityKey,
     };
