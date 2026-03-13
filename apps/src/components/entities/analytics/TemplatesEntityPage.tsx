@@ -7,10 +7,11 @@ export function TemplatesEntityPage() {
     <AnalyticsEntityPage
       entityKey="templates"
       features={{
-        allowCreate: false,
-        allowEdit: false,
-        allowDelete: false,
+        allowCreate: true,
+        allowEdit: true,
+        allowDelete: true,
         allowStatus: false,
+        enabledWorkflowActionIds: ["publish-template", "archive-template"],
         enabledToolbarActionIds: [],
       }}
     />

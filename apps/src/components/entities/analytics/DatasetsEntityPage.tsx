@@ -7,9 +7,9 @@ export function DatasetsEntityPage() {
     <AnalyticsEntityPage
       entityKey="datasets"
       features={{
-        allowCreate: false,
-        allowEdit: false,
-        allowDelete: false,
+        allowCreate: true,
+        allowEdit: true,
+        allowDelete: true,
         allowStatus: false,
         enabledToolbarActionIds: [],
       }}

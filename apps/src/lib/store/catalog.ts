@@ -91,7 +91,7 @@ export const WORKSPACES: WorkspaceDefinition[] = [
 ];
 
 export const WORKSPACE_ENTITY_MAP: Record<WorkspaceId, EntityKey[]> = {
-  farmer: ["farmers", "farms", "plots", "crops", "inputs", "tasks", "advisories", "weatherAlerts", "priceSignals"],
+  farmer: ["farmers", "farms", "plots", "crops", "growthStages", "yieldPredictions", "inputs", "tasks", "advisories", "weatherAlerts", "priceSignals"],
   production: ["cropCycles", "growthStages", "sensorReadings", "pestIncidents", "yieldPredictions"],
   aggregation: ["warehouses", "storageBins", "batches", "qualityGrades", "stockMovements", "spoilageReports"],
   marketplace: ["listings", "rfqs", "orders", "contracts", "negotiations", "reviews"],
@@ -166,19 +166,34 @@ export const ENTITY_DEFINITIONS: Record<EntityKey, EntityDefinition> = {
       },
       statusAction("verify-profile", "Verify", "Mark profile as verified.", "verified"),
       statusAction("reject-profile", "Reject", "Reject profile verification.", "rejected"),
+      {
+        id: "leave-organization",
+        label: "Leave Organization",
+        description: "Leave current cooperative or organization.",
+      },
+      {
+        id: "update-eligibility",
+        label: "Update Eligibility",
+        description: "Update service eligibility for this farmer.",
+      },
+      {
+        id: "view-farmer-stats",
+        label: "View Stats",
+        description: "Load farmer module statistics snapshot.",
+      },
     ]
   ),
   farms: createEntityDefinition("farms", "Farm", "Farms", ["active", "inactive"], [
-    textField("data.location", "Location"),
-    numberField("data.lat", "Latitude"),
-    numberField("data.lng", "Longitude"),
-    textField("data.plotIds", "Linked Plot IDs"),
+    textField("data.farmName", "Farm Name"),
+    numberField("data.totalSize", "Total Size"),
+    textField("data.sizeUnit", "Size Unit"),
+    textField("data.ownershipType", "Ownership Type"),
   ]),
   plots: createEntityDefinition(
     "plots",
     "Plot",
     "Plots",
-    ["active", "inactive"],
+    ["active", "fallow", "inactive"],
     [
       textField("data.farmId", "Farm ID"),
       numberField("data.areaAcres", "Area (acres)"),
@@ -195,18 +210,22 @@ export const ENTITY_DEFINITIONS: Record<EntityKey, EntityDefinition> = {
       },
     ]
   ),
-  crops: createEntityDefinition("crops", "Crop", "Crops", ["planned", "growing", "harvested", "archived"], [
-    textField("data.plotId", "Plot ID"),
-    textField("data.cropType", "Crop Type"),
-    textField("data.stage", "Growth Stage"),
-    dateField("data.plantingDate", "Planting Date"),
-    dateField("data.harvestDate", "Harvest Target"),
+  crops: createEntityDefinition("crops", "Crop", "Crops", ["planned", "in_progress", "harvested", "sold", "stored", "failed"], [
+    textField("data.farmId", "Farm ID"),
+    textField("data.cropName", "Crop Name"),
+    textField("data.cropCategory", "Crop Category"),
+    textField("data.season", "Season"),
+    numberField("data.year", "Year"),
+    numberField("data.areaPlanted", "Area Planted"),
+    numberField("data.estimatedYield", "Estimated Yield"),
   ]),
-  inputs: createEntityDefinition("inputs", "Input", "Inputs", ["in_stock", "low_stock", "out_of_stock"], [
-    textField("data.cropId", "Crop ID"),
-    textField("data.category", "Category"),
-    numberField("data.stock", "Stock"),
-    numberField("data.used", "Used"),
+  inputs: createEntityDefinition("inputs", "Input", "Inputs", ["planned", "applied", "consumed", "cancelled"], [
+    textField("data.farmId", "Farm ID"),
+    textField("data.plotId", "Plot ID"),
+    textField("data.inputName", "Input Name"),
+    textField("data.inputType", "Input Type"),
+    numberField("data.quantity", "Quantity"),
+    textField("data.unit", "Unit"),
   ]),
   tasks: createEntityDefinition("tasks", "Task", "Tasks", ["todo", "doing", "done"], [
     textField("data.assignedTo", "Assigned To"),
@@ -276,9 +295,10 @@ export const ENTITY_DEFINITIONS: Record<EntityKey, EntityDefinition> = {
     dateField("data.plantingTarget", "Planting Target"),
     dateField("data.harvestTarget", "Harvest Target"),
   ]),
-  growthStages: createEntityDefinition("growthStages", "Growth Stage", "Growth Stages", ["seed", "vegetative", "flowering", "maturity", "harvested"], [
+  growthStages: createEntityDefinition("growthStages", "Growth Stage", "Growth Stages", ["planned", "active", "completed"], [
     textField("data.cycleId", "Cycle ID"),
     textField("data.stage", "Stage"),
+    textField("data.status", "Status"),
     dateField("data.observedAt", "Observed At"),
   ]),
   sensorReadings: createEntityDefinition("sensorReadings", "Sensor Reading", "Sensor Readings", ["captured", "flagged", "verified"], [
@@ -929,12 +949,33 @@ export const ENTITY_DEFINITIONS: Record<EntityKey, EntityDefinition> = {
         ],
       },
     ],
-    [],
+    [
+      {
+        id: "publish-chart",
+        label: "Publish",
+        description: "Publish chart for wider access.",
+      },
+      {
+        id: "archive-chart",
+        label: "Archive",
+        description: "Archive chart from active use.",
+      },
+      {
+        id: "export-chart",
+        label: "Export",
+        description: "Export chart data.",
+      },
+    ],
     [
       {
         id: "preview-chart",
         label: "Preview",
-        description: "Preview chart configuration placeholder.",
+        description: "Run chart preview query.",
+      },
+      {
+        id: "preview-chart-export",
+        label: "Export Preview",
+        description: "Export preview query result.",
       },
     ]
   ),
@@ -947,12 +988,38 @@ export const ENTITY_DEFINITIONS: Record<EntityKey, EntityDefinition> = {
       textField("data.chartIds", "Chart IDs"),
       textField("data.layout", "Layout JSON"),
     ],
-    [],
+    [
+      {
+        id: "publish-dashboard",
+        label: "Publish",
+        description: "Publish dashboard.",
+      },
+      {
+        id: "archive-dashboard",
+        label: "Archive",
+        description: "Archive dashboard.",
+      },
+      {
+        id: "add-chart-dashboard",
+        label: "Add Chart",
+        description: "Add chart to dashboard.",
+      },
+      {
+        id: "remove-chart-dashboard",
+        label: "Remove Chart",
+        description: "Remove chart from dashboard.",
+      },
+      {
+        id: "update-dashboard-sharing",
+        label: "Update Sharing",
+        description: "Update dashboard sharing configuration.",
+      },
+    ],
     [
       {
         id: "reorder-charts",
         label: "Reorder Charts",
-        description: "Reorder dashboard widgets placeholder.",
+        description: "Reorder dashboard widgets.",
       },
     ]
   ),
@@ -974,43 +1041,90 @@ export const ENTITY_DEFINITIONS: Record<EntityKey, EntityDefinition> = {
         ],
       },
     ],
-    [],
+    [
+      {
+        id: "generate-report",
+        label: "Generate",
+        description: "Generate analytics report.",
+      },
+      {
+        id: "export-report",
+        label: "Export",
+        description: "Export analytics report.",
+      },
+    ],
     [
       {
         id: "export-report",
         label: "Export",
-        description: "Mock report export flow.",
+        description: "Export analytics report.",
       },
     ]
   ),
-  templates: createEntityDefinition("templates", "Template", "Templates", ["draft", "published", "archived"], [
-    {
-      key: "data.basedOnType",
-      label: "Based On",
-      type: "select",
-      options: [
-        { label: "Chart", value: "chart" },
-        { label: "Dashboard", value: "dashboard" },
-      ],
-    },
-    textField("data.basedOnId", "Based On ID"),
-    {
-      key: "data.shareScope",
-      label: "Share Scope",
-      type: "select",
-      options: [
-        { label: "Private", value: "private" },
-        { label: "Org", value: "org" },
-        { label: "Public", value: "public" },
-      ],
-    },
-  ]),
-  users: createEntityDefinition("users", "User", "Users", ["active", "disabled"], [
-    textField("data.name", "Name"),
-    textField("data.email", "Email"),
-    textField("data.orgId", "Org ID"),
-    textField("data.roles", "Roles"),
-  ]),
+  templates: createEntityDefinition(
+    "templates",
+    "Template",
+    "Templates",
+    ["draft", "published", "archived"],
+    [
+      {
+        key: "data.basedOnType",
+        label: "Based On",
+        type: "select",
+        options: [
+          { label: "Chart", value: "chart" },
+          { label: "Dashboard", value: "dashboard" },
+        ],
+      },
+      textField("data.basedOnId", "Based On ID"),
+      {
+        key: "data.shareScope",
+        label: "Share Scope",
+        type: "select",
+        options: [
+          { label: "Private", value: "private" },
+          { label: "Org", value: "org" },
+          { label: "Public", value: "public" },
+        ],
+      },
+    ],
+    [
+      {
+        id: "publish-template",
+        label: "Publish",
+        description: "Publish dashboard template.",
+      },
+      {
+        id: "archive-template",
+        label: "Archive",
+        description: "Archive dashboard template.",
+      },
+    ]
+  ),
+  users: createEntityDefinition(
+    "users",
+    "User",
+    "Users",
+    ["active", "disabled"],
+    [textField("data.name", "Name"), textField("data.email", "Email"), textField("data.role", "Role")],
+    [
+      {
+        id: "unlock-user",
+        label: "Unlock User",
+        description: "Unlock a blocked user account.",
+      },
+      {
+        id: "restore-user",
+        label: "Restore User",
+        description: "Restore a soft-deleted user.",
+      },
+      {
+        id: "impersonate-user",
+        label: "Impersonate User",
+        description: "Start a super-admin impersonation session.",
+      },
+    ]
+  ),
   orgs: createEntityDefinition("orgs", "Organization", "Organizations", ["active", "disabled"], [
     textField("data.name", "Name"),
     textField("data.enabledModules", "Enabled Workspaces"),
@@ -1037,16 +1151,6 @@ export const ENTITY_DEFINITIONS: Record<EntityKey, EntityDefinition> = {
     ],
     [
       statusAction("revoke-token", "Revoke", "Revoke token permanently.", "revoked"),
-      {
-        id: "rotate-token-secret",
-        label: "Rotate Secret",
-        description: "Rotate API token secret and invalidate old secret.",
-      },
-      {
-        id: "view-token-usage",
-        label: "View Usage",
-        description: "Fetch token usage snapshot from API.",
-      },
     ],
     [
       {
