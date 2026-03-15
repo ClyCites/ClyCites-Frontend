@@ -6,6 +6,8 @@ import { useQuery } from "@tanstack/react-query";
 import { Search } from "lucide-react";
 import { searchService } from "@/lib/api";
 import { queryKeys } from "@/lib/query/keys";
+import { useMockSession } from "@/lib/auth/mock-session";
+import { AccessDenied } from "@/components/common/AccessDenied";
 import { PageHeader } from "@/components/common/PageHeader";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -15,6 +17,7 @@ import { EmptyState } from "@/components/common/EmptyState";
 import { LoadingSkeletons } from "@/components/common/LoadingSkeletons";
 
 export default function GlobalSearchPage() {
+  const { can } = useMockSession();
   const [query, setQuery] = useState("");
   const [submitted, setSubmitted] = useState("");
 
@@ -25,6 +28,10 @@ export default function GlobalSearchPage() {
   });
 
   const results = searchQuery.data ?? [];
+
+  if (!can("global.search")) {
+    return <AccessDenied />;
+  }
 
   return (
     <div className="space-y-4">

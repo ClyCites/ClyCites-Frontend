@@ -296,16 +296,11 @@ function RegisterPage() {
   const completePostVerificationFlow = async (context: PendingRegistrationContext) => {
     const session = await login(context.email, context.password);
 
-    const primaryWorkspace =
-      context.accountType === "organization"
-        ? (context.enabledModules[0] ?? "farmer")
-        : "farmer";
-
     await securityService.saveOnboarding(session.user.id, {
       accountType: context.accountType,
       preferredLanguage: "English",
       region: context.region,
-      primaryWorkspace,
+      primaryWorkspace: session.activeWorkspace,
       goals:
         context.accountType === "organization"
           ? ["Track marketplace performance", "Strengthen financial controls"]

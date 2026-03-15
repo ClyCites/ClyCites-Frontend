@@ -1011,8 +1011,9 @@ export async function login(email: string, password: string): Promise<LoginRespo
       }
 
       const organization = getOrganization(state, user.orgId);
+      const sanitizedUser = sanitizeUser(user);
       const token = randomId("session");
-      const defaultWorkspace = organization.enabledModules[0] ?? "farmer";
+      const defaultWorkspace = resolveWorkspaceForSession(sanitizedUser, organization);
       const session: SessionRecord = {
         token,
         userId: user.id,
@@ -1034,7 +1035,7 @@ export async function login(email: string, password: string): Promise<LoginRespo
 
       return {
         token,
-        user: sanitizeUser(user),
+        user: sanitizedUser,
         organization,
       };
     })
@@ -1099,21 +1100,28 @@ export async function logout(token: string, actorId: string): Promise<void> {
 }
 
 export async function resolveSession(token: string): Promise<AuthSession> {
-  return withSimulation(() => {
-    const state = loadState();
-    const session = state.sessions.find((candidate) => candidate.token === token);
-    if (!session) throw new MockApiError("Session expired", "SESSION_EXPIRED");
+  return withSimulation(() =>
+    saveWithMutation((state) => {
+      const session = state.sessions.find((candidate) => candidate.token === token);
+      if (!session) throw new MockApiError("Session expired", "SESSION_EXPIRED");
 
-    const user = getUserById(state, session.userId);
-    const organization = getOrganization(state, user.orgId);
+      const user = getUserById(state, session.userId);
+      const sanitizedUser = sanitizeUser(user);
+      const organization = getOrganization(state, user.orgId);
+      const activeWorkspace = resolveWorkspaceForSession(sanitizedUser, organization, session.activeWorkspace);
 
-    return {
-      token: session.token,
-      user: sanitizeUser(user),
-      organization,
-      activeWorkspace: session.activeWorkspace,
-    };
-  });
+      if (session.activeWorkspace !== activeWorkspace) {
+        session.activeWorkspace = activeWorkspace;
+      }
+
+      return {
+        token: session.token,
+        user: sanitizedUser,
+        organization,
+        activeWorkspace,
+      };
+    })
+  );
 }
 
 export async function updateSessionWorkspace(token: string, workspace: WorkspaceId): Promise<AuthSession> {
@@ -1121,19 +1129,50 @@ export async function updateSessionWorkspace(token: string, workspace: Workspace
     saveWithMutation((state) => {
       const session = state.sessions.find((candidate) => candidate.token === token);
       if (!session) throw new MockApiError("Session expired", "SESSION_EXPIRED");
-      session.activeWorkspace = workspace;
 
       const user = getUserById(state, session.userId);
+      const sanitizedUser = sanitizeUser(user);
       const organization = getOrganization(state, user.orgId);
+      if (!hasWorkspaceAccess(sanitizedUser, organization, workspace)) {
+        throw new MockApiError(`You do not have access to the ${workspace} workspace.`, "WORKSPACE_ACCESS_DENIED");
+      }
+
+      session.activeWorkspace = workspace;
 
       return {
         token: session.token,
-        user: sanitizeUser(user),
+        user: sanitizedUser,
         organization,
         activeWorkspace: session.activeWorkspace,
       };
     })
   );
+}
+
+export function listAccessibleWorkspaces(
+  user: Omit<UserAccount, "password">,
+  organization: Organization
+): WorkspaceId[] {
+  return WORKSPACES
+    .map((workspace) => workspace.id)
+    .filter((workspaceId) => hasWorkspaceAccess(user, organization, workspaceId));
+}
+
+export function resolveWorkspaceForSession(
+  user: Omit<UserAccount, "password">,
+  organization: Organization,
+  requestedWorkspace?: WorkspaceId | null
+): WorkspaceId {
+  const accessibleWorkspaces = listAccessibleWorkspaces(user, organization);
+  if (accessibleWorkspaces.length === 0) {
+    throw new MockApiError("No workspaces are available for this account.", "NO_WORKSPACE_ACCESS");
+  }
+
+  if (requestedWorkspace && accessibleWorkspaces.includes(requestedWorkspace)) {
+    return requestedWorkspace;
+  }
+
+  return accessibleWorkspaces.includes("farmer") ? "farmer" : accessibleWorkspaces[0];
 }
 
 export function hasPermission(user: Omit<UserAccount, "password">, permission: Permission): boolean {

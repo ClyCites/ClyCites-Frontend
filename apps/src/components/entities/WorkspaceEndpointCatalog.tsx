@@ -5,6 +5,8 @@ import Link from "next/link";
 import { listWorkspaceEndpoints } from "@/lib/api/workspaces";
 import type { WorkspaceId } from "@/lib/store/types";
 import { getWorkspaceLabel } from "@/lib/nav/workspace-nav";
+import { useMockSession } from "@/lib/auth/mock-session";
+import { AccessDenied } from "@/components/common/AccessDenied";
 import { PageHeader } from "@/components/common/PageHeader";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -18,6 +20,7 @@ interface WorkspaceEndpointCatalogProps {
 }
 
 export function WorkspaceEndpointCatalog({ workspaceId }: WorkspaceEndpointCatalogProps) {
+  const { canAccessWorkspace } = useMockSession();
   const [searchText, setSearchText] = useState("");
   const [methodFilter, setMethodFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -42,6 +45,10 @@ export function WorkspaceEndpointCatalog({ workspaceId }: WorkspaceEndpointCatal
 
   const wiredCount = endpoints.filter((endpoint) => endpoint.uiImplemented).length;
   const catalogOnlyCount = endpoints.length - wiredCount;
+
+  if (!canAccessWorkspace(workspaceId)) {
+    return <AccessDenied />;
+  }
 
   return (
     <div className="space-y-4">
