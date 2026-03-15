@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { authService } from "@/lib/api/mock/auth";
-import { hasWorkspaceAccess } from "@/lib/store";
+import { hasWorkspaceAccess, listAccessibleWorkspaces } from "@/lib/store";
 
 describe("Auth and RBAC", () => {
   it("logs in, switches workspace, and preserves session token", async () => {
@@ -18,8 +18,14 @@ describe("Auth and RBAC", () => {
 
   it("enforces role workspace boundaries", async () => {
     const farmerSession = await authService.login("farmer@clycites.com", "farmer123");
+    expect(listAccessibleWorkspaces(farmerSession.user, farmerSession.organization)).toEqual(["farmer"]);
     expect(hasWorkspaceAccess(farmerSession.user, farmerSession.organization, "farmer")).toBe(true);
     expect(hasWorkspaceAccess(farmerSession.user, farmerSession.organization, "admin")).toBe(false);
+  });
+
+  it("blocks switching into a workspace outside the user's role permissions", async () => {
+    await authService.login("farmer@clycites.com", "farmer123");
+    await expect(authService.switchWorkspace("admin")).rejects.toThrow(/access/i);
   });
 
   it("returns reminder policy when MFA is not enabled and rejects bad credentials", async () => {

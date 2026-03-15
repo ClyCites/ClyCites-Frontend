@@ -8,6 +8,7 @@ import { createElement, type ComponentType } from "react";
 import { cn } from "@/lib/utils";
 import type { WorkspaceId } from "@/lib/store/types";
 import { getWorkspaceItems, getWorkspaceLabel } from "@/lib/nav/workspace-nav";
+import { useMockSession } from "@/lib/auth/mock-session";
 import { getWorkspaceIcon, getEntityIcon } from "@/components/layout/workspaces/workspace-icons";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
@@ -76,8 +77,14 @@ function SidebarBody({
   collapsed: boolean;
   onNavigate?: () => void;
 }) {
-  const items = getWorkspaceItems(workspaceId);
+  const { can, canAccessEntity, canAccessWorkspace } = useMockSession();
+  const items = getWorkspaceItems(workspaceId).filter((item) => canAccessEntity(item.entityKey, "read"));
   const workspaceIcon = getWorkspaceIcon(workspaceId);
+  const canSearch = can("global.search");
+
+  if (!canAccessWorkspace(workspaceId)) {
+    return null;
+  }
 
   return (
     <TooltipProvider delayDuration={120}>
@@ -134,14 +141,16 @@ function SidebarBody({
             collapsed={collapsed}
             onNavigate={onNavigate}
           />
-          <SidebarLink
-            href="/app/search"
-            label="Global Search"
-            icon={Search}
-            active={pathname === "/app/search"}
-            collapsed={collapsed}
-            onNavigate={onNavigate}
-          />
+          {canSearch && (
+            <SidebarLink
+              href="/app/search"
+              label="Global Search"
+              icon={Search}
+              active={pathname === "/app/search"}
+              collapsed={collapsed}
+              onNavigate={onNavigate}
+            />
+          )}
         </div>
       </div>
     </TooltipProvider>

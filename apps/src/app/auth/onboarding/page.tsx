@@ -32,7 +32,7 @@ function OnboardingPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const nextPath = searchParams.get("next") || "/app";
-  const { session, isLoading } = useMockSession();
+  const { session, isLoading, availableWorkspaces } = useMockSession();
 
   const [step, setStep] = useState(1);
   const [accountType, setAccountType] = useState<RegistrationAccountType>("sole");
@@ -49,6 +49,14 @@ function OnboardingPage() {
   const [passkeyEnabled, setPasskeyEnabled] = useState(false);
   const [loginAlerts, setLoginAlerts] = useState(true);
 
+  const workspaceOptions = WORKSPACES.filter((workspace) => availableWorkspaces.includes(workspace.id));
+  const selectedPrimaryWorkspace =
+    availableWorkspaces.includes(primaryWorkspace)
+      ? primaryWorkspace
+      : session?.activeWorkspace && availableWorkspaces.includes(session.activeWorkspace)
+        ? session.activeWorkspace
+        : workspaceOptions[0]?.id ?? "farmer";
+
   useEffect(() => {
     if (!isLoading && !session) {
       router.replace(`/auth/login?next=${encodeURIComponent(nextPath)}`);
@@ -63,7 +71,7 @@ function OnboardingPage() {
         accountType,
         preferredLanguage,
         region,
-        primaryWorkspace,
+        primaryWorkspace: selectedPrimaryWorkspace,
         goals: selectedGoals,
         notificationChannels: {
           email: notifyEmail,
@@ -150,12 +158,12 @@ function OnboardingPage() {
               </div>
               <div className="space-y-1.5">
                 <Label>Primary workspace</Label>
-                <Select value={primaryWorkspace} onValueChange={(value) => setPrimaryWorkspace(value as WorkspaceId)}>
+                <Select value={selectedPrimaryWorkspace} onValueChange={(value) => setPrimaryWorkspace(value as WorkspaceId)}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {WORKSPACES.map((workspace) => (
+                    {workspaceOptions.map((workspace) => (
                       <SelectItem key={workspace.id} value={workspace.id}>
                         {workspace.label}
                       </SelectItem>

@@ -2,8 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { authService } from "@/lib/api";
-import { WORKSPACES } from "@/lib/store/catalog";
-import { hasEntityPermission, hasPermission, hasWorkspaceAccess } from "@/lib/store";
+import { hasEntityPermission, hasPermission, hasWorkspaceAccess, listAccessibleWorkspaces } from "@/lib/store";
 import type { AuthSession, EntityKey, Permission, WorkspaceId } from "@/lib/store/types";
 
 const LAST_PROFILE_KEY = "clycites.auth.last-profile";
@@ -135,10 +134,7 @@ export function MockSessionProvider({ children }: { children: ReactNode }) {
 
   const availableWorkspaces = useMemo(() => {
     if (!session) return [];
-
-    return WORKSPACES
-      .map((workspace) => workspace.id)
-      .filter((workspace) => hasWorkspaceAccess(session.user, session.organization, workspace));
+    return listAccessibleWorkspaces(session.user, session.organization);
   }, [session]);
 
   const value = useMemo<SessionContextValue>(() => {
