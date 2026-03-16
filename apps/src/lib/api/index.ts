@@ -12,6 +12,9 @@ import {
   securityService as realSecurityService,
   chartService as realChartService,
 } from "@/lib/api/real";
+import { farmersApi } from "@/lib/api/farmers.api";
+import { productsApi } from "@/lib/api/products.api";
+import { ordersApi } from "@/lib/api/orders.api";
 
 export const apiMode = "real";
 export const isRealApiMode = true;
@@ -23,3 +26,4 @@ export const entityServices = realEntityServices;
 export const notificationsService = realNotificationsService;
 export const auditService = realAuditService;
 export const searchService = realSearchService;
+export { farmersApi, productsApi, ordersApi };

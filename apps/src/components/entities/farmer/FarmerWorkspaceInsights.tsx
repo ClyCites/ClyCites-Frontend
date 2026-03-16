@@ -1,12 +1,13 @@
 "use client";
 
 import { useMemo } from "react";
-import { useQueries, useQuery } from "@tanstack/react-query";
+import { useQueries } from "@tanstack/react-query";
 import { entityServices } from "@/lib/api";
 import type { EntityKey, ListParams, ListResult } from "@/lib/store/types";
 import { WorkspaceInsightsCharts } from "@/components/charts/WorkspaceInsightsCharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { apiRequest, unwrapApiData } from "@/lib/api/real/http";
+import { useFarmerStats } from "@/lib/hooks/useFarmers";
+import type { FarmerStats } from "@/lib/types/farmer.types";
 
 type FarmerInsightEntityKey = "farmers" | "farms" | "plots" | "crops" | "growthStages" | "yieldPredictions" | "inputs";
 
@@ -36,12 +37,6 @@ async function fetchEntityCount(entityKey: EntityKey): Promise<number> {
   return Number(result.pagination?.total ?? 0);
 }
 
-async function fetchFarmerStats(): Promise<Record<string, unknown>> {
-  const payload = await apiRequest<unknown>("/api/v1/farmers/stats", { method: "GET" }, { auth: true });
-  const unwrapped = unwrapApiData<unknown>(payload);
-  return (typeof unwrapped === "object" && unwrapped !== null ? unwrapped : {}) as Record<string, unknown>;
-}
-
 export function FarmerWorkspaceInsights() {
   const countQueries = useQueries({
     queries: INSIGHT_ENTITIES.map((entity) => ({
@@ -51,11 +46,7 @@ export function FarmerWorkspaceInsights() {
     })),
   });
 
-  const farmerStatsQuery = useQuery({
-    queryKey: ["farmer-module-stats"],
-    queryFn: fetchFarmerStats,
-    staleTime: 60_000,
-  });
+  const farmerStatsQuery = useFarmerStats();
 
   const metrics = useMemo(
     () =>
@@ -66,24 +57,29 @@ export function FarmerWorkspaceInsights() {
     [countQueries]
   );
 
-  const stats = farmerStatsQuery.data ?? {};
-  const byStatusRaw = Array.isArray(stats.byVerificationStatus) ? stats.byVerificationStatus : [];
+  const stats: FarmerStats = farmerStatsQuery.data ?? {
+    totalFarmers: 0,
+    verifiedFarmers: 0,
+    totalFarmSize: 0,
+    averageFarmSize: 0,
+    byVerificationStatus: [],
+  };
+  const byStatusRaw = stats.byVerificationStatus;
   const trend =
     byStatusRaw.length > 0
       ? byStatusRaw.map((item, index) => {
-          const row = (typeof item === "object" && item !== null ? item : {}) as Record<string, unknown>;
           return {
-            period: String(row.status ?? `status-${index + 1}`),
-            records: Number(row.count ?? 0),
+            period: String(item.status ?? `status-${index + 1}`),
+            records: Number(item.count ?? 0),
             alerts: 0,
           };
         })
       : metrics.slice(0, 5).map((item) => ({ period: item.name, records: item.total, alerts: 0 }));
 
-  const totalFarmers = Number(stats.totalFarmers ?? 0);
-  const verifiedFarmers = Number(stats.verifiedFarmers ?? 0);
-  const totalFarmSize = Number(stats.totalFarmSize ?? 0);
-  const averageFarmSize = Number(stats.averageFarmSize ?? 0);
+  const totalFarmers = Number(stats.totalFarmers);
+  const verifiedFarmers = Number(stats.verifiedFarmers);
+  const totalFarmSize = Number(stats.totalFarmSize);
+  const averageFarmSize = Number(stats.averageFarmSize);
 
   return (
     <section className="space-y-4">
