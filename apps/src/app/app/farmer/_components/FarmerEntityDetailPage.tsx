@@ -6,7 +6,7 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Edit, Filter, Trash2, Workflow } from "lucide-react";
 import { entityServices } from "@/lib/api";
-import type { EntityRecord, FieldDefinition } from "@/lib/store/types";
+import type { EntityRecord } from "@/lib/store/types";
 import { useMockSession } from "@/lib/auth/mock-session";
 import { invalidateEntityMutation } from "@/lib/query/invalidation";
 import { PageHeader } from "@/components/common/PageHeader";
@@ -24,7 +24,11 @@ import {
   getFarmerEntityFeatures,
   getFilteredActions,
 } from "@/app/app/farmer/_lib/entity-config";
-import { getPathValue } from "@/app/app/farmer/_lib/form-utils";
+import {
+  formatFarmerEntityFieldValue,
+  getFarmerEntityFieldValue,
+  getFarmerEntityFormDefinition,
+} from "@/app/app/farmer/_lib/entity-form-config";
 
 interface FarmerEntityService {
   getX: (id: string) => Promise<EntityRecord>;
@@ -41,23 +45,12 @@ function entityPath(entityKey: FarmerEntityKey): string {
   return `/app/${FARMER_WORKSPACE_ID}/${entityKey}`;
 }
 
-function formatFieldValue(value: unknown, field: FieldDefinition): string {
-  if (value === undefined || value === null || value === "") return "-";
-  if (field.type === "switch") return Boolean(value) ? "Yes" : "No";
-  if (field.type === "date") {
-    const parsed = new Date(String(value));
-    if (!Number.isNaN(parsed.getTime())) return parsed.toLocaleDateString();
-  }
-  if (Array.isArray(value)) return value.map((item) => String(item)).join(", ");
-  if (typeof value === "object") return JSON.stringify(value);
-  return String(value);
-}
-
 export function FarmerEntityDetailPage({ entityKey, recordId }: { entityKey: FarmerEntityKey; recordId: string }) {
   const router = useRouter();
   const { session, canAccessEntity } = useMockSession();
   const queryClient = useQueryClient();
   const definition = getFarmerEntityDefinition(entityKey);
+  const formDefinition = getFarmerEntityFormDefinition(entityKey);
   const features = getFarmerEntityFeatures(entityKey);
   const service = serviceFor(entityKey);
 
@@ -230,20 +223,28 @@ export function FarmerEntityDetailPage({ entityKey, recordId }: { entityKey: Far
       <Card>
         <CardHeader>
           <CardTitle>Field Data</CardTitle>
-          <CardDescription>Mapped view of configured entity fields.</CardDescription>
+          <CardDescription>Mapped view of farmer API fields.</CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="grid gap-3 md:grid-cols-2">
-            {definition.fields.map((field) => {
-              const value = getPathValue(record as unknown as Record<string, unknown>, field.key);
-              return (
-                <div key={field.key} className={field.type === "textarea" ? "md:col-span-2" : undefined}>
-                  <p className="text-xs uppercase text-muted-foreground">{field.label}</p>
-                  <p className="break-words">{formatFieldValue(value, field)}</p>
-                </div>
-              );
-            })}
-          </div>
+        <CardContent className="space-y-4">
+          {formDefinition.sections.map((section, sectionIndex) => (
+            <div key={section.title} className={sectionIndex > 0 ? "space-y-3 border-t pt-4" : "space-y-3"}>
+              <div className="space-y-1">
+                <h3 className="text-sm font-semibold">{section.title}</h3>
+                {section.description ? <p className="text-sm text-muted-foreground">{section.description}</p> : null}
+              </div>
+              <div className="grid gap-3 md:grid-cols-2">
+                {section.fields.map((field) => {
+                  const value = getFarmerEntityFieldValue(record, field);
+                  return (
+                    <div key={field.key} className={field.span === 2 || field.type === "textarea" ? "md:col-span-2" : undefined}>
+                      <p className="text-xs uppercase text-muted-foreground">{field.label}</p>
+                      <p className="break-words">{formatFarmerEntityFieldValue(field, value)}</p>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
         </CardContent>
       </Card>
 

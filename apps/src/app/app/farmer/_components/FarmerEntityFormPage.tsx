@@ -23,11 +23,11 @@ import {
   getFarmerEntityFeatures,
 } from "@/app/app/farmer/_lib/entity-config";
 import {
-  buildDataPayload,
-  createEmptyFormValues,
-  type FormValues,
-  toFormValues,
-} from "@/app/app/farmer/_lib/form-utils";
+  createFarmerEntityFormValues,
+  getFarmerEntityFormDefinition,
+  getFarmerEntityMutationPayload,
+  type FarmerFormValues,
+} from "@/app/app/farmer/_lib/entity-form-config";
 import { renderFarmerFieldControl } from "@/app/app/farmer/_components/farmer-form-controls";
 
 interface FarmerEntityService {
@@ -60,13 +60,6 @@ function entityPath(entityKey: FarmerEntityKey): string {
   return `/app/${FARMER_WORKSPACE_ID}/${entityKey}`;
 }
 
-function splitTags(rawTags: string | number | boolean | undefined): string[] {
-  return String(rawTags ?? "")
-    .split(",")
-    .map((item) => item.trim())
-    .filter(Boolean);
-}
-
 export function FarmerEntityFormPage({
   entityKey,
   mode,
@@ -81,6 +74,7 @@ export function FarmerEntityFormPage({
   const queryClient = useQueryClient();
   const definition = getFarmerEntityDefinition(entityKey);
   const features = getFarmerEntityFeatures(entityKey);
+  const formDefinition = getFarmerEntityFormDefinition(entityKey);
   const service = serviceFor(entityKey);
 
   const canRead = canAccessEntity(entityKey, "read");
@@ -112,8 +106,8 @@ export function FarmerEntityFormPage({
 
   const initialValues =
     mode === "edit" && recordQuery.data
-      ? toFormValues(recordQuery.data, definition.fields)
-      : createEmptyFormValues(definition.fields);
+      ? createFarmerEntityFormValues(entityKey, recordQuery.data)
+      : createFarmerEntityFormValues(entityKey);
 
   const formKey = mode === "edit" ? recordQuery.data?.id ?? recordId ?? "edit" : "create";
 
@@ -124,6 +118,7 @@ export function FarmerEntityFormPage({
       mode={mode}
       recordId={recordId}
       definition={definition}
+      formDefinition={formDefinition}
       service={service}
       session={session}
       queryClient={queryClient}
@@ -138,6 +133,7 @@ function FarmerEntityFormContent({
   mode,
   recordId,
   definition,
+  formDefinition,
   service,
   session,
   queryClient,
@@ -148,32 +144,33 @@ function FarmerEntityFormContent({
   mode: "create" | "edit";
   recordId?: string;
   definition: ReturnType<typeof getFarmerEntityDefinition>;
+  formDefinition: ReturnType<typeof getFarmerEntityFormDefinition>;
   service: FarmerEntityService;
   session: ReturnType<typeof useMockSession>["session"];
   queryClient: ReturnType<typeof useQueryClient>;
   router: ReturnType<typeof useRouter>;
-  initialValues: FormValues;
+  initialValues: FarmerFormValues;
 }) {
-  const [formValues, setFormValues] = useState<FormValues>(initialValues);
+  const [formValues, setFormValues] = useState<FarmerFormValues>(initialValues);
 
   const submitMutation = useMutation({
     mutationFn: async () => {
       if (!session) throw new Error("No active session");
 
-      const payload = {
-        actorId: session.user.id,
-        title: String(formValues.title ?? "Untitled"),
-        subtitle: String(formValues.subtitle ?? ""),
-        tags: splitTags(formValues.tags),
-        data: buildDataPayload(definition.fields, formValues),
-      };
+      const payload = getFarmerEntityMutationPayload(entityKey, formValues);
 
       if (mode === "create") {
-        return service.createX(payload);
+        return service.createX({
+          actorId: session.user.id,
+          ...payload,
+        });
       }
 
       if (!recordId) throw new Error("Missing record id");
-      return service.updateX(recordId, payload);
+      return service.updateX(recordId, {
+        actorId: session.user.id,
+        ...payload,
+      });
     },
     onSuccess: (record) => {
       void invalidateEntityMutation(queryClient, { workspaceId: FARMER_WORKSPACE_ID, entityKey });
@@ -213,20 +210,39 @@ function FarmerEntityFormContent({
       <Card>
         <CardHeader>
           <CardTitle>{mode === "create" ? `New ${definition.label}` : `Update ${definition.label}`}</CardTitle>
-          <CardDescription>Fill in the fields below and save.</CardDescription>
+          <CardDescription>Fill in the API-specific fields below and save.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2">
-            {definition.fields.map((field) => {
-              const value = formValues[field.key] ?? "";
-              return (
-                <div key={field.key} className={field.type === "textarea" ? "space-y-1.5 md:col-span-2" : "space-y-1.5"}>
-                  <Label>{field.label}</Label>
-                  {renderFarmerFieldControl(field, value, (next) => setFormValues((current) => ({ ...current, [field.key]: next })))}
+          {formDefinition.sections
+            .map((section) => ({
+              ...section,
+              fields: section.fields.filter((field) => !field.modes || field.modes.includes(mode)),
+            }))
+            .filter((section) => section.fields.length > 0)
+            .map((section, sectionIndex) => (
+              <div key={section.title} className={sectionIndex > 0 ? "space-y-4 border-t pt-4" : "space-y-4"}>
+                <div className="space-y-1">
+                  <h3 className="text-sm font-semibold">{section.title}</h3>
+                  {section.description ? <p className="text-sm text-muted-foreground">{section.description}</p> : null}
                 </div>
-              );
-            })}
-          </div>
+                <div className="grid gap-4 md:grid-cols-2">
+                  {section.fields.map((field) => {
+                    const value = formValues[field.key] ?? (field.type === "switch" ? false : "");
+                    return (
+                      <div
+                        key={field.key}
+                        className={field.span === 2 || field.type === "textarea" ? "space-y-1.5 md:col-span-2" : "space-y-1.5"}
+                      >
+                        <Label>{field.label}</Label>
+                        {renderFarmerFieldControl(field, value, (next) =>
+                          setFormValues((current) => ({ ...current, [field.key]: next }))
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
 
           <div className="flex flex-wrap items-center gap-2 pt-2">
             <Button onClick={() => submitMutation.mutate()} loading={submitMutation.isPending}>
